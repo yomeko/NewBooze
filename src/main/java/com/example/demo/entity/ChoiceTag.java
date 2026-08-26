@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,7 +40,7 @@ public class ChoiceTag {
     @JoinColumn(name = "tag_id")
     private Tag tag;
 
-    /** 選択時にタグへ与える重み。デフォルト1。 */
+    /** 選択時にタグへ与える重み。デフォルト1。DB側がTINYINTのためByte型にマッピング */
     @Column(nullable = false)
-    private Integer weight = 1;
+    private Byte weight = 1;
 }

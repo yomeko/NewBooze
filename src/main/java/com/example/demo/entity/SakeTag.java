@@ -8,6 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,8 +43,8 @@ public class SakeTag {
     @MapsId("tagId")
     @JoinColumn(name = "tag_id")
     private Tag tag;
-
-    /** 当該地酒における当該タグの強さ（1〜5想定）。デフォルト3。 */
+    
+    /** 当該地酒における当該タグの強さ（1〜5想定）。デフォルト3。DB側がTINYINTのためByte型にマッピング */
     @Column(nullable = false)
-    private Integer score = 3;
+    private Byte score = 3;
 }
