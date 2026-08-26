@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン - NEWBOOZE</title>
+    <!-- ※出田担当のデザインに置き換え予定の暫定テンプレート -->
+</head>
+<body>
+    <h1>ログイン</h1>
+
+    <p th:if="${param.error}" style="color:red;">
+        メールアドレスまたはパスワードが正しくありません
+    </p>
+    <p th:if="${param.registered}" style="color:green;">
+        登録が完了しました。ログインしてください
+    </p>
+
+    <!--
+      重要: Spring Securityのデフォルト仕様では、
+      ログインフォームのユーザー名項目は name="username" である必要がある。
+      本アプリではメールアドレスをusernameとして扱うため、
+      入力欄のラベルは「メールアドレス」だが name属性は username のままにする。
+    -->
+    <form th:action="@{/login}" method="post">
+        <label>メールアドレス:
+            <input type="email" name="username">
+        </label>
+        <label>パスワード:
+            <input type="password" name="password">
+        </label>
+        <button type="submit">ログイン</button>
+    </form>
+
+    <p><a th:href="@{/signup}">新規登録はこちら</a></p>
+</body>
+</html>
