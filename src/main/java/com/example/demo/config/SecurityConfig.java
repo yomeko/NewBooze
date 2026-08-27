@@ -41,7 +41,13 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")           // 独自のログイン画面を使用
                 .loginProcessingUrl("/login")  // フォームのPOST先。Spring Securityが自動で処理する
-                .defaultSuccessUrl("/mypage", false)
+                // ログイン後は好み診断（/diagnosis）へ誘導する。
+                // 第2引数 false は「常にこのURLへ飛ばすわけではない」の意味で、
+                // お気に入り(/favorites)等の認証必須ページへ直接アクセスして
+                // ログイン画面に飛ばされたケースでは、Spring Securityが記憶している
+                // 元のリクエスト(SavedRequest)を優先して復元する。
+                // trueにすると常に/diagnosisへ強制遷移してしまうため注意。
+                .defaultSuccessUrl("/diagnosis", false)
                 .failureUrl("/login?error")
                 .permitAll()
             )
