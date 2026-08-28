@@ -1,5 +1,7 @@
 plugins {
 	id 'java'
+	// Spring Bootの各種プラグイン。バージョン管理・実行可能jar化・依存関係の
+	// バージョン統一(BOM)機能などを提供する
 	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -9,6 +11,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
+		// Java 21固定。内部設計書 2.1の技術スタックに合わせる
 		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
@@ -17,39 +20,59 @@ repositories {
 	mavenCentral()
 }
 
+// Spring AI（Anthropic連携）のバージョンを変数化。
+// 複数の依存関係で同じバージョンを参照する際に、ここを直すだけで済むようにする狙い
 ext {
 	set('springAiVersion', "2.0.0")
 }
 
 dependencies {
+	// ---- 本体で使用する依存関係(implementation) ----
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+	// Spring Data JPA：Repository層でのDBアクセス(newbooze.sqlに対応するEntity操作)に使用
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	// Thymeleaf：サーバーサイドレンダリング用テンプレートエンジン
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	// Spring Security：フォームベース認証(ログイン/新規登録)、BCryptパスワードハッシュ化
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	// Bean Validation(jakarta.validation)：SignupForm等の@NotBlank/@Email等の入力チェックに使用
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Thymeleaf側でSpring Securityの認証状態(sec:authorize等)を扱うための拡張
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+	// Spring AI starter：外部設計書 第6章のAnthropic API連携（用途は今後確定）に使用予定
 	implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+	// Lombok：@Getter/@Setter/@NoArgsConstructor等でEntityの定型コードを自動生成する
+	// (compileOnly：実行時には不要で、コンパイル時のみ使用するためJarには含めない)
 	compileOnly 'org.projectlombok:lombok'
+	// 開発時のみ有効。クラス変更時の自動リスタート等の開発支援機能を提供
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	// MySQL/MariaDB接続用JDBCドライバ。実行時にのみ必要(runtimeOnly)
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	// Lombokのアノテーション処理を有効化するために必要
 	annotationProcessor 'org.projectlombok:lombok'
+
+	// ---- テスト実行時のみ使用する依存関係(testImplementation) ----
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jdbc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-thymeleaf-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'
+	// JUnit5(JUnit Platform)を実際に実行するためのランチャー
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// Spring AIのBOM(Bill of Materials)をインポートし、
+// spring-ai関連ライブラリ間のバージョン整合性をSpring側に一任する
 dependencyManagement {
 	imports {
 		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
 	}
 }
 
+// テストタスクの実行エンジンとしてJUnit Platform(JUnit5)を明示的に指定
 tasks.named('test') {
 	useJUnitPlatform()
 }

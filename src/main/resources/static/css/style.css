@@ -1,2 +1,300 @@
+/* =========================================================
+   NEWBOOZE（地酒サーチ）暫定スタイルシート
+   出田担当の本番デザインに置き換えられるまでの仮UI。
+   フォントは要件定義書 6.2 の通り、見出しに Shippori Mincho、
+   本文に Zen Kaku Gothic New を採用（和風テイストの方向性）。
+   ========================================================= */
+
+/* Google Fontsから和文フォントを読み込む */
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
-:root{--ink:#212018;--paper:#f7f2e8;--cream:#fffdf8;--red:#a63a2a;--gold:#bc8b3c;--line:#ded4c1}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:'Zen Kaku Gothic New',sans-serif;line-height:1.8}.site-header{height:76px;padding:0 7%;display:flex;align-items:center;justify-content:space-between;background:var(--cream);border-bottom:1px solid var(--line)}.logo{font:700 24px 'Shippori Mincho',serif;letter-spacing:.06em;color:var(--ink);text-decoration:none}.logo span{color:var(--red)}nav{display:flex;gap:28px}nav a,.sake-card a,.back{color:var(--ink);text-decoration:none;font-weight:700}.menu-toggle{display:none;border:0;background:transparent;font-size:24px}.hero{padding:100px 7% 85px;background:radial-gradient(circle at 85% 20%,#e7c790 0,transparent 28%),var(--cream)}h1,h2,h3{font-family:'Shippori Mincho',serif;line-height:1.35}.hero h1{font-size:clamp(42px,7vw,84px);margin:12px 0 24px}.hero em{font-style:normal;color:var(--red)}.eyebrow{color:var(--red);letter-spacing:.16em;font-size:12px;font-weight:700}.actions{display:flex;gap:12px;margin-top:32px}.button{display:inline-block;border:1px solid var(--ink);padding:12px 22px;background:transparent;color:var(--ink);font:700 14px inherit;text-decoration:none;cursor:pointer}.button.primary{background:var(--red);border-color:var(--red);color:#fff}.marquee{overflow:hidden;background:var(--ink);color:#fff;padding:13px 0;white-space:nowrap}.marquee-track{display:inline-flex;animation:scroll 35s linear infinite}.marquee span{padding-right:34px}.section{padding:72px 7%}.page{max-width:1250px;margin:auto;min-height:calc(100vh - 140px)}.section-heading{margin-bottom:28px}.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}.sake-card{background:var(--cream);padding:26px;box-shadow:0 5px 16px #6d552018;border-top:3px solid var(--gold)}.sake-card h2,.sake-card h3{margin:7px 0}.sake-card a{display:block;margin-top:20px;color:var(--red)}.badge{display:inline-block;color:var(--red);font-weight:700;font-size:13px;margin:0}.muted{color:#706b5e;font-size:14px}.search-form{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:10px;background:#ece3d3;padding:18px;margin:24px 0}.search-form input,.search-form select{min-width:0;border:1px solid var(--line);background:#fff;padding:12px;font:inherit}.result-count strong{font-size:26px;color:var(--red)}.pagination{margin:42px 0;justify-content:center;align-items:center;gap:8px}.pagination a{border:1px solid var(--line);padding:8px 12px;text-decoration:none;color:var(--ink)}.pagination a.current{background:var(--ink);color:#fff}.empty{padding:40px;background:var(--cream)}.lead{font-size:18px;max-width:720px}.spec{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin:36px 0}.spec div{padding:16px;background:var(--cream)}dt{font-size:13px;color:#706b5e}dd{margin:2px 0;font-weight:700}details{background:var(--cream);padding:17px 20px;margin:12px 0;border-left:3px solid var(--gold)}summary{cursor:pointer;font-weight:700}.tag-list{display:flex;gap:8px;flex-wrap:wrap;padding-top:14px}.tag-list span{background:#eee1cc;padding:5px 11px;font-size:13px}.preference{margin:22px 0 34px}.question{display:none;border:0;padding:0;margin:35px 0}.question.active{display:block}.question legend{font:600 28px 'Shippori Mincho',serif;margin-bottom:22px}.question label{display:block;background:var(--cream);margin:10px 0;padding:17px;cursor:pointer;border:1px solid transparent}.question label:has(input:checked){border-color:var(--red);background:#f6e5df}.question input{accent-color:var(--red);margin-right:10px}.quiz-controls{display:flex;justify-content:space-between;margin-top:28px}.recommendations{margin:28px 0 38px}footer{padding:30px 7%;background:var(--ink);color:#eee6d8;font-size:13px}@keyframes scroll{to{transform:translateX(-50%)}}@media(max-width:700px){.site-header{padding:0 5%}.menu-toggle{display:block}nav{display:none;position:absolute;right:5%;top:64px;background:var(--cream);padding:16px;z-index:2;box-shadow:0 4px 12px #0002}nav.open{display:flex;flex-direction:column}.hero,.section{padding-left:5%;padding-right:5%}.search-form{grid-template-columns:1fr}.spec{grid-template-columns:1fr}.actions{flex-direction:column;align-items:flex-start}.question legend{font-size:23px}}
+
+/* ---- カラーパレット・共通変数 ----
+   :root で定義したCSSカスタムプロパティ(--ink等)を全体で使い回すことで、
+   配色変更時にここだけ直せば済むようにしている */
+:root {
+  --ink: #212018;    /* 基本の文字色（黒に近い墨色） */
+  --paper: #f7f2e8;  /* ページ全体の背景色（生成り色） */
+  --cream: #fffdf8;  /* カード・ヘッダー等の背景色 */
+  --red: #a63a2a;    /* アクセントカラー（朱色、ボタンやリンクに使用） */
+  --gold: #bc8b3c;   /* アクセントカラー（金色、ボーダー装飾に使用） */
+  --line: #ded4c1;   /* 罫線・区切り線の色 */
+}
+
+/* 全要素でpadding/borderをwidthに含める(border-box)ことで、
+   幅計算をシンプルにし、レイアウト崩れを防ぐ */
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Zen Kaku Gothic New', sans-serif;
+  line-height: 1.8;
+}
+
+/* ---- ヘッダー／ナビゲーション（ハンバーガーメニュー） ---- */
+.site-header {
+  height: 76px;
+  padding: 0 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--cream);
+  border-bottom: 1px solid var(--line);
+}
+.logo {
+  font: 700 24px 'Shippori Mincho', serif;
+  letter-spacing: .06em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.logo span { color: var(--red); }
+nav { display: flex; gap: 28px; }
+nav a, .sake-card a, .back {
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 700;
+}
+/* PC表示では非表示。画面幅700px以下（下部のメディアクエリ参照）でのみ表示される
+   ハンバーガーメニュー用ボタン */
+.menu-toggle {
+  display: none;
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+}
+
+/* ---- S01トップ画面：ヒーローセクション ---- */
+.hero {
+  padding: 100px 7% 85px;
+  background: radial-gradient(circle at 85% 20%, #e7c790 0, transparent 28%), var(--cream);
+}
+h1, h2, h3 {
+  font-family: 'Shippori Mincho', serif;
+  line-height: 1.35;
+}
+.hero h1 {
+  /* clamp()：ビューポート幅に応じて42px〜84pxの間でフォントサイズを可変にする
+     (メディアクエリを複数書かなくても、なめらかにレスポンシブ対応できる) */
+  font-size: clamp(42px, 7vw, 84px);
+  margin: 12px 0 24px;
+}
+.hero em { font-style: normal; color: var(--red); }
+.eyebrow {
+  color: var(--red);
+  letter-spacing: .16em;
+  font-size: 12px;
+  font-weight: 700;
+}
+.actions { display: flex; gap: 12px; margin-top: 32px; }
+.button {
+  display: inline-block;
+  border: 1px solid var(--ink);
+  padding: 12px 22px;
+  background: transparent;
+  color: var(--ink);
+  font: 700 14px inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.button.primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+/* ---- マーキー（注目銘柄の横スクロール表示） ----
+   要件定義書 4.3／内部設計書 4.1 の通り、非推奨の<marquee>タグは使わず、
+   CSSアニメーション(@keyframes scroll)＋JS側でのコンテンツ複製（main.js側ではなく
+   home.htmlのth:each側で同じ内容を2回出力）によってシームレスループを実現している */
+.marquee {
+  overflow: hidden;
+  background: var(--ink);
+  color: #fff;
+  padding: 13px 0;
+  white-space: nowrap;
+}
+.marquee-track {
+  display: inline-flex;
+  /* 35秒かけて等速(linear)で無限ループ(infinite)する */
+  animation: scroll 35s linear infinite;
+}
+.marquee span { padding-right: 34px; }
+
+/* ---- 共通レイアウト（セクション余白・ページ幅） ---- */
+.section { padding: 72px 7%; }
+.page {
+  max-width: 1250px;
+  margin: auto;
+  /* ヘッダー(76px)+フッター分を差し引いた高さを最低確保し、
+     コンテンツが少ないページでもフッターが浮かないようにする */
+  min-height: calc(100vh - 140px);
+}
+.section-heading { margin-bottom: 28px; }
+
+/* ---- 地酒カード一覧（S01注目銘柄／S04検索結果／S03推薦結果で共通利用） ----
+   auto-fit + minmax によって、画面幅に応じてカラム数が自動で増減するグリッドを実現 */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 18px;
+}
+.sake-card {
+  background: var(--cream);
+  padding: 26px;
+  box-shadow: 0 5px 16px #6d552018;
+  border-top: 3px solid var(--gold);
+}
+.sake-card h2, .sake-card h3 { margin: 7px 0; }
+.sake-card a { display: block; margin-top: 20px; color: var(--red); }
+.badge {
+  display: inline-block;
+  color: var(--red);
+  font-weight: 700;
+  font-size: 13px;
+  margin: 0;
+}
+.muted { color: #706b5e; font-size: 14px; }
+
+/* ---- S04検索フォーム ---- */
+.search-form {
+  display: grid;
+  /* キーワード欄を広め(2fr)、酒種・地域は同じ幅(1fr)、ボタンは内容に応じた幅(auto) */
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 10px;
+  background: #ece3d3;
+  padding: 18px;
+  margin: 24px 0;
+}
+.search-form input, .search-form select {
+  min-width: 0; /* グリッド内でinput/selectがはみ出さないようにするための指定 */
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 12px;
+  font: inherit;
+}
+.result-count strong { font-size: 26px; color: var(--red); }
+
+/* ---- S04ページネーション ---- */
+.pagination {
+  margin: 42px 0;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.pagination a {
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+  text-decoration: none;
+  color: var(--ink);
+}
+/* 現在表示中のページ番号を強調（search.htmlのth:classappendで付与される） */
+.pagination a.current { background: var(--ink); color: #fff; }
+.empty { padding: 40px; background: var(--cream); }
+
+/* ---- 汎用テキストスタイル ---- */
+.lead { font-size: 18px; max-width: 720px; }
+
+/* ---- S05地酒詳細：スペック表示 ---- */
+.spec {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* gap:1pxの背景色(--line)を罫線代わりに見せるテクニック
+     (各div自体は--creamで塗りつぶすため、隙間の1pxだけが線として見える) */
+  gap: 1px;
+  background: var(--line);
+  margin: 36px 0;
+}
+.spec div { padding: 16px; background: var(--cream); }
+dt { font-size: 13px; color: #706b5e; }
+dd { margin: 2px 0; font-weight: 700; }
+
+/* ---- Disclosure Triangle（詳細情報の開閉表示） ----
+   HTML標準の<details>/<summary>タグを利用（要件定義書 4.3の「ディスクロージャートライアングル」）。
+   JS不要でブラウザ標準の開閉動作が使えるのが利点 */
+details {
+  background: var(--cream);
+  padding: 17px 20px;
+  margin: 12px 0;
+  border-left: 3px solid var(--gold);
+}
+summary { cursor: pointer; font-weight: 700; }
+
+/* ---- タグ表示（地酒の特徴タグ／診断結果の嗜好タグ共通） ---- */
+.tag-list { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 14px; }
+.tag-list span { background: #eee1cc; padding: 5px 11px; font-size: 13px; }
+.preference { margin: 22px 0 34px; }
+
+/* ---- S02診断画面：1問ずつ表示するウィザード形式 ----
+   .question は既定で非表示にし、JS(main.js)が.activeクラスを
+   1つの設問だけに付け替えることで「1問ずつ表示」を実現している */
+.question {
+  display: none;
+  border: 0;
+  padding: 0;
+  margin: 35px 0;
+}
+.question.active { display: block; }
+.question legend {
+  font: 600 28px 'Shippori Mincho', serif;
+  margin-bottom: 22px;
+}
+.question label {
+  display: block;
+  background: var(--cream);
+  margin: 10px 0;
+  padding: 17px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+/* :has()疑似クラス：選択中(input:checked)のラジオボタンを含むlabelだけを
+   赤枠でハイライトする。比較的新しいCSS機能のため、
+   対応していない古いブラウザではこの装飾のみ効かない(機能自体は問題なく動作する) */
+.question label:has(input:checked) {
+  border-color: var(--red);
+  background: #f6e5df;
+}
+.question input { accent-color: var(--red); margin-right: 10px; }
+.quiz-controls { display: flex; justify-content: space-between; margin-top: 28px; }
+
+/* ---- S03診断結果：推薦一覧 ---- */
+.recommendations { margin: 28px 0 38px; }
+
+/* ---- フッター ---- */
+footer {
+  padding: 30px 7%;
+  background: var(--ink);
+  color: #eee6d8;
+  font-size: 13px;
+}
+
+/* マーキーのループアニメーション定義。
+   コンテンツを2回複製して並べたうえで、ちょうど半分(-50%)だけ左へ動かすことで、
+   継ぎ目が見えないシームレスなループになる */
+@keyframes scroll {
+  to { transform: translateX(-50%); }
+}
+
+/* ---- レスポンシブ対応（画面幅700px以下＝主にスマートフォン想定） ---- */
+@media (max-width: 700px) {
+  .site-header { padding: 0 5%; }
+  .menu-toggle { display: block; } /* ハンバーガーボタンを表示 */
+  nav {
+    /* 通常は横並びのナビゲーションを、スマホ幅ではドロップダウン的に表示する */
+    display: none;
+    position: absolute;
+    right: 5%;
+    top: 64px;
+    background: var(--cream);
+    padding: 16px;
+    z-index: 2;
+    box-shadow: 0 4px 12px #0002;
+  }
+  /* main.jsがtoggleクリック時に付け外しする.openクラスで表示を切り替える */
+  nav.open { display: flex; flex-direction: column; }
+  .hero, .section { padding-left: 5%; padding-right: 5%; }
+  .search-form { grid-template-columns: 1fr; } /* 検索フォームを縦一列に */
+  .spec { grid-template-columns: 1fr; }        /* スペック表示も縦一列に */
+  .actions { flex-direction: column; align-items: flex-start; }
+  .question legend { font-size: 23px; }
+}

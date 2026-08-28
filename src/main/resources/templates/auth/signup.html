@@ -1,9 +1,15 @@
+<!--
+  S07: 新規登録画面
+  AuthController.signup()（POST /signup）へ送信する。
+  th:object="${signupForm}" によりdto.SignupFormのフィールドとth:field="*{...}"を紐付け、
+  バリデーションエラー時（@Validで検出）はth:errorsで各項目下にエラーメッセージを表示する。
+  ※出田担当のデザインに置き換え予定の暫定テンプレート
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>新規登録 - NEWBOOZE</title>
-    <!-- ※出田担当のデザインに置き換え予定の暫定テンプレート -->
 </head>
 <body>
     <h1>新規登録</h1>

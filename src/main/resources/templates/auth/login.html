@@ -1,16 +1,24 @@
+<!--
+  S07: ログイン画面
+  AuthController.loginForm()で表示。フォームのPOST先(/login)自体は
+  SecurityConfigでSpring Securityに処理を委譲しているため、
+  このテンプレートでは画面表示のみを担当する。
+  ※出田担当のデザインに置き換え予定の暫定テンプレート
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>ログイン - NEWBOOZE</title>
-    <!-- ※出田担当のデザインに置き換え予定の暫定テンプレート -->
 </head>
 <body>
     <h1>ログイン</h1>
 
+    <!-- Spring Securityがログイン失敗時に /login?error を付けてリダイレクトしてくる -->
     <p th:if="${param.error}" style="color:red;">
         メールアドレスまたはパスワードが正しくありません
     </p>
+    <!-- 新規登録完了後に /login?registered を付けて遷移させたい場合に使う想定の表示（現状AuthControllerは自動ログインするため未使用） -->
     <p th:if="${param.registered}" style="color:green;">
         登録が完了しました。ログインしてください
     </p>
