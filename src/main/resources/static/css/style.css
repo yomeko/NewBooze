@@ -55,6 +55,18 @@ nav a, .sake-card a, .back {
   text-decoration: none;
   font-weight: 700;
 }
+/* ナビ内の「ログアウト」ボタン：<form>内の<button>だが、
+   見た目はnav aのテキストリンクと揃えるためリセットしている */
+.nav-logout-form { display: inline-flex; margin: 0; }
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
 /* PC表示では非表示。画面幅700px以下（下部のメディアクエリ参照）でのみ表示される
    ハンバーガーメニュー用ボタン */
 .menu-toggle {
