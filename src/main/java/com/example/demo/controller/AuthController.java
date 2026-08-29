@@ -57,7 +57,7 @@ public class AuthController {
     /**
      * S07: 新規登録処理。
      * 登録完了後はログイン画面を経由させず、そのまま自動ログインさせたうえで
-     * 好み診断(/diagnosis)へ誘導する（要望：ログイン・新規登録した後に好み診断）。
+     * 好み診断(/diagnosis)へ誘導する（好み診断は新規登録直後のみ自動表示する）。
      */
     @PostMapping("/signup")
     public String signup(@Valid @ModelAttribute("signupForm") SignupForm form,
