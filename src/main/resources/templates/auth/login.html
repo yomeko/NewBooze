@@ -3,43 +3,75 @@
   AuthController.loginForm()で表示。フォームのPOST先(/login)自体は
   SecurityConfigでSpring Securityに処理を委譲しているため、
   このテンプレートでは画面表示のみを担当する。
-  ※出田担当のデザインに置き換え予定の暫定テンプレート
+  デザインは home.html と同じヘッダー／フッターを踏襲し、
+  中央に1枚のカード(.auth-card)を配置する構成にリニューアルした。
 -->
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>ログイン - NEWBOOZE</title>
-	<link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <h1>ログイン</h1>
 
-    <!-- Spring Securityがログイン失敗時に /login?error を付けてリダイレクトしてくる -->
-    <p th:if="${param.error}" style="color:red;">
-        メールアドレスまたはパスワードが正しくありません
-    </p>
-    <!-- 新規登録完了後に /login?registered を付けて遷移させたい場合に使う想定の表示（現状AuthControllerは自動ログインするため未使用） -->
-    <p th:if="${param.registered}" style="color:green;">
-        登録が完了しました。ログインしてください
-    </p>
+<!-- 全画面共通ヘッダー（home.htmlと同一構成） -->
+<header class="site-header">
+    <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
+    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+    <nav>
+        <a th:href="@{/search}">さがす</a>
+        <a th:href="@{/diagnosis}">好み診断</a>
+        <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
+        <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
+        <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
+            <button type="submit" class="link-button">ログアウト</button>
+        </form>
+    </nav>
+</header>
 
-    <!--
-      重要: Spring Securityのデフォルト仕様では、
-      ログインフォームのユーザー名項目は name="username" である必要がある。
-      本アプリではメールアドレスをusernameとして扱うため、
-      入力欄のラベルは「メールアドレス」だが name属性は username のままにする。
-    -->
-    <form th:action="@{/login}" method="post">
-        <label>メールアドレス:
-            <input type="email" name="username">
-        </label>
-        <label>パスワード:
-            <input type="password" name="password">
-        </label>
-        <button type="submit">ログイン</button>
-    </form>
+<main class="page auth-page">
+    <div class="auth-card">
+        <p class="eyebrow">WELCOME BACK</p>
+        <h1>ログイン</h1>
+        <p class="auth-sub">アカウントにログインして、好み診断の結果やお気に入りを見る。</p>
 
-    <p><a th:href="@{/signup}">新規登録はこちら</a></p>
+        <!-- Spring Securityがログイン失敗時に /login?error を付けてリダイレクトしてくる -->
+        <p class="auth-alert" th:if="${param.error}">
+            メールアドレスまたはパスワードが正しくありません
+        </p>
+        <!-- 新規登録完了後に /login?registered を付けて遷移させたい場合に使う想定の表示
+             （現状AuthControllerは自動ログインするため未使用） -->
+        <p class="auth-alert success" th:if="${param.registered}">
+            登録が完了しました。ログインしてください
+        </p>
+
+        <!--
+          重要: Spring Securityのデフォルト仕様では、
+          ログインフォームのユーザー名項目は name="username" である必要がある。
+          本アプリではメールアドレスをusernameとして扱うため、
+          入力欄のラベルは「メールアドレス」だが name属性は username のままにする。
+        -->
+        <form th:action="@{/login}" method="post" novalidate>
+            <div class="form-group">
+                <label for="username">メールアドレス</label>
+                <input id="username" type="email" name="username" autocomplete="email" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+                <label for="password">パスワード</label>
+                <input id="password" type="password" name="password" autocomplete="current-password" placeholder="パスワード">
+            </div>
+            <button type="submit" class="button primary">ログイン</button>
+        </form>
+
+        <div class="auth-divider"></div>
+        <p class="auth-footer-link">アカウントをお持ちでない方は <a th:href="@{/signup}">新規登録</a></p>
+    </div>
+</main>
+
+<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<script th:src="@{/js/main.js}"></script>
 </body>
 </html>

@@ -3,34 +3,66 @@
   AuthController.signup()（POST /signup）へ送信する。
   th:object="${signupForm}" によりdto.SignupFormのフィールドとth:field="*{...}"を紐付け、
   バリデーションエラー時（@Validで検出）はth:errorsで各項目下にエラーメッセージを表示する。
-  ※出田担当のデザインに置き換え予定の暫定テンプレート
+  デザインは home.html と同じヘッダー／フッターを踏襲し、
+  中央に1枚のカード(.auth-card)を配置する構成にリニューアルした。
 -->
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>新規登録 - NEWBOOZE</title>
-	<link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <h1>新規登録</h1>
 
-    <form th:action="@{/signup}" th:object="${signupForm}" method="post">
-        <label>表示名:
-            <input type="text" th:field="*{name}">
-            <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" style="color:red;"></span>
-        </label>
-        <label>メールアドレス:
-            <input type="email" th:field="*{email}">
-            <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" style="color:red;"></span>
-        </label>
-        <label>パスワード:
-            <input type="password" th:field="*{password}">
-            <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" style="color:red;"></span>
-        </label>
-        <button type="submit">登録する</button>
-    </form>
+<!-- 全画面共通ヘッダー（home.htmlと同一構成） -->
+<header class="site-header">
+    <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
+    <button class="menu-toggle" aria-label="メニューを開く">☰</button>
+    <nav>
+        <a th:href="@{/search}">さがす</a>
+        <a th:href="@{/diagnosis}">好み診断</a>
+        <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
+        <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
+        <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
+            <button type="submit" class="link-button">ログアウト</button>
+        </form>
+    </nav>
+</header>
 
-    <p><a th:href="@{/login}">ログインはこちら</a></p>
+<main class="page auth-page">
+    <div class="auth-card">
+        <p class="eyebrow">CREATE ACCOUNT</p>
+        <h1>新規登録</h1>
+        <p class="auth-sub">アカウントを作成して、好み診断の結果やお気に入りを保存しましょう。</p>
+
+        <form th:action="@{/signup}" th:object="${signupForm}" method="post" novalidate>
+            <div class="form-group">
+                <label for="name">表示名</label>
+                <input id="name" type="text" th:field="*{name}" autocomplete="nickname" placeholder="例：地酒太郎">
+                <span class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></span>
+            </div>
+            <div class="form-group">
+                <label for="email">メールアドレス</label>
+                <input id="email" type="email" th:field="*{email}" autocomplete="email" placeholder="you@example.com">
+                <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </div>
+            <div class="form-group">
+                <label for="password">パスワード</label>
+                <input id="password" type="password" th:field="*{password}" autocomplete="new-password" placeholder="8文字以上">
+                <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            </div>
+            <button type="submit" class="button primary">登録する</button>
+        </form>
+
+        <div class="auth-divider"></div>
+        <p class="auth-footer-link">すでにアカウントをお持ちの方は <a th:href="@{/login}">ログイン</a></p>
+    </div>
+</main>
+
+<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<script th:src="@{/js/main.js}"></script>
 </body>
 </html>

@@ -272,6 +272,100 @@ summary { cursor: pointer; font-weight: 700; }
 /* ---- S03診断結果：推薦一覧 ---- */
 .recommendations { margin: 28px 0 38px; }
 
+/* ---- S07 ログイン／新規登録画面 ----
+   トップ画面等と統一感を持たせつつ、中央寄せの1枚カードとして見せるデザイン。
+   .sake-card と同じ「生成り背景＋上部に金のライン」の構成を踏襲している */
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* ヘッダー・フッター分を除いた高さを最低確保し、カードを画面中央に固定する */
+  min-height: calc(100vh - 140px);
+  padding: 60px 5%;
+}
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--cream);
+  padding: 46px 42px 40px;
+  box-shadow: 0 10px 30px #6d552022;
+  border-top: 3px solid var(--gold);
+}
+.auth-card h1 {
+  font-size: 30px;
+  margin: 6px 0 6px;
+}
+.auth-sub {
+  color: #706b5e;
+  font-size: 14px;
+  margin: 0 0 30px;
+}
+/* サーバー側のエラー・成功メッセージ表示（ログイン失敗／登録完了など） */
+.auth-alert {
+  padding: 13px 16px;
+  font-size: 13px;
+  margin-bottom: 24px;
+  border-left: 3px solid var(--red);
+  background: #f6e5df;
+}
+.auth-alert.success {
+  border-left-color: #4c7a4c;
+  background: #e6efe1;
+}
+.form-group { margin-bottom: 20px; }
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  margin-bottom: 8px;
+}
+.form-group input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 13px 14px;
+  font: inherit;
+  transition: border-color .15s;
+}
+.form-group input:focus {
+  outline: none;
+  border-color: var(--red);
+}
+/* th:errorsによるフィールド別バリデーションエラー表示 */
+.field-error {
+  display: block;
+  color: var(--red);
+  font-size: 12px;
+  margin-top: 6px;
+}
+/* 既存の.button.primaryを継承しつつ、カード幅いっぱいのボタンに調整 */
+.auth-card .button.primary {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 14px;
+  font-size: 15px;
+  border: 0;
+  margin-top: 10px;
+  cursor: pointer;
+}
+.auth-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 28px 0;
+}
+.auth-footer-link {
+  text-align: center;
+  font-size: 14px;
+  color: #706b5e;
+}
+.auth-footer-link a {
+  color: var(--red);
+  font-weight: 700;
+  text-decoration: none;
+}
+
 /* ---- フッター ---- */
 footer {
   padding: 30px 7%;
