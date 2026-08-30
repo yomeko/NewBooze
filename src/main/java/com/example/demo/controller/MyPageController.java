@@ -49,7 +49,9 @@ public class MyPageController {
     private final DirectMessageRepository messages;
     private final PasswordEncoder passwordEncoder;
     private final UserProfileImageRepository profileImages;
-    private static final long MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
+    // MariaDBのmax_allowed_packetが1MBの環境でも、SQLの付加情報を含めて
+    // 安全に保存できるよう画像本体は900KB以下にする。
+    private static final long MAX_PROFILE_IMAGE_SIZE = 900 * 1024;
     private static final long MAX_UPLOAD_IMAGE_SIZE = 20 * 1024 * 1024;
     private static final int MAX_IMAGE_DIMENSION = 1600;
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/gif");
@@ -126,7 +128,7 @@ public class MyPageController {
         image.setContentType(storedImage.contentType());
         profileImages.save(image);
         redirect.addFlashAttribute("success", uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE
-                ? "プロフィール画像を5MB以下に圧縮して変更しました" : "プロフィール画像を変更しました");
+                ? "プロフィール画像を保存可能なサイズに圧縮して変更しました" : "プロフィール画像を変更しました");
         return "redirect:/mypage#settings";
     }
 
@@ -138,17 +140,18 @@ public class MyPageController {
     }
 
     @PostMapping("/profile-image/position")
-    public String updateProfileImagePosition(@RequestParam int positionX, @RequestParam int positionY,
+    public String updateProfileImagePosition(@RequestParam double positionX, @RequestParam double positionY,
             @RequestParam int zoom,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
-        if (positionX < 0 || positionX > 100 || positionY < 0 || positionY > 100)
+        if (!Double.isFinite(positionX) || !Double.isFinite(positionY)
+                || positionX < 0 || positionX > 100 || positionY < 0 || positionY > 100)
             return imageError(redirect, "画像位置は0〜100の範囲で指定してください");
         if (zoom < 100 || zoom > 300)
             return imageError(redirect, "画像の拡大率は100〜300%の範囲で指定してください");
         UserProfileImage image = profileImages.findById(principal.getUserId()).orElse(null);
         if (image == null) return imageError(redirect, "先にプロフィール画像を登録してください");
-        image.setPositionX(positionX);
-        image.setPositionY(positionY);
+        image.setPositionX((int) Math.round(positionX));
+        image.setPositionY((int) Math.round(positionY));
         image.setZoom(zoom);
         profileImages.save(image);
         redirect.addFlashAttribute("success", "プロフィール画像の位置を保存しました");
@@ -229,7 +232,7 @@ public class MyPageController {
     private String error(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage#settings"; }
     private String imageError(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage#settings"; }
 
-    /** 画像を長辺1600px以下に縮小し、5MB以下のJPEGへ変換する。 */
+    /** 画像を長辺1600px以下に縮小し、DBへ保存可能なサイズのJPEGへ変換する。 */
     private StoredImage compressProfileImage(byte[] source) throws IOException {
         BufferedImage original = ImageIO.read(new ByteArrayInputStream(source));
         if (original == null) return null;

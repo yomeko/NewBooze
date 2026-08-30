@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cropStage = document.querySelector('#crop-stage');
   const imageZoom = document.querySelector('#image-zoom');
   const resetImagePosition = document.querySelector('#reset-image-position');
+  const imagePositionForm = document.querySelector('#image-position-form');
   if (profilePreview && positionX && positionY && imageZoom && cropStage) {
     const previewPosition = () => {
       profilePreview.style.objectPosition = `${positionX.value}% ${positionY.value}%`;
@@ -32,6 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     imageEditor.addEventListener('click', event => { if (event.target === imageEditor) closeImageEditor.click(); });
     imageZoom.addEventListener('input', previewPosition);
     resetImagePosition.addEventListener('click', () => { positionX.value = 50; positionY.value = 50; imageZoom.value = 100; previewPosition(); });
+    imagePositionForm.addEventListener('submit', () => {
+      positionX.value = Math.round(Number(positionX.value));
+      positionY.value = Math.round(Number(positionY.value));
+    });
 
     let dragging = false;
     let lastX = 0;
