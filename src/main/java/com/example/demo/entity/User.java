@@ -39,6 +39,18 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** 仮パスワードでログイン中ならtrue。変更完了後にfalseに戻す。 */
+    @Column(name = "temporary_password", nullable = false)
+    private boolean temporaryPassword;
+
+    /**
+     * Lombokのアノテーション処理が無効なIDEでも、仮パスワード状態を
+     * 更新できるようにsetterを明示的に定義する。
+     */
+    public void setTemporaryPassword(boolean temporaryPassword) {
+        this.temporaryPassword = temporaryPassword;
+    }
+
     // DB側で DEFAULT CURRENT_TIMESTAMP が設定されているため、
     // アプリ側からは insertable/updatable = false にして値を渡さないようにする。
     @Column(name = "created_at", insertable = false, updatable = false)
