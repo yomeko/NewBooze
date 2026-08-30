@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>マイページ - NEWBOOZE</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
+<body>
+<header class="site-header"><a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a><button class="menu-toggle" aria-label="メニューを開く">☰</button><nav><a th:href="@{/search}">さがす</a><a th:href="@{/diagnosis}">好み診断</a><a th:href="@{/mypage}">マイページ</a><form th:action="@{/logout}" method="post" class="nav-logout-form"><button class="link-button">ログアウト</button></form></nav></header>
+<main class="page mypage">
+  <section class="profile-hero"><div class="avatar" th:text="${#strings.substring(user.name,0,1)}">酒</div><div><p class="eyebrow">MY NEWBOOZE</p><h1 th:text="|${user.name} さん|">マイページ</h1><p class="muted" th:text="${user.email}"></p></div></section>
+  <p class="auth-alert success" th:if="${success}" th:text="${success}"></p><p class="auth-alert" th:if="${error}" th:text="${error}"></p>
+  <div class="mypage-grid">
+    <section class="mypage-card" id="taste"><div class="card-title"><span>01</span><div><p class="eyebrow">YOUR TASTE</p><h2>好きな系統</h2></div><a th:href="@{/diagnosis}">診断し直す</a></div>
+      <p class="muted" th:if="${#lists.isEmpty(preferences)}">まだ診断結果がありません。好み診断をすると、あなたの好きな系統が表示されます。</p>
+      <div class="taste-list"><div class="taste-item" th:each="preference : ${preferences}"><div><strong th:text="${preference.tag.name}"></strong><small th:text="${preference.tag.category}"></small></div><div class="score"><i th:style="|width:${T(java.lang.Math).min(preference.score * 12, 100)}%|"></i></div></div></div>
+    </section>
+    <section class="mypage-card" id="dm"><div class="card-title"><span>02</span><div><p class="eyebrow">MESSAGES</p><h2>DM</h2></div></div><p class="muted" th:if="${#lists.isEmpty(otherUsers)}">メッセージを送れるユーザーがまだいません。</p><div class="user-list"><a th:each="other : ${otherUsers}" th:href="@{/mypage/messages/{id}(id=${other.id})}"><b class="mini-avatar" th:text="${#strings.substring(other.name,0,1)}"></b><span th:text="${other.name}"></span><em>メッセージ →</em></a></div></section>
+    <section class="mypage-card wide" id="posts"><div class="card-title"><span>03</span><div><p class="eyebrow">DRINK LOG</p><h2>飲んだお酒</h2></div></div>
+      <form class="post-form" th:action="@{/mypage/posts}" th:object="${drinkPostForm}" method="post"><div><label for="sakeName">お酒の名前</label><input id="sakeName" th:field="*{sakeName}" placeholder="例：獺祭 純米大吟醸"><small class="field-error" th:errors="*{sakeName}"></small></div><div><label for="comment">ひとこと</label><textarea id="comment" th:field="*{comment}" placeholder="香りや味わいの感想"></textarea><small class="field-error" th:errors="*{comment}"></small></div><button class="button primary">投稿する</button></form>
+      <div class="post-list"><article th:each="post : ${posts}"><div><strong th:text="${post.sakeName}"></strong><time th:text="${#temporals.format(post.createdAt,'yyyy.MM.dd')}"></time></div><p th:if="${!#strings.isEmpty(post.comment)}" th:text="${post.comment}"></p></article><p class="muted" th:if="${#lists.isEmpty(posts)}">まだ投稿はありません。飲んだ一本を記録してみましょう。</p></div>
+    </section>
+    <section class="mypage-card wide" id="settings"><div class="card-title"><span>04</span><div><p class="eyebrow">ACCOUNT</p><h2>アカウント設定</h2></div></div><div class="settings-grid">
+      <form th:action="@{/mypage/profile}" method="post"><h3>プロフィール</h3><div class="form-group"><label for="name">表示名・ニックネーム</label><input id="name" name="name" th:value="${user.name}" maxlength="50" required></div><div class="form-group"><label for="email">メールアドレス</label><input id="email" name="email" type="email" th:value="${user.email}" required></div><button class="button">変更を保存</button></form>
+      <form th:action="@{/mypage/password}" method="post"><h3>パスワード</h3><div class="form-group"><label for="currentPassword">現在のパスワード</label><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-group"><label for="newPassword">新しいパスワード</label><input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div><button class="button">パスワードを変更</button></form>
+    </div></section>
+  </div>
+</main><footer>NEWBOOZE — 地酒との新しい出会い</footer><script th:src="@{/js/main.js}"></script></body></html>
