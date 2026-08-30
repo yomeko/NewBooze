@@ -4,10 +4,12 @@ import com.example.demo.dto.DrinkPostForm;
 import com.example.demo.entity.DirectMessage;
 import com.example.demo.entity.DrinkPost;
 import com.example.demo.entity.User;
+import com.example.demo.entity.UserProfileImage;
 import com.example.demo.repository.DirectMessageRepository;
 import com.example.demo.repository.DrinkPostRepository;
 import com.example.demo.repository.UserPreferenceRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.UserProfileImageRepository;
 import com.example.demo.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,10 +17,16 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.Set;
 
 @Controller
 @RequestMapping("/mypage")
@@ -28,14 +36,19 @@ public class MyPageController {
     private final DrinkPostRepository posts;
     private final DirectMessageRepository messages;
     private final PasswordEncoder passwordEncoder;
+    private final UserProfileImageRepository profileImages;
+    private static final long MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
+    private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/gif");
 
     public MyPageController(UserRepository users, UserPreferenceRepository preferences,
-            DrinkPostRepository posts, DirectMessageRepository messages, PasswordEncoder passwordEncoder) {
+            DrinkPostRepository posts, DirectMessageRepository messages, PasswordEncoder passwordEncoder,
+            UserProfileImageRepository profileImages) {
         this.users = users;
         this.preferences = preferences;
         this.posts = posts;
         this.messages = messages;
         this.passwordEncoder = passwordEncoder;
+        this.profileImages = profileImages;
     }
 
     @GetMapping
@@ -45,8 +58,46 @@ public class MyPageController {
         model.addAttribute("preferences", preferences.findByIdUserIdOrderByScoreDesc(user.getId()));
         model.addAttribute("posts", posts.findByUserIdOrderByCreatedAtDesc(user.getId()));
         model.addAttribute("otherUsers", users.findByIdNotOrderByNameAsc(user.getId()));
+        model.addAttribute("hasProfileImage", profileImages.existsById(user.getId()));
         if (!model.containsAttribute("drinkPostForm")) model.addAttribute("drinkPostForm", new DrinkPostForm());
         return "mypage";
+    }
+
+    @GetMapping("/profile-image")
+    @ResponseBody
+    public ResponseEntity<byte[]> profileImage(@AuthenticationPrincipal CustomUserDetails principal) {
+        return profileImages.findById(principal.getUserId())
+                .map(image -> ResponseEntity.ok()
+                        .contentType(MediaType.parseMediaType(image.getContentType()))
+                        .cacheControl(CacheControl.noCache())
+                        .body(image.getImageData()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/profile-image")
+    public String updateProfileImage(@RequestParam("profileImage") MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) throws IOException {
+        String contentType = file.getContentType();
+        if (file.isEmpty()) return imageError(redirect, "画像ファイルを選択してください");
+        if (file.getSize() > MAX_PROFILE_IMAGE_SIZE) return imageError(redirect, "画像は5MB以下にしてください");
+        if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType))
+            return imageError(redirect, "JPEG・PNG・GIF形式の画像を選択してください");
+
+        User user = current(principal);
+        UserProfileImage image = profileImages.findById(user.getId()).orElseGet(UserProfileImage::new);
+        image.setUser(user);
+        image.setImageData(file.getBytes());
+        image.setContentType(contentType);
+        profileImages.save(image);
+        redirect.addFlashAttribute("success", "プロフィール画像を変更しました");
+        return "redirect:/mypage#settings";
+    }
+
+    @PostMapping("/profile-image/delete")
+    public String deleteProfileImage(@AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
+        profileImages.deleteById(principal.getUserId());
+        redirect.addFlashAttribute("success", "プロフィール画像を削除しました");
+        return "redirect:/mypage#settings";
     }
 
     @PostMapping("/posts")
@@ -119,6 +170,7 @@ public class MyPageController {
 
     private User current(CustomUserDetails principal) { return users.findById(principal.getUserId()).orElseThrow(); }
     private String error(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage#settings"; }
+    private String imageError(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage#settings"; }
     private void refreshPrincipal(User user) {
         CustomUserDetails details = new CustomUserDetails(user);
         SecurityContextHolder.getContext().setAuthentication(
