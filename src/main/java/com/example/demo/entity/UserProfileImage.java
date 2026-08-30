@@ -26,6 +26,13 @@ public class UserProfileImage {
     @Column(name = "content_type", nullable = false, length = 50)
     private String contentType;
 
+    /** object-position用の百分率。50, 50が画像中央。 */
+    @Column(name = "position_x", nullable = false)
+    private Integer positionX = 50;
+
+    @Column(name = "position_y", nullable = false)
+    private Integer positionY = 50;
+
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 }

@@ -11,6 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => nav.classList.toggle('open'));
   }
 
+  // ---- マイページ：プロフィール画像の表示位置を即時プレビュー ----
+  const profilePreview = document.querySelector('#profile-position-preview');
+  const positionX = document.querySelector('#position-x');
+  const positionY = document.querySelector('#position-y');
+  const positionXValue = document.querySelector('#position-x-value');
+  const positionYValue = document.querySelector('#position-y-value');
+  if (profilePreview && positionX && positionY) {
+    const previewPosition = () => {
+      profilePreview.style.objectPosition = `${positionX.value}% ${positionY.value}%`;
+      positionXValue.textContent = `${positionX.value}%`;
+      positionYValue.textContent = `${positionY.value}%`;
+    };
+    positionX.addEventListener('input', previewPosition);
+    positionY.addEventListener('input', previewPosition);
+  }
+
   // ---- S02診断画面：1問ずつ表示するウィザード形式の制御 ----
   // 診断画面(diagnosis.html)以外ではこの要素が存在しないため、
   // 見つからなければ何もせず終了する（他画面でエラーにならないようにするガード）

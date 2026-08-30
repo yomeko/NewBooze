@@ -401,10 +401,15 @@ summary { cursor: pointer; font-weight: 700; }
 .profile-image-settings { display:flex; align-items:center; gap:22px; padding:0 0 28px; margin-bottom:28px; border-bottom:1px solid var(--line); }
 .avatar.preview { width:88px; height:88px; }
 .profile-image-settings h3,.profile-image-settings p { margin:0 0 6px; }
+.profile-image-controls { flex:1; }
 .image-actions,.image-actions form { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .file-button { position:relative; overflow:hidden; }
 .file-button input { position:absolute; inset:0; opacity:0; cursor:pointer; }
 .link-button.danger { color:var(--red); }
+.position-form { display:grid; grid-template-columns:1fr 1fr auto; align-items:end; gap:14px; margin-top:18px; padding:15px; background:#f0e7d8; }
+.position-form label { font-size:12px; font-weight:700; }
+.position-form output { float:right; color:var(--red); }
+.position-form input[type="range"] { display:block; width:100%; margin-top:8px; accent-color:var(--red); }
 .message-page { padding:45px 7%; max-width:850px; }
 .message-card { background:var(--cream); box-shadow:0 6px 20px #6d552014; }
 .message-head { display:flex; gap:14px; align-items:center; padding:22px 28px; border-bottom:1px solid var(--line); }
@@ -458,4 +463,5 @@ footer {
   .post-form { grid-template-columns:1fr; }
   .taste-item { grid-template-columns:110px 1fr; }
   .profile-image-settings { align-items:flex-start; }
+  .position-form { grid-template-columns:1fr; }
 }
