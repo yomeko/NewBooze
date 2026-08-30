@@ -15,16 +15,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const profilePreview = document.querySelector('#profile-position-preview');
   const positionX = document.querySelector('#position-x');
   const positionY = document.querySelector('#position-y');
-  const positionXValue = document.querySelector('#position-x-value');
-  const positionYValue = document.querySelector('#position-y-value');
-  if (profilePreview && positionX && positionY) {
+  const imageEditor = document.querySelector('#image-editor');
+  const openImageEditor = document.querySelector('#open-image-editor');
+  const closeImageEditor = document.querySelector('.editor-close');
+  const cropStage = document.querySelector('#crop-stage');
+  const imageZoom = document.querySelector('#image-zoom');
+  const resetImagePosition = document.querySelector('#reset-image-position');
+  if (profilePreview && positionX && positionY && imageZoom && cropStage) {
     const previewPosition = () => {
       profilePreview.style.objectPosition = `${positionX.value}% ${positionY.value}%`;
-      positionXValue.textContent = `${positionX.value}%`;
-      positionYValue.textContent = `${positionY.value}%`;
+      profilePreview.style.transform = `scale(${imageZoom.value / 100})`;
+      profilePreview.style.transformOrigin = `${positionX.value}% ${positionY.value}%`;
     };
-    positionX.addEventListener('input', previewPosition);
-    positionY.addEventListener('input', previewPosition);
+    openImageEditor.addEventListener('click', () => { imageEditor.hidden = false; document.body.classList.add('modal-open'); });
+    closeImageEditor.addEventListener('click', () => { imageEditor.hidden = true; document.body.classList.remove('modal-open'); });
+    imageEditor.addEventListener('click', event => { if (event.target === imageEditor) closeImageEditor.click(); });
+    imageZoom.addEventListener('input', previewPosition);
+    resetImagePosition.addEventListener('click', () => { positionX.value = 50; positionY.value = 50; imageZoom.value = 100; previewPosition(); });
+
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    cropStage.addEventListener('pointerdown', event => { dragging = true; lastX = event.clientX; lastY = event.clientY; cropStage.setPointerCapture(event.pointerId); });
+    cropStage.addEventListener('pointermove', event => {
+      if (!dragging) return;
+      const rect = cropStage.getBoundingClientRect();
+      positionX.value = Math.max(0, Math.min(100, Number(positionX.value) - (event.clientX - lastX) / rect.width * 100));
+      positionY.value = Math.max(0, Math.min(100, Number(positionY.value) - (event.clientY - lastY) / rect.height * 100));
+      lastX = event.clientX; lastY = event.clientY; previewPosition();
+    });
+    cropStage.addEventListener('pointerup', () => { dragging = false; });
   }
 
   // ---- S02診断画面：1問ずつ表示するウィザード形式の制御 ----

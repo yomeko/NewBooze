@@ -76,10 +76,12 @@ public class MyPageController {
             model.addAttribute("hasProfileImage", true);
             model.addAttribute("profileImagePositionX", image.getPositionX());
             model.addAttribute("profileImagePositionY", image.getPositionY());
+            model.addAttribute("profileImageZoom", image.getZoom());
         }, () -> {
             model.addAttribute("hasProfileImage", false);
             model.addAttribute("profileImagePositionX", 50);
             model.addAttribute("profileImagePositionY", 50);
+            model.addAttribute("profileImageZoom", 100);
         });
         if (!model.containsAttribute("drinkPostForm")) model.addAttribute("drinkPostForm", new DrinkPostForm());
         return "mypage";
@@ -137,13 +139,17 @@ public class MyPageController {
 
     @PostMapping("/profile-image/position")
     public String updateProfileImagePosition(@RequestParam int positionX, @RequestParam int positionY,
+            @RequestParam int zoom,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         if (positionX < 0 || positionX > 100 || positionY < 0 || positionY > 100)
             return imageError(redirect, "画像位置は0〜100の範囲で指定してください");
+        if (zoom < 100 || zoom > 300)
+            return imageError(redirect, "画像の拡大率は100〜300%の範囲で指定してください");
         UserProfileImage image = profileImages.findById(principal.getUserId()).orElse(null);
         if (image == null) return imageError(redirect, "先にプロフィール画像を登録してください");
         image.setPositionX(positionX);
         image.setPositionY(positionY);
+        image.setZoom(zoom);
         profileImages.save(image);
         redirect.addFlashAttribute("success", "プロフィール画像の位置を保存しました");
         return "redirect:/mypage#settings";
@@ -187,7 +193,9 @@ public class MyPageController {
         User user = current(principal);
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) return error(redirect, "現在のパスワードが違います");
         if (newPassword.length() < 8 || newPassword.length() > 72) return error(redirect, "新しいパスワードは8〜72文字で入力してください");
-        user.setPasswordHash(passwordEncoder.encode(newPassword)); users.save(user);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setTemporaryPassword(false);
+        users.save(user);
         refreshPrincipal(user);
         redirect.addFlashAttribute("success", "パスワードを変更しました");
         return "redirect:/mypage#settings";

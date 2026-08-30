@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS `user_profile_images` (
   `content_type` varchar(50) NOT NULL,
   `position_x` int NOT NULL DEFAULT 50,
   `position_y` int NOT NULL DEFAULT 50,
+  `zoom` int NOT NULL DEFAULT 100,
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`user_id`),
   CONSTRAINT `user_profile_images_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -37,3 +38,6 @@ CREATE TABLE IF NOT EXISTS `user_profile_images` (
 ALTER TABLE `user_profile_images`
   ADD COLUMN IF NOT EXISTS `position_x` int NOT NULL DEFAULT 50,
   ADD COLUMN IF NOT EXISTS `position_y` int NOT NULL DEFAULT 50;
+
+ALTER TABLE `user_profile_images`
+  ADD COLUMN IF NOT EXISTS `zoom` int NOT NULL DEFAULT 100;

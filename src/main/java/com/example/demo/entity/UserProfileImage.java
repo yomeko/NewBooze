@@ -33,6 +33,10 @@ public class UserProfileImage {
     @Column(name = "position_y", nullable = false)
     private Integer positionY = 50;
 
+    /** 100〜300%。プロフィール画像の拡大率。 */
+    @Column(name = "zoom", nullable = false)
+    private Integer zoom = 100;
+
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
 }
