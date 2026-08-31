@@ -38,6 +38,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	// Bean Validation(jakarta.validation)：SignupForm等の@NotBlank/@Email等の入力チェックに使用
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// パスワード忘れ時の仮パスワード送信に使用
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	// Thymeleaf側でSpring Securityの認証状態(sec:authorize等)を扱うための拡張
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	// Spring AI starter：外部設計書 第6章のAnthropic API連携（用途は今後確定）に使用予定

@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import com.example.demo.security.CustomUserDetails;
 
 @Configuration
 @EnableWebSecurity
@@ -31,7 +32,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/", "/search", "/sake/**",
                     "/diagnosis/**",
-                    "/login", "/signup",
+                    "/login", "/signup", "/forgot-password",
                     "/css/**", "/js/**", "/images/**"
                 ).permitAll()
                 // お気に入り(S06)・マイページ(S08)はログイン必須
@@ -48,7 +49,10 @@ public class SecurityConfig {
                 // ログイン画面に飛ばされたケースでは、Spring Securityが記憶している
                 // 元のリクエスト(SavedRequest)を優先して復元する。
                 // trueにすると常にホームへ強制遷移してしまうため注意。
-                .defaultSuccessUrl("/", false)
+                .successHandler((request, response, authentication) -> {
+                    CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
+                    response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : "/");
+                })
                 .failureUrl("/login?error")
                 .permitAll()
             )

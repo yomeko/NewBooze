@@ -59,4 +59,8 @@ public class CustomUserDetails implements UserDetails {
     public String getName() {
         return user.getName();
     }
+
+    public boolean isTemporaryPassword() {
+        return user.isTemporaryPassword();
+    }
 }
