@@ -480,3 +480,258 @@ footer {
   .image-editor { padding:0; }
   .image-editor-panel { border-radius:0; max-height:100vh; }
 }
+
+/* =========================================================
+   可読性・アクセシビリティ改善
+   文字サイズ、行長、余白、コントラスト、フォーカス表示を全画面で統一する。
+   ========================================================= */
+:root {
+  --ink: #1c1a16;
+  --paper: #f5f0e6;
+  --cream: #fffefa;
+  --red: #922f22;
+  --gold: #9a6c25;
+  --line: #cfc3b0;
+  --muted: #5f594f;
+  --focus: #1769aa;
+}
+
+html {
+  font-size: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: .015em;
+  -webkit-font-smoothing: antialiased;
+}
+
+p, li, dd { max-width: 72ch; }
+
+h1, h2, h3 {
+  color: #171510;
+  letter-spacing: .025em;
+}
+
+h1 {
+  margin: 12px 0 20px;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+}
+
+h2 { font-size: clamp(1.35rem, 2vw, 1.75rem); }
+h3 { font-size: 1.2rem; }
+
+a { text-underline-offset: .2em; }
+
+a:hover, .link-button:hover { color: var(--red); }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.site-header {
+  min-height: 80px;
+  height: auto;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 2px 10px #3c2e1810;
+}
+
+.logo { font-size: 26px; }
+
+nav { align-items: center; }
+
+nav a, .link-button {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+nav > a:not(.button) {
+  padding: 10px 2px 7px;
+  border-bottom: 2px solid transparent;
+}
+
+nav > a:not(.button):hover { border-bottom-color: var(--red); }
+
+.page {
+  width: min(100%, 1120px);
+}
+
+.section { padding-top: 64px; padding-bottom: 80px; }
+
+.section-heading { margin-bottom: 34px; }
+
+.lead {
+  max-width: 62ch;
+  color: #3f3a32;
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  line-height: 1.9;
+}
+
+.muted, dt, .auth-sub, .auth-footer-link { color: var(--muted); }
+
+.eyebrow {
+  font-size: 13px;
+  letter-spacing: .14em;
+}
+
+.button {
+  min-height: 48px;
+  padding: 12px 22px;
+  border-width: 2px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+  transition: background-color .15s, color .15s, border-color .15s, transform .15s;
+}
+
+.button:hover { background: #eee7da; color: var(--ink); }
+.button.primary:hover { background: #73251b; border-color: #73251b; color: #fff; }
+.button:active { transform: translateY(1px); }
+
+.card-grid { gap: 24px; }
+
+.sake-card, .mypage-card, .auth-card, .message-card {
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--gold);
+  box-shadow: 0 8px 24px #49330d12;
+}
+
+.sake-card {
+  padding: 28px;
+  line-height: 1.75;
+}
+
+.sake-card h2, .sake-card h3 { margin: 10px 0; }
+.sake-card p { margin: 10px 0; }
+
+.sake-card a {
+  display: inline-block;
+  margin-top: 18px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+.badge {
+  font-size: 14px;
+  letter-spacing: .04em;
+}
+
+.search-form {
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.search-form input,
+.search-form select,
+.form-group input,
+.post-form input,
+.post-form textarea,
+.message-form textarea {
+  min-height: 48px;
+  border: 2px solid #b9ad9b;
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 16px;
+}
+
+input::placeholder, textarea::placeholder { color: #716a5f; opacity: 1; }
+
+.result-count { margin: 30px 0 20px; }
+
+.spec { border: 1px solid var(--line); }
+.spec div { padding: 20px; }
+.spec dt { font-size: 14px; }
+.spec dd { font-size: 17px; }
+
+details {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--gold);
+}
+
+summary { font-size: 17px; }
+
+.tag-list span {
+  padding: 7px 12px;
+  border: 1px solid #d4c1a3;
+  border-radius: 999px;
+  color: #4b3214;
+  font-size: 14px;
+}
+
+.question { max-width: 780px; }
+.question legend { font-size: clamp(1.45rem, 3vw, 2rem); line-height: 1.55; }
+
+.question label {
+  padding: 18px 20px;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  font-size: 17px;
+}
+
+.question label:hover { border-color: var(--gold); background: #fffaf0; }
+.question input { width: 18px; height: 18px; vertical-align: middle; }
+
+.auth-card { max-width: 500px; padding: 48px; }
+.auth-card h1 { font-size: 2.1rem; }
+.auth-sub { font-size: 15px; line-height: 1.8; }
+.form-group label { font-size: 14px; }
+.field-error { font-size: 13px; font-weight: 700; }
+
+.auth-alert {
+  font-size: 14px;
+  line-height: 1.7;
+  border: 1px solid #d9ada6;
+  border-left: 4px solid var(--red);
+}
+
+.empty { border: 1px solid var(--line); font-size: 17px; }
+
+.pagination a { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
+
+footer { color: #fffaf0; font-size: 14px; }
+
+@media (max-width: 700px) {
+  body { font-size: 16px; line-height: 1.7; }
+  .site-header { min-height: 68px; }
+  .logo { font-size: 22px; }
+  .menu-toggle { min-width: 44px; min-height: 44px; cursor: pointer; }
+  nav { top: 62px; width: min(300px, 90vw); gap: 8px; border: 1px solid var(--line); }
+  nav a, nav .link-button { width: 100%; padding: 11px 8px; text-align: left; }
+  .section { padding-top: 42px; padding-bottom: 60px; }
+  .hero { padding-top: 64px; padding-bottom: 60px; }
+  .hero h1 { font-size: clamp(2.35rem, 12vw, 3.5rem); }
+  .sake-card, .mypage-card { padding: 24px 20px; }
+  .search-form { padding: 16px; }
+  .search-form .button { width: 100%; }
+  .auth-page { padding: 32px 16px; align-items: flex-start; }
+  .auth-card { padding: 32px 22px; }
+  .actions { align-items: stretch; }
+  .actions .button { width: 100%; }
+  .quiz-controls { gap: 10px; }
+  .quiz-controls .button { flex: 1; }
+  .profile-hero { align-items: flex-start; }
+  .profile-image-settings { flex-direction: column; }
+  .message-stream article { max-width: 88%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

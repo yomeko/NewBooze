@@ -6,9 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.menu-toggle');
   const nav = document.querySelector('header nav');
   if (toggle && nav) {
+    toggle.setAttribute('aria-expanded', 'false');
     // クリックのたびに.openクラスを付け外しし、CSS側(@media(max-width:700px))で
     // nav.openの表示・非表示を切り替える仕組み
-    toggle.addEventListener('click', () => nav.classList.toggle('open'));
+    toggle.addEventListener('click', () => {
+      const isOpen = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(isOpen));
+      toggle.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+    });
   }
 
   // ---- マイページ：プロフィール画像の表示位置を即時プレビュー ----
