@@ -23,6 +23,29 @@ CREATE TABLE IF NOT EXISTS `direct_messages` (
   CONSTRAINT `direct_messages_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+CREATE TABLE IF NOT EXISTS `drink_post_likes` (
+  `user_id` bigint(20) NOT NULL,
+  `post_id` bigint(20) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`user_id`, `post_id`),
+  KEY `idx_post_likes_post` (`post_id`),
+  CONSTRAINT `drink_post_likes_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `drink_post_likes_post_fk` FOREIGN KEY (`post_id`) REFERENCES `drink_posts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `drink_post_reports` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `reporter_id` bigint(20) NOT NULL,
+  `post_id` bigint(20) NOT NULL,
+  `reason` varchar(30) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_post_reporter` (`reporter_id`, `post_id`),
+  KEY `idx_post_reports_post` (`post_id`),
+  CONSTRAINT `drink_post_reports_user_fk` FOREIGN KEY (`reporter_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `drink_post_reports_post_fk` FOREIGN KEY (`post_id`) REFERENCES `drink_posts` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 CREATE TABLE IF NOT EXISTS `user_profile_images` (
   `user_id` bigint(20) NOT NULL,
   `image_data` mediumblob NOT NULL,

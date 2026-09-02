@@ -5,11 +5,21 @@ import com.example.demo.entity.DirectMessage;
 import com.example.demo.entity.DrinkPost;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserProfileImage;
+import com.example.demo.entity.DrinkPostLike;
+import com.example.demo.entity.DrinkPostLikeId;
+import com.example.demo.entity.DrinkPostReport;
+import com.example.demo.entity.Favorite;
+import com.example.demo.entity.FavoriteId;
 import com.example.demo.repository.DirectMessageRepository;
 import com.example.demo.repository.DrinkPostRepository;
 import com.example.demo.repository.UserPreferenceRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.UserProfileImageRepository;
+import com.example.demo.repository.DrinkPostLikeRepository;
+import com.example.demo.repository.DrinkPostReportRepository;
+import com.example.demo.repository.FavoriteRepository;
+import com.example.demo.repository.SakeRepository;
+import com.example.demo.service.PostModerationService;
 import com.example.demo.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,6 +49,9 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/mypage")
@@ -49,6 +62,11 @@ public class MyPageController {
     private final DirectMessageRepository messages;
     private final PasswordEncoder passwordEncoder;
     private final UserProfileImageRepository profileImages;
+    private final DrinkPostLikeRepository postLikes;
+    private final DrinkPostReportRepository postReports;
+    private final FavoriteRepository favorites;
+    private final SakeRepository sake;
+    private final PostModerationService moderation;
     // MariaDBのmax_allowed_packetが1MBの環境でも、SQLの付加情報を含めて
     // 安全に保存できるよう画像本体は900KB以下にする。
     private static final long MAX_PROFILE_IMAGE_SIZE = 900 * 1024;
@@ -58,13 +76,20 @@ public class MyPageController {
 
     public MyPageController(UserRepository users, UserPreferenceRepository preferences,
             DrinkPostRepository posts, DirectMessageRepository messages, PasswordEncoder passwordEncoder,
-            UserProfileImageRepository profileImages) {
+            UserProfileImageRepository profileImages, DrinkPostLikeRepository postLikes,
+            DrinkPostReportRepository postReports, FavoriteRepository favorites,
+            SakeRepository sake, PostModerationService moderation) {
         this.users = users;
         this.preferences = preferences;
         this.posts = posts;
         this.messages = messages;
         this.passwordEncoder = passwordEncoder;
         this.profileImages = profileImages;
+        this.postLikes = postLikes;
+        this.postReports = postReports;
+        this.favorites = favorites;
+        this.sake = sake;
+        this.moderation = moderation;
     }
 
     @GetMapping
@@ -72,7 +97,17 @@ public class MyPageController {
         User user = current(principal);
         model.addAttribute("user", user);
         model.addAttribute("preferences", preferences.findByIdUserIdOrderByScoreDesc(user.getId()));
-        model.addAttribute("posts", posts.findByUserIdOrderByCreatedAtDesc(user.getId()));
+        List<DrinkPost> timeline = posts.findAllByOrderByCreatedAtDesc();
+        List<Long> postIds = timeline.stream().map(DrinkPost::getId).toList();
+        Set<Long> likedPostIds = postIds.isEmpty() ? Set.of() : postLikes
+                .findByIdUserIdAndIdPostIdIn(user.getId(), postIds).stream()
+                .map(like -> like.getId().getPostId()).collect(Collectors.toSet());
+        Map<Long, Long> likeCounts = postIds.stream().collect(Collectors.toMap(id -> id, postLikes::countByIdPostId));
+        model.addAttribute("posts", timeline);
+        model.addAttribute("likedPostIds", likedPostIds);
+        model.addAttribute("likeCounts", likeCounts);
+        model.addAttribute("favorites", favorites.findByIdUserIdOrderByCreatedAtDesc(user.getId()));
+        model.addAttribute("sakeCatalog", sake.findAll());
         model.addAttribute("otherUsers", users.findByIdNotOrderByNameAsc(user.getId()));
         profileImages.findById(user.getId()).ifPresentOrElse(image -> {
             model.addAttribute("hasProfileImage", true);
@@ -166,13 +201,70 @@ public class MyPageController {
             redirect.addFlashAttribute("drinkPostForm", drinkPostForm);
             return "redirect:/mypage#posts";
         }
+        User user = current(principal);
+        String sakeName = drinkPostForm.getSakeName().trim();
+        String comment = drinkPostForm.getComment() == null ? "" : drinkPostForm.getComment().trim();
+        String moderationError = moderation.validate(user.getId(), sakeName, comment);
+        if (moderationError != null) {
+            redirect.addFlashAttribute("error", moderationError);
+            redirect.addFlashAttribute("drinkPostForm", drinkPostForm);
+            return "redirect:/mypage#posts";
+        }
         DrinkPost post = new DrinkPost();
-        post.setUser(current(principal));
-        post.setSakeName(drinkPostForm.getSakeName().trim());
-        post.setComment(drinkPostForm.getComment() == null ? "" : drinkPostForm.getComment().trim());
+        post.setUser(user);
+        post.setSakeName(sakeName);
+        post.setComment(comment);
         posts.save(post);
         redirect.addFlashAttribute("success", "飲んだお酒を投稿しました");
         return "redirect:/mypage#posts";
+    }
+
+    @PostMapping("/posts/{postId}/like")
+    public String toggleLike(@PathVariable Long postId, @AuthenticationPrincipal CustomUserDetails principal) {
+        User user = current(principal);
+        DrinkPost post = posts.findById(postId).orElseThrow();
+        DrinkPostLikeId id = new DrinkPostLikeId(user.getId(), postId);
+        if (postLikes.existsById(id)) postLikes.deleteById(id);
+        else {
+            DrinkPostLike like = new DrinkPostLike(); like.setId(id); like.setUser(user); like.setPost(post);
+            postLikes.save(like);
+        }
+        return "redirect:/mypage#posts";
+    }
+
+    @PostMapping("/posts/{postId}/report")
+    public String report(@PathVariable Long postId, @RequestParam String reason,
+            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
+        Set<String> allowed = Set.of("OFF_TOPIC", "ABUSE", "SPAM", "INAPPROPRIATE");
+        if (!allowed.contains(reason)) { redirect.addFlashAttribute("error", "通報理由を選択してください"); return "redirect:/mypage#posts"; }
+        User user = current(principal);
+        DrinkPost post = posts.findById(postId).orElseThrow();
+        if (post.getUser().getId().equals(user.getId())) { redirect.addFlashAttribute("error", "自分の投稿は通報できません"); return "redirect:/mypage#posts"; }
+        if (postReports.existsByReporterIdAndPostId(user.getId(), postId)) { redirect.addFlashAttribute("error", "この投稿は通報済みです"); return "redirect:/mypage#posts"; }
+        DrinkPostReport report = new DrinkPostReport(); report.setReporter(user); report.setPost(post); report.setReason(reason);
+        postReports.save(report); redirect.addFlashAttribute("success", "投稿を通報しました");
+        return "redirect:/mypage#posts";
+    }
+
+    @PostMapping("/favorites")
+    public String addFavorite(@RequestParam Long sakeId, @AuthenticationPrincipal CustomUserDetails principal,
+            RedirectAttributes redirect) {
+        User user = current(principal);
+        if (favorites.existsByIdUserIdAndIdSakeId(user.getId(), sakeId)) {
+            redirect.addFlashAttribute("error", "そのお酒はすでに登録済みです"); return "redirect:/mypage#favorites";
+        }
+        var selected = sake.findById(sakeId).orElseThrow();
+        Favorite favorite = new Favorite(); favorite.setId(new FavoriteId(user.getId(), sakeId));
+        favorite.setUser(user); favorite.setSake(selected); favorites.save(favorite);
+        redirect.addFlashAttribute("success", "好きなお酒に登録しました"); return "redirect:/mypage#favorites";
+    }
+
+    @PostMapping("/favorites/{sakeId}/delete")
+    public String removeFavorite(@PathVariable Long sakeId, @AuthenticationPrincipal CustomUserDetails principal,
+            RedirectAttributes redirect) {
+        FavoriteId id = new FavoriteId(principal.getUserId(), sakeId);
+        if (favorites.existsById(id)) favorites.deleteById(id);
+        redirect.addFlashAttribute("success", "好きなお酒から削除しました"); return "redirect:/mypage#favorites";
     }
 
     @PostMapping("/profile")

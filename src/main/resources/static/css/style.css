@@ -397,6 +397,22 @@ summary { cursor: pointer; font-weight: 700; }
 .post-list article { padding:17px 4px; border-bottom:1px solid var(--line); }
 .post-list article div { display:flex; justify-content:space-between; }
 .post-list article p { margin:5px 0 0; }
+.post-list article>div span { display:flex; gap:12px; align-items:baseline; }
+.post-list article>div span b { color:var(--red); font-size:13px; }
+.favorite-form { display:grid; grid-template-columns:auto minmax(220px,1fr) auto; align-items:end; gap:12px; padding:18px; background:#f0e7d8; }
+.favorite-form label { font-size:13px; font-weight:700; }
+.favorite-form select,.report-menu select { padding:10px; border:1px solid var(--line); background:#fff; font:inherit; }
+.favorite-list article { display:flex; align-items:center; gap:14px; padding:13px 4px; border-bottom:1px solid var(--line); }
+.favorite-list article a { color:var(--red); font-weight:700; }
+.favorite-list article form { margin-left:auto; }
+.moderation-note { max-width:none; padding:10px 14px; background:#fff7dc; border-left:3px solid var(--gold); font-size:13px; }
+.post-actions { justify-content:flex-start!important; align-items:center; gap:12px; margin-top:10px; }
+.like-button { border:1px solid var(--line); background:#fff; color:#777; padding:6px 12px; cursor:pointer; border-radius:20px; }
+.like-button.liked { color:var(--red); border-color:var(--red); background:#fbeae6; }
+.report-menu { margin:0; padding:0; border:0; background:none; }
+.report-menu summary { color:#706b5e; font-size:12px; }
+.report-menu form { display:flex; gap:8px; margin-top:8px; }
+.report-menu .button { padding:7px 11px; }
 .post-list time,.message-stream time { color:#8c8578; font-size:12px; }
 .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:45px; }
 .profile-image-settings { display:flex; align-items:center; gap:22px; padding:0 0 28px; margin-bottom:28px; border-bottom:1px solid var(--line); }
@@ -475,6 +491,7 @@ footer {
   .mypage-grid,.settings-grid { grid-template-columns:1fr; }
   .mypage-card.wide { grid-column:auto; }
   .post-form { grid-template-columns:1fr; }
+  .favorite-form { grid-template-columns:1fr; }
   .taste-item { grid-template-columns:110px 1fr; }
   .profile-image-settings { align-items:flex-start; }
   .image-editor { padding:0; }
