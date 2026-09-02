@@ -10,19 +10,6 @@ CREATE TABLE IF NOT EXISTS `drink_posts` (
   CONSTRAINT `drink_posts_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS `direct_messages` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `sender_id` bigint(20) NOT NULL,
-  `recipient_id` bigint(20) NOT NULL,
-  `body` varchar(1000) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_dm_sender` (`sender_id`),
-  KEY `idx_dm_recipient` (`recipient_id`),
-  CONSTRAINT `direct_messages_ibfk_1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `direct_messages_ibfk_2` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 CREATE TABLE IF NOT EXISTS `drink_post_likes` (
   `user_id` bigint(20) NOT NULL,
   `post_id` bigint(20) NOT NULL,

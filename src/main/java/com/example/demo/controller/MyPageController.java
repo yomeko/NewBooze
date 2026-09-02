@@ -1,7 +1,6 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.DrinkPostForm;
-import com.example.demo.entity.DirectMessage;
 import com.example.demo.entity.DrinkPost;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserProfileImage;
@@ -10,7 +9,6 @@ import com.example.demo.entity.DrinkPostLikeId;
 import com.example.demo.entity.DrinkPostReport;
 import com.example.demo.entity.Favorite;
 import com.example.demo.entity.FavoriteId;
-import com.example.demo.repository.DirectMessageRepository;
 import com.example.demo.repository.DrinkPostRepository;
 import com.example.demo.repository.UserPreferenceRepository;
 import com.example.demo.repository.UserRepository;
@@ -59,7 +57,6 @@ public class MyPageController {
     private final UserRepository users;
     private final UserPreferenceRepository preferences;
     private final DrinkPostRepository posts;
-    private final DirectMessageRepository messages;
     private final PasswordEncoder passwordEncoder;
     private final UserProfileImageRepository profileImages;
     private final DrinkPostLikeRepository postLikes;
@@ -75,14 +72,13 @@ public class MyPageController {
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/gif");
 
     public MyPageController(UserRepository users, UserPreferenceRepository preferences,
-            DrinkPostRepository posts, DirectMessageRepository messages, PasswordEncoder passwordEncoder,
+            DrinkPostRepository posts, PasswordEncoder passwordEncoder,
             UserProfileImageRepository profileImages, DrinkPostLikeRepository postLikes,
             DrinkPostReportRepository postReports, FavoriteRepository favorites,
             SakeRepository sake, PostModerationService moderation) {
         this.users = users;
         this.preferences = preferences;
         this.posts = posts;
-        this.messages = messages;
         this.passwordEncoder = passwordEncoder;
         this.profileImages = profileImages;
         this.postLikes = postLikes;
@@ -108,7 +104,6 @@ public class MyPageController {
         model.addAttribute("likeCounts", likeCounts);
         model.addAttribute("favorites", favorites.findByIdUserIdOrderByCreatedAtDesc(user.getId()));
         model.addAttribute("sakeCatalog", sake.findAll());
-        model.addAttribute("otherUsers", users.findByIdNotOrderByNameAsc(user.getId()));
         profileImages.findById(user.getId()).ifPresentOrElse(image -> {
             model.addAttribute("hasProfileImage", true);
             model.addAttribute("profileImagePositionX", image.getPositionX());
@@ -294,30 +289,6 @@ public class MyPageController {
         refreshPrincipal(user);
         redirect.addFlashAttribute("success", "パスワードを変更しました");
         return "redirect:/mypage#settings";
-    }
-
-    @GetMapping("/messages/{otherId}")
-    public String conversation(@PathVariable Long otherId, @AuthenticationPrincipal CustomUserDetails principal, Model model) {
-        User me = current(principal);
-        User other = users.findById(otherId).filter(u -> !u.getId().equals(me.getId())).orElseThrow();
-        model.addAttribute("me", me); model.addAttribute("other", other);
-        model.addAttribute("messages", messages.conversation(me.getId(), otherId));
-        return "messages";
-    }
-
-    @PostMapping("/messages/{otherId}")
-    public String send(@PathVariable Long otherId, @RequestParam String body,
-            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
-        User me = current(principal);
-        User other = users.findById(otherId).filter(u -> !u.getId().equals(me.getId())).orElseThrow();
-        body = body.trim();
-        if (body.isEmpty() || body.length() > 1000) {
-            redirect.addFlashAttribute("error", "メッセージは1〜1000文字で入力してください");
-        } else {
-            DirectMessage message = new DirectMessage();
-            message.setSender(me); message.setRecipient(other); message.setBody(body); messages.save(message);
-        }
-        return "redirect:/mypage/messages/" + otherId;
     }
 
     private User current(CustomUserDetails principal) { return users.findById(principal.getUserId()).orElseThrow(); }
