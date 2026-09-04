@@ -19,8 +19,8 @@
   <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
   <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   <nav>
-    <a th:href="@{/search}">さがす</a>
-    <a th:href="@{/diagnosis}">好み診断</a>
+    <a th:href="@{/search}">日本酒をさがす</a>
+    <a th:href="@{/diagnosis}">日本酒診断</a>
     <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
     <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
@@ -32,8 +32,8 @@
 
 <main class="section page diagnosis">
   <p class="eyebrow">SAKE PREFERENCE QUIZ</p>
-  <h1>好み診断</h1>
-  <p class="lead">4つの質問に答えて、今のあなたに合う地酒を見つけましょう。</p>
+  <h1>日本酒診断</h1>
+  <p class="lead">専門知識は必要ありません。4つの質問に答えて、今のあなたに合いそうな日本酒を見つけましょう。</p>
 
   <!--
     DiagnosisController.result()（POST /diagnosis/result）へ回答を送信するフォーム。
@@ -68,7 +68,7 @@
   </form>
 </main>
 
-<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

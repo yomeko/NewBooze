@@ -13,7 +13,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>NEWBOOZE | 地酒サーチ</title>
+  <title>NEWBOOZE | 日本酒初心者向け好み診断</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -23,8 +23,8 @@
   <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
   <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   <nav>
-    <a th:href="@{/search}">さがす</a>
-    <a th:href="@{/diagnosis}">好み診断</a>
+    <a th:href="@{/search}">日本酒をさがす</a>
+    <a th:href="@{/diagnosis}">日本酒診断</a>
 
     <!--
       認証状態による出し分け（sec:authorize）:
@@ -47,13 +47,16 @@
 <main>
   <!-- ヒーローセクション：キャッチコピーと「診断する」「検索する」への導線ボタン -->
   <section class="hero">
-    <p class="eyebrow">JAPANESE SAKE DISCOVERY</p>
-    <h1>今の気分に、<br><em>一杯の地酒</em>を。</h1>
-    <p>味わいから探して、好みから出会う。<br>あなたのための地酒サーチ。</p>
-    <div class="actions">
-      <a class="button primary" th:href="@{/diagnosis}">好みを診断する</a>
-      <a class="button" th:href="@{/search}">地酒をさがす</a>
+    <div class="hero-copy">
+      <p class="eyebrow">YOUR FIRST SAKE DISCOVERY</p>
+      <h1>日本酒を知らなくても、<br><em>好きな一本</em>に出会える。</h1>
+      <p>専門用語はいりません。気分や口当たりなど、4つの簡単な質問から<br>あなたの好みに合いそうな日本酒をご案内します。</p>
     </div>
+    <div class="actions">
+      <a class="button primary" th:href="@{/diagnosis}">日本酒診断を始める</a>
+      <a class="button" th:href="@{/search}">日本酒をさがす</a>
+    </div>
+    <p class="hero-note">登録・ログインなしですぐに診断できます</p>
   </section>
 
   <!--
@@ -71,11 +74,24 @@
     </div>
   </section>
 
+  <section class="section discovery-guide" aria-labelledby="guide-title">
+    <div class="section-heading">
+      <p class="eyebrow">HOW IT WORKS</p>
+      <h2 id="guide-title">はじめての日本酒選びを、かんたんに。</h2>
+      <p class="lead">難しい分類を覚える前に、あなたの感覚から探してみましょう。</p>
+    </div>
+    <ol class="guide-grid">
+      <li><span>01</span><h3>4つの質問に回答</h3><p>気分、口当たり、飲みたい場面、甘さの印象を選びます。</p></li>
+      <li><span>02</span><h3>好みの特徴を発見</h3><p>フルーティー、軽快、旨口など、今の好みを分かりやすく表示します。</p></li>
+      <li><span>03</span><h3>気になる一本へ</h3><p>おすすめから詳細を開き、日本酒や造り手について知るきっかけにできます。</p></li>
+    </ol>
+  </section>
+
   <!-- 注目の地酒カード一覧（HomeControllerがSakeCatalogService.featured()で渡した先頭5件） -->
   <section class="section">
     <div class="section-heading">
       <p class="eyebrow">FEATURED SAKE</p>
-      <h2>注目の地酒</h2>
+      <h2>注目の日本酒</h2>
     </div>
     <div class="card-grid">
       <article class="sake-card" th:each="sake : ${featured}">
@@ -90,7 +106,7 @@
   </section>
 </main>
 
-<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>地酒をさがす | NEWBOOZE</title>
+  <title>日本酒をさがす | NEWBOOZE</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -17,8 +17,8 @@
   <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
   <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   <nav>
-    <a th:href="@{/search}">さがす</a>
-    <a th:href="@{/diagnosis}">好み診断</a>
+    <a th:href="@{/search}">日本酒をさがす</a>
+    <a th:href="@{/diagnosis}">日本酒診断</a>
     <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
     <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
@@ -30,7 +30,8 @@
 
 <main class="section page">
   <p class="eyebrow">SAKE SEARCH</p>
-  <h1>地酒をさがす</h1>
+  <h1>日本酒をさがす</h1>
+  <p class="lead">商品名や地域、味わいの特徴から、気になる日本酒を探せます。</p>
 
   <!--
     検索フォーム：method="get" のため、送信内容はクエリパラメータとして
@@ -55,7 +56,7 @@
   </form>
 
   <!-- 検索結果件数の表示 -->
-  <p class="result-count"><strong th:text="${result.totalElements}">0</strong> 件の地酒</p>
+  <p class="result-count"><strong th:text="${result.totalElements}">0</strong> 件の日本酒</p>
 
   <!-- 検索結果一覧（SakePageDto.content分のみ表示。1ページ分はService側でスライス済み） -->
   <div class="card-grid">
@@ -70,7 +71,7 @@
   </div>
 
   <!-- 該当0件の場合のメッセージ表示 -->
-  <p th:if="${result.totalElements == 0}" class="empty">条件に合う地酒が見つかりませんでした。</p>
+  <p th:if="${result.totalElements == 0}" class="empty">条件に合う日本酒が見つかりませんでした。</p>
 
   <!--
     ページネーション。
@@ -93,7 +94,7 @@
   </nav>
 </main>
 
-<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

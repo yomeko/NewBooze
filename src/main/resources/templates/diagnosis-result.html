@@ -18,8 +18,8 @@
   <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
   <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   <nav>
-    <a th:href="@{/search}">さがす</a>
-    <a th:href="@{/diagnosis}">好み診断</a>
+    <a th:href="@{/search}">日本酒をさがす</a>
+    <a th:href="@{/diagnosis}">日本酒診断</a>
     <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
     <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
@@ -31,14 +31,14 @@
 
 <main class="section page">
   <p class="eyebrow">YOUR RESULT</p>
-  <h1>あなたへのおすすめ</h1>
+  <h1>あなたに合いそうな日本酒</h1>
 
   <!-- preferences（タグ名→スコアのMap）の件数を表示。#maps.size()はThymeleafのMapユーティリティ -->
-  <p class="lead">選んだ回答から、<strong th:text="${#maps.size(preferences)}">0</strong> 種類の味わい傾向を見つけました。</p>
+  <p class="lead">選んだ回答から見つかった、今のあなたの味わい傾向です。</p>
 
   <!-- 診断で得られたタグ別スコアの一覧表示 -->
   <div class="tag-list preference">
-    <span th:each="tag : ${preferences}" th:text="|${tag.key} +${tag.value}|"></span>
+    <span th:each="tag : ${preferences}" th:text="${tag.key}"></span>
   </div>
 
   <!--
@@ -48,7 +48,7 @@
   -->
   <div class="card-grid recommendations">
     <article class="sake-card" th:each="item : ${recommendations}">
-      <p class="badge" th:text="|相性 ${#numbers.formatDecimal(item.score * 100, 1, 0)}%|"></p>
+      <p class="badge">おすすめ</p>
       <h2 th:text="${item.sake.name}"></h2>
       <p class="muted" th:text="|${item.sake.type} ・ ${item.sake.region}|"></p>
       <p th:text="${item.sake.description}"></p>
@@ -59,7 +59,7 @@
   <a class="button" th:href="@{/diagnosis}">もう一度診断する</a>
 </main>
 
-<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

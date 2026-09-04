@@ -19,8 +19,8 @@
   <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
   <button class="menu-toggle" aria-label="メニューを開く">☰</button>
   <nav>
-    <a th:href="@{/search}">さがす</a>
-    <a th:href="@{/diagnosis}">好み診断</a>
+    <a th:href="@{/search}">日本酒をさがす</a>
+    <a th:href="@{/diagnosis}">日本酒診断</a>
     <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
     <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
@@ -61,10 +61,10 @@
     <p>掲載情報はデモデータです。実データ収集後は、蔵元情報や画像などを追加して表示できます。</p>
   </details>
 
-  <a class="button primary" th:href="@{/diagnosis}">自分に合う地酒を診断する</a>
+  <a class="button primary" th:href="@{/diagnosis}">自分に合う日本酒を診断する</a>
 </main>
 
-<footer>NEWBOOZE — 地酒との新しい出会い</footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>
 </html>

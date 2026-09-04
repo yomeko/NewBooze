@@ -81,6 +81,7 @@ nav a, .sake-card a, .back {
   padding: 100px 7% 85px;
   background: radial-gradient(circle at 85% 20%, #e7c790 0, transparent 28%), var(--cream);
 }
+.hero-copy { max-width: 880px; }
 h1, h2, h3 {
   font-family: 'Shippori Mincho', serif;
   line-height: 1.35;
@@ -99,6 +100,7 @@ h1, h2, h3 {
   font-weight: 700;
 }
 .actions { display: flex; gap: 12px; margin-top: 32px; }
+.hero-note { margin: 12px 0 0; color: #706b5e; font-size: 13px; }
 .button {
   display: inline-block;
   border: 1px solid var(--ink);
@@ -143,6 +145,19 @@ h1, h2, h3 {
   min-height: calc(100vh - 140px);
 }
 .section-heading { margin-bottom: 28px; }
+.discovery-guide { background: #ece3d3; }
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.guide-grid li { background: var(--cream); padding: 28px; border-top: 3px solid var(--gold); }
+.guide-grid li > span { color: var(--red); font-size: 13px; font-weight: 700; letter-spacing: .12em; }
+.guide-grid h3 { margin: 10px 0 8px; }
+.guide-grid p { margin: 0; color: #706b5e; }
 
 /* ---- 地酒カード一覧（S01注目銘柄／S04検索結果／S03推薦結果で共通利用） ----
    auto-fit + minmax によって、画面幅に応じてカラム数が自動で増減するグリッドを実現 */
@@ -707,6 +722,8 @@ summary { font-size: 17px; }
 .pagination a { min-width: 44px; min-height: 44px; display: inline-grid; place-items: center; }
 
 footer { color: #fffaf0; font-size: 14px; }
+footer strong, footer span { display: block; }
+footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 
 @media (max-width: 700px) {
   body { font-size: 16px; line-height: 1.7; }
@@ -718,6 +735,7 @@ footer { color: #fffaf0; font-size: 14px; }
   .section { padding-top: 42px; padding-bottom: 60px; }
   .hero { padding-top: 64px; padding-bottom: 60px; }
   .hero h1 { font-size: clamp(2.35rem, 12vw, 3.5rem); }
+  .guide-grid { grid-template-columns: 1fr; }
   .sake-card, .mypage-card { padding: 24px 20px; }
   .search-form { padding: 16px; }
   .search-form .button { width: 100%; }
