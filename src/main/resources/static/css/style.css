@@ -87,9 +87,9 @@ h1, h2, h3 {
   line-height: 1.35;
 }
 .hero h1 {
-  /* clamp()：ビューポート幅に応じて42px〜84pxの間でフォントサイズを可変にする
+  /* clamp()：ビューポート幅に応じて37px〜79pxの間でフォントサイズを可変にする
      (メディアクエリを複数書かなくても、なめらかにレスポンシブ対応できる) */
-  font-size: clamp(42px, 7vw, 84px);
+  font-size: clamp(37px, calc(7vw - 5px), 79px);
   margin: 12px 0 24px;
 }
 .hero em { font-style: normal; color: var(--red); }
@@ -734,7 +734,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   nav a, nav .link-button { width: 100%; padding: 11px 8px; text-align: left; }
   .section { padding-top: 42px; padding-bottom: 60px; }
   .hero { padding-top: 64px; padding-bottom: 60px; }
-  .hero h1 { font-size: clamp(2.35rem, 12vw, 3.5rem); }
+  .hero h1 { font-size: clamp(32.6px, calc(12vw - 5px), 51px); }
   .guide-grid { grid-template-columns: 1fr; }
   .sake-card, .mypage-card { padding: 24px 20px; }
   .search-form { padding: 16px; }
