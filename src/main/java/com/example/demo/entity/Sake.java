@@ -21,9 +21,6 @@ import lombok.Setter;
  * 地酒本体（sake）。
  * 要件定義書 5.3 では「DBスキーマ確定前は@Entityを付与しない」方針だったが、
  * newbooze.sql でスキーマが確定したため、ここで正式に @Entity 化する。
- *
- * 既存の com.example.demo.model.Sake（record・デモ表示用）は当面残し、
- * SakeCatalogService をこの Entity + SakeRepository ベースに置き換えるタイミングで整理する。
  */
 @Entity
 @Table(name = "sake")
@@ -36,6 +33,11 @@ public class Sake {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    /** 蔵元。新SQLでは未登録の銘柄も許容されるためnullable。 */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brewery_id")
+    private Brewery brewery;
 
     // FetchType.LAZY: 検索一覧表示のたびに酒種情報をJOINで引く必要がない場面もあるため、
     // 必要な時だけ取得するようにして無駄なクエリを避ける。

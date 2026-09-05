@@ -39,6 +39,8 @@
 
   <!-- 常時表示するスペック情報（外部設計書 7.2「常時表示項目」） -->
   <dl class="spec">
+    <div th:if="${!#strings.isEmpty(sake.breweryName)}"><dt>蔵元</dt><dd th:text="${sake.breweryName}"></dd></div>
+    <div th:if="${!#strings.isEmpty(sake.breweryPrefecture)}"><dt>蔵元所在地</dt><dd th:text="${sake.breweryPrefecture}"></dd></div>
     <div><dt>産地</dt><dd th:text="${sake.region}"></dd></div>
     <div><dt>アルコール度数</dt><dd th:text="|${sake.abv}%|"></dd></div>
     <div><dt>参考価格</dt><dd th:text="|${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></dd></div>
@@ -58,7 +60,7 @@
 
   <details>
     <summary>この銘柄について</summary>
-    <p>掲載情報はデモデータです。実データ収集後は、蔵元情報や画像などを追加して表示できます。</p>
+    <p>掲載情報は登録された地酒データをもとに表示しています。</p>
   </details>
 
   <a class="button primary" th:href="@{/diagnosis}">自分に合う日本酒を診断する</a>

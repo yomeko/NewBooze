@@ -50,6 +50,7 @@
     <article class="sake-card" th:each="item : ${recommendations}">
       <p class="badge">おすすめ</p>
       <h2 th:text="${item.sake.name}"></h2>
+      <p class="muted" th:if="${!#strings.isEmpty(item.sake.breweryName)}" th:text="|蔵元：${item.sake.breweryName}|"></p>
       <p class="muted" th:text="|${item.sake.type} ・ ${item.sake.region}|"></p>
       <p th:text="${item.sake.description}"></p>
       <a th:href="@{/sake/{id}(id=${item.sake.id})}">詳しく見る →</a>

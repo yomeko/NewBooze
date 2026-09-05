@@ -63,6 +63,7 @@
     <article class="sake-card" th:each="sake : ${result.content}">
       <p class="badge" th:text="${sake.type}"></p>
       <h2 th:text="${sake.name}"></h2>
+      <p class="muted" th:if="${!#strings.isEmpty(sake.breweryName)}" th:text="|蔵元：${sake.breweryName}|"></p>
       <!-- リテラル置換構文(|...|)の中に、numbers.formatIntegerでカンマ区切りの価格表示を組み込む -->
       <p class="muted" th:text="|${sake.region} ・ ${sake.abv}% ・ ${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></p>
       <p th:text="${sake.description}"></p>

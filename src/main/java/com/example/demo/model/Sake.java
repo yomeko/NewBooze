@@ -3,31 +3,31 @@ package com.example.demo.model;
 import java.util.Map;
 
 /**
- * DB未接続段階の画面表示・推薦計算用の暫定モデル（＝いわゆる「デュアルモデル問題」の一方）。
- * entity.Sake（JPA Entity、DBの sake テーブルに対応）とは別物であり、
- * SakeCatalogServiceが保持するインメモリのダミーデータを表現するために使う。
+ * JPAエンティティを画面表示と推薦計算に適した形へ変換した読み取り専用DTO。
  *
- * 濵田担当のデータ収集完了後、検索機能をentity.Sake + SakeRepositoryベースへ
- * 移行するタイミングで、このクラスの利用箇所は順次置き換えていく想定
- * （内部設計書 第8章「今後の課題」／「デュアルモデル問題」参照）。
- *
- * @param id          地酒ID（インメモリ用の暫定ID）
+ * @param id          地酒ID
  * @param name        銘柄名
+ * @param breweryName 蔵元名（未登録の場合は空文字）
+ * @param breweryPrefecture 蔵元の都道府県（未登録の場合は空文字）
  * @param type        酒種（純米大吟醸・吟醸 等）
  * @param region      産地
  * @param abv         アルコール度数(%)
  * @param price       価格(円)
  * @param description 説明文
+ * @param imageUrl    商品画像URL
  * @param tagScores   タグ名→強さスコアのマップ（コサイン類似度計算での特徴ベクトルとして使用）
  */
 public record Sake(
         long id,
         String name,
+        String breweryName,
+        String breweryPrefecture,
         String type,
         String region,
         double abv,
         int price,
         String description,
+        String imageUrl,
         Map<String, Integer> tagScores
 ) {
 }

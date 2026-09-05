@@ -32,11 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
  * ③ ログイン中であれば diagnosis_sessions / diagnosis_answers / user_preferences へ保存する
  * ④ 集計結果をもとに、地酒との類似度（コサイン類似度）を計算して上位N件を推薦する
  *
- * ※ ④の地酒データについては、濵田担当のデータ収集・sake_tagsへの登録が
- *   完了していないため、暫定的に SakeCatalogService のインメモリデータを利用する。
- *   タグ名（例:「フルーティー」）をキーとして突き合わせているため、
- *   tagsテーブルのタグ名とSakeCatalogService側のタグ名は一致させる必要がある
- *   （seed/diagnosis_seed.sql で投入するタグ名を参照）。
+ * 地酒の特徴ベクトルは sake / sake_tags / tags から取得する。
+ * diagnosis_seed.sql と sake_catalog_seed.sql は同じ tags.name を共通軸として使う。
  */
 @Service
 public class DiagnosisService {

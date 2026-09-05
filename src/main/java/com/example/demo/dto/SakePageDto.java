@@ -9,10 +9,8 @@ import java.util.List;
  * 要件定義書 5.3／7.2の設計方針の通り、Spring Data JPAの標準インタフェースである
  * {@code Page<T>}（content, totalElements, totalPages, pageNumber等のプロパティを持つ）
  * を模した独自クラスとして設計している。
- * 現状はDB未接続でmodel.Sake（インメモリ）を扱っているためこの独自DTOを使っているが、
- * entity.Sake + SakeRepositoryへ移行した際は、Spring Data標準のPage<Sake>を
- * 直接使う形に置き換えられるよう、あえて同じプロパティ構成に揃えてある
- * （＝Thymeleaf側の記述（result.content等）を極力変更せずに済ませる狙い）。
+ * JPAのページ検索結果を画面用 Sake DTO の一覧に変換しつつ、
+ * Thymeleaf が利用するページングプロパティを保つ。
  *
  * @param content       このページに含まれる地酒一覧
  * @param pageNumber    現在のページ番号（0始まり）

@@ -11,9 +11,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * S04（検索結果一覧画面）／S05（地酒詳細画面）を担当するController。
- * 現時点ではSakeCatalogService（インメモリのダミーデータ）を参照しており、
- * 濵田担当のデータ収集完了後、entity.Sake + SakeRepositoryベースへ
- * 差し替える予定（内部設計書 第8章「今後の課題」参照）。
+ * SakeCatalogService を通じて JPA カタログを参照する。
  */
 @Controller
 public class SakeSearchController {
