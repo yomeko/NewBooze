@@ -30,6 +30,9 @@
     <a th:href="@{/}" th:attr="aria-current=${currentPage == 'home'} ? 'page' : null">おすすめ</a>
     <a th:href="@{/search}" th:attr="aria-current=${currentPage == 'search'} ? 'page' : null">日本酒をさがす</a>
     <a th:href="@{/diagnosis}" th:attr="aria-current=${currentPage == 'diagnosis'} ? 'page' : null">日本酒診断</a>
+    <a th:href="@{/ranking}" th:attr="aria-current=${currentPage == 'ranking'} ? 'page' : null">ランキング</a>
+    <a th:href="@{/pairings}" th:attr="aria-current=${currentPage == 'pairings'} ? 'page' : null">おすすめのおつまみ・グラス系</a>
+    <a th:href="@{/goods}" th:attr="aria-current=${currentPage == 'goods'} ? 'page' : null">日本酒関連の商品</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}" th:attr="aria-current=${currentPage == 'mypage'} ? 'page' : null">マイページ</a>
   </nav>
 </header>

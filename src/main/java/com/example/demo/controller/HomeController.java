@@ -31,4 +31,29 @@ public class HomeController {
         model.addAttribute("featured", catalogService.featured());
         return "home"; // templates/home.html を返す
     }
+
+    @GetMapping("/ranking")
+    public String ranking(Model model) {
+        return collectionPage(model, "ranking", "人気ランキング",
+                "みんなに選ばれている日本酒を紹介します。");
+    }
+
+    @GetMapping("/pairings")
+    public String pairings(Model model) {
+        return collectionPage(model, "pairings", "おすすめのおつまみ・グラス系",
+                "日本酒をもっと楽しむためのおつまみや酒器を紹介します。");
+    }
+
+    @GetMapping("/goods")
+    public String goods(Model model) {
+        return collectionPage(model, "goods", "日本酒関連の商品",
+                "日本酒のある時間を豊かにする関連商品を紹介します。");
+    }
+
+    private String collectionPage(Model model, String currentPage, String title, String description) {
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("title", title);
+        model.addAttribute("description", description);
+        return "collection";
+    }
 }
