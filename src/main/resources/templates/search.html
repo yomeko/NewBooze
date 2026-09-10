@@ -1,6 +1,6 @@
 <!--
   S04: 検索結果一覧画面
-  外部設計書 4.4：味の特徴・風味によるキーワード検索＋ページネーション表示。
+  外部設計書 4.4：味・酒種・価格帯による絞り込みと並び替え＋ページネーション表示。
   ※出田担当の本番デザインに置き換え予定の暫定テンプレート。
 -->
 <!doctype html>
@@ -22,7 +22,7 @@
 
   <!--
     検索フォーム：method="get" のため、送信内容はクエリパラメータとして
-    /search?keyword=...&page=... の形でURLに現れる
+    /search?keyword=...&type=...&taste=...&priceRange=...&sort=...&page=... の形でURLに現れる
     （SakeSearchController.search()の@RequestParamで受け取る）。
   -->
   <form class="search-form" method="get" th:action="@{/search}">
@@ -30,6 +30,41 @@
       <label for="search-keyword">味の特徴・風味</label>
       <input id="search-keyword" name="keyword" th:value="${keyword}"
              placeholder="例：フルーティー、辛口、すっきり">
+    </div>
+    <div class="search-field">
+      <label for="search-taste">辛口・甘口</label>
+      <select id="search-taste" name="taste">
+        <option value="">すべて</option>
+        <option value="辛口" th:selected="${selectedTaste == '辛口'}">辛口</option>
+        <option value="甘口" th:selected="${selectedTaste == '甘口'}">甘口</option>
+      </select>
+    </div>
+    <div class="search-field">
+      <label for="search-type">酒の種類</label>
+      <select id="search-type" name="type">
+        <option value="">すべての種類</option>
+        <option th:each="value : ${types}" th:value="${value}"
+                th:selected="${value == selectedType}" th:text="${value}"></option>
+      </select>
+    </div>
+    <div class="search-field">
+      <label for="search-price">価格帯（公式サイトの販売値）</label>
+      <select id="search-price" name="priceRange">
+        <option value="">すべての価格</option>
+        <option value="under-1500" th:selected="${selectedPriceRange == 'under-1500'}">1,500円未満</option>
+        <option value="1500-2999" th:selected="${selectedPriceRange == '1500-2999'}">1,500～2,999円</option>
+        <option value="3000-4999" th:selected="${selectedPriceRange == '3000-4999'}">3,000～4,999円</option>
+        <option value="5000-up" th:selected="${selectedPriceRange == '5000-up'}">5,000円以上</option>
+      </select>
+    </div>
+    <div class="search-field">
+      <label for="search-sort">並び順</label>
+      <select id="search-sort" name="sort">
+        <option value="recommended" th:selected="${selectedSort == 'recommended'}">おすすめ</option>
+        <option value="priceAsc" th:selected="${selectedSort == 'priceAsc'}">安い順</option>
+        <option value="priceDesc" th:selected="${selectedSort == 'priceDesc'}">高い順</option>
+        <option value="newest" th:selected="${selectedSort == 'newest'}">新着順</option>
+      </select>
     </div>
     <button class="button primary">検索</button>
   </form>
@@ -55,22 +90,22 @@
 
   <!--
     ページネーション。
-    現在の検索条件(keyword)を維持したまま、pageだけを変えたリンクを組み立てる。
+    現在の検索条件を維持したまま、pageだけを変えたリンクを組み立てる。
     result.totalPagesが1以下（＝ページ分割不要）の場合は表示自体をスキップする。
   -->
   <nav class="pagination" th:if="${result.totalPages > 1}">
     <a th:if="${result.hasPrevious}"
-       th:href="@{/search(keyword=${keyword},page=${result.pageNumber - 1})}">← 前へ</a>
+       th:href="@{/search(keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${result.pageNumber - 1})}">← 前へ</a>
 
     <!-- #numbers.sequence(0, N-1) で 0〜(総ページ数-1) の連番を生成し、ページ番号リンクを並べる -->
     <span th:each="number : ${#numbers.sequence(0, result.totalPages - 1)}">
       <a th:classappend="${number == result.pageNumber} ? ' current'"
-         th:href="@{/search(keyword=${keyword},page=${number})}"
+         th:href="@{/search(keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${number})}"
          th:text="${number + 1}"></a>
     </span>
 
     <a th:if="${result.hasNext}"
-       th:href="@{/search(keyword=${keyword},page=${result.pageNumber + 1})}">次へ →</a>
+       th:href="@{/search(keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${result.pageNumber + 1})}">次へ →</a>
   </nav>
 </main>
 

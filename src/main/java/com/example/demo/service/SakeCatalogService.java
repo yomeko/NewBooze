@@ -32,25 +32,40 @@ public class SakeCatalogService {
     }
 
     @Transactional(readOnly = true)
-    public SakePageDto search(String keyword, String type, String region, int requestedPage) {
+    public SakePageDto search(String keyword, String type, Integer minPrice, Integer maxPrice,
+                              String taste, String sortOrder, int requestedPage) {
         String normalizedKeyword = emptyToNull(keyword);
         String normalizedType = emptyToNull(type);
-        String normalizedRegion = emptyToNull(region);
+        String normalizedTaste = emptyToNull(taste);
         int pageNumber = Math.max(0, requestedPage);
         Page<com.example.demo.entity.Sake> page = findPage(
-                normalizedKeyword, normalizedType, normalizedRegion, pageNumber);
+                normalizedKeyword, normalizedType, minPrice, maxPrice,
+                normalizedTaste, sortOrder, pageNumber);
         if (page.getTotalPages() > 0 && pageNumber >= page.getTotalPages()) {
             pageNumber = page.getTotalPages() - 1;
-            page = findPage(normalizedKeyword, normalizedType, normalizedRegion, pageNumber);
+            page = findPage(normalizedKeyword, normalizedType, minPrice, maxPrice,
+                    normalizedTaste, sortOrder, pageNumber);
         }
         return new SakePageDto(mapAll(page.getContent()), pageNumber,
                 Math.max(1, page.getTotalPages()), page.getTotalElements());
     }
 
     private Page<com.example.demo.entity.Sake> findPage(String keyword, String type,
-                                                         String region, int pageNumber) {
-        return sakeRepository.search(keyword, type, region,
-                PageRequest.of(pageNumber, PAGE_SIZE, CATALOG_ORDER));
+                                                         Integer minPrice, Integer maxPrice,
+                                                         String taste, String sortOrder,
+                                                         int pageNumber) {
+        return sakeRepository.search(keyword, type, minPrice, maxPrice, taste,
+                PageRequest.of(pageNumber, PAGE_SIZE, searchSort(sortOrder)));
+    }
+
+    /** 画面から受け取る値をホワイトリストで安全なSortに変換する。 */
+    private Sort searchSort(String sortOrder) {
+        return switch (sortOrder == null ? "recommended" : sortOrder) {
+            case "priceAsc" -> Sort.by(Sort.Order.asc("price"), Sort.Order.asc("id"));
+            case "priceDesc" -> Sort.by(Sort.Order.desc("price"), Sort.Order.asc("id"));
+            case "newest" -> Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
+            default -> CATALOG_ORDER;
+        };
     }
 
     @Transactional(readOnly = true)
