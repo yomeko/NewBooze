@@ -34,6 +34,9 @@
         <p class="auth-alert success" th:if="${param.registered}">
             登録が完了しました。ログインしてください
         </p>
+        <p class="auth-alert success" th:if="${param.deleted}">
+            アカウントを削除しました
+        </p>
 
         <!--
           重要: Spring Securityのデフォルト仕様では、

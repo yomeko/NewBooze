@@ -402,6 +402,17 @@ summary { cursor: pointer; font-weight: 700; }
 .mypage-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:20px; }
 .mypage-card { background:var(--cream); padding:30px; border-top:3px solid var(--gold); box-shadow:0 6px 20px #6d552014; }
 .mypage-card.wide { grid-column:1/-1; }
+.account-link-card .button { display:inline-block; margin-top:10px; text-decoration:none; }
+.page-back { margin-bottom:24px; }
+.page-back a { color:var(--red); font-weight:700; }
+.account-settings-page { max-width:1180px; margin:0 auto; }
+.account-settings-page>.mypage-card { margin-top:20px; }
+.danger-zone { display:grid; grid-template-columns:1fr minmax(280px,.8fr); align-items:center; gap:40px; border-top-color:var(--red); }
+.danger-zone h2,.danger-zone p { margin:4px 0; }
+.danger-zone form { display:grid; gap:10px; }
+.danger-zone label { font-size:13px; font-weight:700; }
+.danger-zone input { padding:11px; border:1px solid var(--line); font:inherit; }
+.danger-button { background:var(--red); border-color:var(--red); color:#fff; }
 .card-title { display:flex; align-items:center; gap:14px; border-bottom:1px solid var(--line); padding-bottom:18px; margin-bottom:22px; }
 .card-title>span { color:var(--gold); font:600 25px 'Shippori Mincho',serif; }
 .card-title p,.card-title h2 { margin:0; }
@@ -500,7 +511,7 @@ footer {
   .actions { flex-direction: column; align-items: flex-start; }
   .question legend { font-size: 23px; }
   .mypage { padding-left:5%; padding-right:5%; }
-  .mypage-grid,.settings-grid { grid-template-columns:1fr; }
+  .mypage-grid,.settings-grid,.danger-zone { grid-template-columns:1fr; }
   .mypage-card.wide { grid-column:auto; }
   .post-form { grid-template-columns:1fr; }
   .favorite-form { grid-template-columns:1fr; }
