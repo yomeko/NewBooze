@@ -2,7 +2,7 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>マイページ - NEWBOOZE</title><link rel="stylesheet" th:href="@{/css/style.css}"></head>
 <body>
-<header class="site-header"><a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a><button class="menu-toggle" aria-label="メニューを開く">☰</button><nav><a th:href="@{/search}">日本酒をさがす</a><a th:href="@{/diagnosis}">日本酒診断</a><a th:href="@{/mypage}">マイページ</a><form th:action="@{/logout}" method="post" class="nav-logout-form"><button class="link-button">ログアウト</button></form></nav></header>
+<header th:replace="~{fragments/site-header :: siteHeader('mypage')}"></header>
 <main class="page mypage">
   <section class="profile-hero"><div class="avatar"><img th:if="${hasProfileImage}" th:src="@{/mypage/profile-image}" th:style="|object-position:${profileImagePositionX}% ${profileImagePositionY}%;transform:scale(${profileImageZoom / 100.0});transform-origin:${profileImagePositionX}% ${profileImagePositionY}%|" alt="プロフィール画像"><span th:unless="${hasProfileImage}" th:text="${#strings.substring(user.name,0,1)}">酒</span></div><div><p class="eyebrow">MY NEWBOOZE</p><h1 th:text="|${user.name} さん|">マイページ</h1><p class="muted" th:text="${user.email}"></p></div></section>
   <p class="auth-alert success" th:if="${success}" th:text="${success}"></p><p class="auth-alert" th:if="${error}" th:text="${error}"></p>

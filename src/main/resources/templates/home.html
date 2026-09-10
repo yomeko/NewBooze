@@ -18,31 +18,7 @@
 </head>
 <body>
 
-<!-- 全画面共通ヘッダー：ロゴ＋ハンバーガーメニュー＋ナビゲーション -->
-<header class="site-header">
-  <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
-  <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-  <nav>
-    <a th:href="@{/search}">日本酒をさがす</a>
-    <a th:href="@{/diagnosis}">日本酒診断</a>
-
-    <!--
-      認証状態による出し分け（sec:authorize）:
-      isAnonymous() = 未ログイン、isAuthenticated() = ログイン済み。
-      未ログイン時は「ログイン」「新規登録」を、ログイン時は「マイページ」「ログアウト」を表示する。
-      ※マイページ(/mypage)は内部設計書 第8章の通り未実装のため、リンクのみ先行して用意している。
-    -->
-    <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
-    <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
-
-    <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
-    <!-- ログアウトはGETリンクではなくPOSTフォームにする必要がある
-         (SecurityConfigでlogoutUrlは"/logout"、CSRF保護が有効なためGETでの実行は不可) -->
-    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
-      <button type="submit" class="link-button">ログアウト</button>
-    </form>
-  </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('home')}"></header>
 
 <main>
   <!-- ヒーローセクション：キャッチコピーと「診断する」「検索する」への導線ボタン -->
