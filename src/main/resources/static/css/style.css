@@ -186,13 +186,18 @@ h1, h2, h3 {
 /* ---- S04検索フォーム ---- */
 .search-form {
   display: grid;
-  /* キーワード欄を広め(2fr)、酒種・地域は同じ幅(1fr)、ボタンは内容に応じた幅(auto) */
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: 1fr auto;
+  align-items: end;
   gap: 10px;
   background: #ece3d3;
   padding: 18px;
   margin: 24px 0;
 }
+.search-field {
+  display: grid;
+  gap: 8px;
+}
+.search-field label { font-weight: 700; }
 .search-form input, .search-form select {
   min-width: 0; /* グリッド内でinput/selectがはみ出さないようにするための指定 */
   border: 1px solid var(--line);

@@ -1,6 +1,6 @@
 <!--
   S04: 検索結果一覧画面
-  外部設計書 4.4：キーワード・酒種・地域による絞り込み＋ページネーション表示。
+  外部設計書 4.4：味の特徴・風味によるキーワード検索＋ページネーション表示。
   ※出田担当の本番デザインに置き換え予定の暫定テンプレート。
 -->
 <!doctype html>
@@ -18,27 +18,19 @@
 <main class="section page">
   <p class="eyebrow">SAKE SEARCH</p>
   <h1>日本酒をさがす</h1>
-  <p class="lead">商品名や地域、味わいの特徴から、気になる日本酒を探せます。</p>
+  <p class="lead">味の特徴や風味から、気になる日本酒を探せます。</p>
 
   <!--
     検索フォーム：method="get" のため、送信内容はクエリパラメータとして
-    /search?keyword=...&type=...&region=...&page=... の形でURLに現れる
+    /search?keyword=...&page=... の形でURLに現れる
     （SakeSearchController.search()の@RequestParamで受け取る）。
-    プルダウンの選択肢はControllerがtypes()/regions()で渡した一覧を元に
-    th:eachで動的に生成し、th:selectedで現在の選択状態を復元している。
   -->
   <form class="search-form" method="get" th:action="@{/search}">
-    <input name="keyword" th:value="${keyword}" placeholder="銘柄名・地域・特徴で検索">
-    <select name="type">
-      <option value="">すべての酒種</option>
-      <option th:each="value : ${types}" th:value="${value}"
-              th:selected="${value == selectedType}" th:text="${value}"></option>
-    </select>
-    <select name="region">
-      <option value="">すべての地域</option>
-      <option th:each="value : ${regions}" th:value="${value}"
-              th:selected="${value == selectedRegion}" th:text="${value}"></option>
-    </select>
+    <div class="search-field">
+      <label for="search-keyword">味の特徴・風味</label>
+      <input id="search-keyword" name="keyword" th:value="${keyword}"
+             placeholder="例：フルーティー、辛口、すっきり">
+    </div>
     <button class="button primary">検索</button>
   </form>
 
@@ -63,22 +55,22 @@
 
   <!--
     ページネーション。
-    現在の検索条件(keyword/type/region)を維持したまま、pageだけを変えたリンクを組み立てる。
+    現在の検索条件(keyword)を維持したまま、pageだけを変えたリンクを組み立てる。
     result.totalPagesが1以下（＝ページ分割不要）の場合は表示自体をスキップする。
   -->
   <nav class="pagination" th:if="${result.totalPages > 1}">
     <a th:if="${result.hasPrevious}"
-       th:href="@{/search(keyword=${keyword},type=${selectedType},region=${selectedRegion},page=${result.pageNumber - 1})}">← 前へ</a>
+       th:href="@{/search(keyword=${keyword},page=${result.pageNumber - 1})}">← 前へ</a>
 
     <!-- #numbers.sequence(0, N-1) で 0〜(総ページ数-1) の連番を生成し、ページ番号リンクを並べる -->
     <span th:each="number : ${#numbers.sequence(0, result.totalPages - 1)}">
       <a th:classappend="${number == result.pageNumber} ? ' current'"
-         th:href="@{/search(keyword=${keyword},type=${selectedType},region=${selectedRegion},page=${number})}"
+         th:href="@{/search(keyword=${keyword},page=${number})}"
          th:text="${number + 1}"></a>
     </span>
 
     <a th:if="${result.hasNext}"
-       th:href="@{/search(keyword=${keyword},type=${selectedType},region=${selectedRegion},page=${result.pageNumber + 1})}">次へ →</a>
+       th:href="@{/search(keyword=${keyword},page=${result.pageNumber + 1})}">次へ →</a>
   </nav>
 </main>
 
