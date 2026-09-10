@@ -15,20 +15,7 @@
 </head>
 <body>
 
-<header class="site-header">
-  <a class="logo" th:href="@{/}">NEW<span>BOOZE</span></a>
-  <button class="menu-toggle" aria-label="メニューを開く">☰</button>
-  <nav>
-    <a th:href="@{/search}">日本酒をさがす</a>
-    <a th:href="@{/diagnosis}">日本酒診断</a>
-    <a sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
-    <a sec:authorize="isAnonymous()" class="button" th:href="@{/signup}">新規登録</a>
-    <a sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
-    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
-      <button type="submit" class="link-button">ログアウト</button>
-    </form>
-  </nav>
-</header>
+<header th:replace="~{fragments/site-header :: siteHeader('diagnosis')}"></header>
 
 <main class="section page diagnosis">
   <p class="eyebrow">SAKE PREFERENCE QUIZ</p>
