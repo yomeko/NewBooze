@@ -26,6 +26,7 @@ public class SakeSearchController {
      * S04: 検索結果一覧画面表示。
      * 外部設計書 4.4の入出力仕様に対応。
      *
+     * @param name    銘柄名の部分一致キーワード
      * @param keyword 味の特徴・風味のキーワード。未入力時は空文字がデフォルトで入る
      * @param type    酒種による絞り込み
      * @param taste   辛口・甘口による絞り込み
@@ -35,6 +36,7 @@ public class SakeSearchController {
      */
     @GetMapping("/search")
     public String search(@RequestParam(defaultValue = "") String keyword,
+                          @RequestParam(defaultValue = "") String name,
                           @RequestParam(defaultValue = "") String type,
                           @RequestParam(defaultValue = "") String taste,
                           @RequestParam(defaultValue = "") String priceRange,
@@ -55,10 +57,11 @@ public class SakeSearchController {
         };
         // 検索結果本体（ページネーション情報込みのSakePageDto）
         model.addAttribute("result", catalogService.search(
-                keyword, type, minPrice, maxPrice, taste, sort, page));
+                keyword, name, type, minPrice, maxPrice, taste, sort, page));
         model.addAttribute("types", catalogService.types());
         // 画面再表示時に検索条件を保持するため、入力値をそのまま画面へ戻す
         model.addAttribute("keyword", keyword);
+        model.addAttribute("name", name);
         model.addAttribute("selectedType", type);
         model.addAttribute("selectedTaste", taste);
         model.addAttribute("selectedPriceRange", priceRange);

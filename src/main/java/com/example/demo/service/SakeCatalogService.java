@@ -32,29 +32,30 @@ public class SakeCatalogService {
     }
 
     @Transactional(readOnly = true)
-    public SakePageDto search(String keyword, String type, Integer minPrice, Integer maxPrice,
+    public SakePageDto search(String keyword, String name, String type, Integer minPrice, Integer maxPrice,
                               String taste, String sortOrder, int requestedPage) {
         String normalizedKeyword = emptyToNull(keyword);
+        String normalizedName = emptyToNull(name);
         String normalizedType = emptyToNull(type);
         String normalizedTaste = emptyToNull(taste);
         int pageNumber = Math.max(0, requestedPage);
         Page<com.example.demo.entity.Sake> page = findPage(
-                normalizedKeyword, normalizedType, minPrice, maxPrice,
+                normalizedKeyword, normalizedName, normalizedType, minPrice, maxPrice,
                 normalizedTaste, sortOrder, pageNumber);
         if (page.getTotalPages() > 0 && pageNumber >= page.getTotalPages()) {
             pageNumber = page.getTotalPages() - 1;
-            page = findPage(normalizedKeyword, normalizedType, minPrice, maxPrice,
+            page = findPage(normalizedKeyword, normalizedName, normalizedType, minPrice, maxPrice,
                     normalizedTaste, sortOrder, pageNumber);
         }
         return new SakePageDto(mapAll(page.getContent()), pageNumber,
                 Math.max(1, page.getTotalPages()), page.getTotalElements());
     }
 
-    private Page<com.example.demo.entity.Sake> findPage(String keyword, String type,
+    private Page<com.example.demo.entity.Sake> findPage(String keyword, String name, String type,
                                                          Integer minPrice, Integer maxPrice,
                                                          String taste, String sortOrder,
                                                          int pageNumber) {
-        return sakeRepository.search(keyword, type, minPrice, maxPrice, taste,
+        return sakeRepository.search(keyword, name, type, minPrice, maxPrice, taste,
                 PageRequest.of(pageNumber, PAGE_SIZE, searchSort(sortOrder)));
     }
 

@@ -19,7 +19,8 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
      * これはSpecification（動的クエリビルダAPI）を使わずに済む簡易な方法だが、
      * 条件が増えると可読性が落ちるため、将来的にはSpecificationへの移行も検討する。
      *
-     * @param keyword    銘柄名の部分一致キーワード（未指定時はnull）
+     * @param name       銘柄名の部分一致キーワード（未指定時はnull）
+     * @param keyword    全体検索キーワード（未指定時はnull）
      * @param sakeTypeName 酒種名（未指定時はnull）
      * @param minPrice   最低価格（未指定時はnull）
      * @param maxPrice   最高価格（未指定時はnull）
@@ -35,6 +36,7 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
                    s.sakeType.name LIKE CONCAT('%', :keyword, '%') OR
                    s.region LIKE CONCAT('%', :keyword, '%') OR
                    s.description LIKE CONCAT('%', :keyword, '%'))
+              AND (:name IS NULL OR s.name LIKE CONCAT('%', :name, '%'))
               AND (:sakeTypeName IS NULL OR s.sakeType.name = :sakeTypeName)
               AND (:minPrice IS NULL OR s.price >= :minPrice)
               AND (:maxPrice IS NULL OR s.price <= :maxPrice)
@@ -45,6 +47,7 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
             """)
     Page<Sake> search(
             @Param("keyword") String keyword,
+            @Param("name") String name,
             @Param("sakeTypeName") String sakeTypeName,
             @Param("minPrice") Integer minPrice,
             @Param("maxPrice") Integer maxPrice,
