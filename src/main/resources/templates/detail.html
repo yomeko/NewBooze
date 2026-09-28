@@ -14,7 +14,6 @@
   <p class="sake-message" role="status" th:if="${success}" th:text="${success}"></p>
   <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <section class="sake-intro" aria-labelledby="sake-name">
-    <p class="sake-eyebrow">一本を知る、日本酒を楽しむ。</p>
     <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
     <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
