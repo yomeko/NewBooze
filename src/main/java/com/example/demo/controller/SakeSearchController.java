@@ -1,6 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.service.SakeCatalogService;
+import com.example.demo.service.SakePageService;
+import com.example.demo.service.SakeInteractionService;
+import com.example.demo.security.CustomUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,9 +21,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class SakeSearchController {
 
     private final SakeCatalogService catalogService;
+    private final SakePageService pages;
+    private final SakeInteractionService interactions;
 
-    public SakeSearchController(SakeCatalogService catalogService) {
+    public SakeSearchController(SakeCatalogService catalogService, SakePageService pages,
+            SakeInteractionService interactions) {
         this.catalogService = catalogService;
+        this.pages = pages;
+        this.interactions = interactions;
     }
 
     /**
@@ -74,11 +83,21 @@ public class SakeSearchController {
      * 該当IDの銘柄が存在しない場合は404(Not Found)を返す。
      */
     @GetMapping("/sake/{id}")
-    public String detail(@PathVariable long id, Model model) {
-        model.addAttribute("sake", catalogService.findById(id)
-                // ResponseStatusExceptionを投げると、Spring MVCが自動でHTTPステータス404の
-                // エラーレスポンスに変換してくれる（専用のExceptionHandlerを書く必要がない）
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+    public String detail(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal, Model model) {
+        var sake = catalogService.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        var page = pages.pageFor(sake);
+        model.addAttribute("sake", sake);
+        model.addAttribute("page", page);
+        model.addAttribute("similar", page.similarIds().stream()
+                .map(catalogService::findById).flatMap(java.util.Optional::stream)
+                .map(pages::pageFor).toList());
+        model.addAttribute("favorite", principal != null && interactions.isFavorite(principal.getUserId(), id));
+        var saved = principal == null ? java.util.Optional.<SakeInteractionService.Review>empty()
+                : interactions.review(principal.getUserId(), id);
+        model.addAttribute("hasReview", saved.isPresent());
+        if (!model.containsAttribute("review"))
+            model.addAttribute("review", saved.orElse(new SakeInteractionService.Review(0, "")));
         return "detail"; // templates/detail.html を返す
     }
 }
