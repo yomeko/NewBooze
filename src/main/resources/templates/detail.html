@@ -10,7 +10,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <!-- タイトルを銘柄名込みで動的に生成 -->
-  <title th:text="|${sake.name} | NEWBOOZE|"></title>
+  <title th:text="${sake.name + ' | NEWBOOZE'}"></title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -50,7 +50,6 @@
     <p>掲載情報は登録された地酒データをもとに表示しています。</p>
   </details>
 
-  <a class="button primary" th:href="@{/diagnosis}">自分に合う日本酒を診断する</a>
 </main>
 
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
