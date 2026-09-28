@@ -18,13 +18,14 @@
     <div class="sake-heading-row">
       <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
       <div class="sake-header-actions">
+		<form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
+		  <input type="hidden" name="selected" th:value="${!favorite}">
+		  <button class="button sake-favorite" type="submit" th:attr="aria-pressed=${favorite},aria-label=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'},title=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}"><span aria-hidden="true" th:text="${favorite ? '♥' : '♡'}"></span></button>
+		</form>
         <th:block th:with="officialLinks=${page.purchaseLinks.?[official]}, purchaseUrl=${#lists.isEmpty(officialLinks) ? page.officialUrl : officialLinks[0].url}">
           <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
         </th:block>
-        <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
-          <input type="hidden" name="selected" th:value="${!favorite}">
-          <button class="button sake-favorite" type="submit" th:attr="aria-pressed=${favorite},aria-label=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'},title=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}"><span aria-hidden="true" th:text="${favorite ? '♥' : '♡'}"></span></button>
-        </form>
+
         <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/login}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
       </div>
     </div>
