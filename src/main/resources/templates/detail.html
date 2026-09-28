@@ -15,6 +15,8 @@
   <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <!-- 商品名・紹介文・操作ボタンを同じsticky領域に入れ、この位置が画面上端に達したらまとめて固定する。 -->
   <section class="sake-intro" aria-labelledby="sake-name">
+    <!-- ページ先頭まで戻らずホームへ移動できるよう、リンクも固定領域に配置する。 -->
+    <a class="sake-home-link" th:href="@{/}"><span aria-hidden="true">← </span>ホームに戻る</a>
     <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
     <div class="sake-heading-row">
       <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
