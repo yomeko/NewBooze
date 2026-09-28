@@ -402,7 +402,13 @@ summary { cursor: pointer; font-weight: 700; }
 .mypage-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:20px; }
 .mypage-card { background:var(--cream); padding:30px; border-top:3px solid var(--gold); box-shadow:0 6px 20px #6d552014; }
 .mypage-card.wide { grid-column:1/-1; }
-.account-link-card .button { display:inline-block; margin-top:10px; text-decoration:none; }
+.profile-hero { flex-wrap:wrap; }
+.profile-hero>div:not(.avatar) { min-width:0; overflow-wrap:anywhere; }
+.account-settings-link { margin-left:auto; text-decoration:none; }
+.account-settings-nav { display:flex; flex-wrap:wrap; gap:12px 24px; margin:24px 0; }
+.account-settings-nav a { color:var(--red); font-weight:700; text-underline-offset:4px; }
+.account-settings-page section[id] { scroll-margin-top:100px; }
+.account-settings-page .profile-image-settings { border-bottom:0; padding-bottom:0; margin-bottom:0; }
 .page-back { margin-bottom:24px; }
 .page-back a { color:var(--red); font-weight:700; }
 .account-settings-page { max-width:1180px; margin:0 auto; }
