@@ -135,6 +135,9 @@ public class MyPageController {
         image.setUser(user);
         image.setImageData(storedImage.data());
         image.setContentType(storedImage.contentType());
+        image.setPositionX(50);
+        image.setPositionY(50);
+        image.setZoom(100);
         profileImages.save(image);
         redirect.addFlashAttribute("success", uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE
                 ? "プロフィール画像を保存可能なサイズに圧縮して変更しました" : "プロフィール画像を変更しました");
