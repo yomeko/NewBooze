@@ -1,10 +1,16 @@
 /* Shared, photo-free sake page. Scoped to avoid changing other screens. */
 .sake-detail { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; overflow-wrap: anywhere; }
-.sake-intro { padding: 40px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.sake-intro { position: sticky; top: 0; z-index: 20; padding: 16px 0; margin-top: 24px; border-bottom: 1px solid var(--line); background: var(--paper); max-height: 45dvh; overflow-y: auto; }
+.sake-intro-actions { padding: 20px 0 28px; }
+.sake-detail-page { padding-bottom: var(--purchase-bar-height, 100px); }
+html:has(.sake-detail-page) { scroll-padding-top: calc(var(--sake-intro-height, 45dvh) + 16px); scroll-padding-bottom: calc(var(--purchase-bar-height, 100px) + 16px); }
+.sake-purchase-bar { position: fixed; inset: auto 0 0; z-index: 30; display: flex; justify-content: center; padding: 12px 24px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--cream); box-shadow: 0 -4px 18px #21201812; }
+.sake-purchase-bar .button { width: min(100%, 480px); margin: 0; text-align: center; white-space: normal; }
+.sake-purchase-bar :focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
 .sake-eyebrow { font-size: .8rem; letter-spacing: .15em; color: var(--red); margin: 0 0 32px; }
 .sake-brewery { color: #625b50; margin-bottom: 6px; }
 .sake-intro h1 { font-family: 'Shippori Mincho', serif; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.5; margin: 0 0 20px; }
-.sake-introduction { max-width: 42em; font-size: 1.05rem; line-height: 2; margin-bottom: 28px; }
+.sake-introduction { max-width: 42em; font-size: 1.05rem; line-height: 2; margin: 0; }
 .sake-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sake-actions form { margin: 0; }
 .sake-detail .button { margin: 0; font: inherit; cursor: pointer; text-align: center; white-space: normal; }
@@ -42,7 +48,7 @@
   .sake-detail { padding: 24px 16px 48px; }
   .sake-info-grid { grid-template-columns: 1fr; gap: 16px; }
   .sake-panel { padding: 20px; }
-  .sake-intro { padding-top: 28px; }
+  .sake-intro { margin-top: 16px; }
   .sake-actions { align-items: stretch; }
   .sake-actions > *, .sake-actions form button { width: 100%; }
 }
