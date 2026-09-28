@@ -810,6 +810,11 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   box-shadow: 0 3px 18px #0002;
 }
 
+.home-page > .site-header {
+  position: sticky;
+  top: 0;
+}
+
 .header-main {
   width: min(100%, 1440px);
   min-height: 78px;
