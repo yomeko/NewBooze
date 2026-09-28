@@ -3,6 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title th:text="${(#strings.isEmpty(page.name) ? sake.name : page.name) + ' | NEWBOOZE'}"></title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <link rel="stylesheet" th:href="@{/css/sake-detail.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('search')}"></header>
+<main class="sake-detail">
+  <a class="back" th:href="@{/search}">← 日本酒をさがす</a>
+  <p class="sake-message" role="status" th:if="${success}" th:text="${success}"></p>
+  <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
+  <section class="sake-intro" aria-labelledby="sake-name">
+    <p class="sake-eyebrow">一本を知る、日本酒を楽しむ。</p>
+    <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
+    <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
+    <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
+    <div class="sake-actions">
+      <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
+        <input type="hidden" name="selected" th:value="${!favorite}">
+        <button class="button" type="submit" th:attr="aria-pressed=${favorite}" th:text="${favorite ? '♥ お気に入り登録済み（解除）' : '♡ お気に入りに追加'}"></button>
+      </form>
+      <a sec:authorize="isAnonymous()" class="button" th:href="@{/login}">♡ ログインしてお気に入りに追加</a>
+      <a class="button" href="#review">☆ 評価・コメント</a>
+      <a class="button primary" th:if="${!#lists.isEmpty(page.purchaseLinks)}" href="#purchase">購入先を見る</a>
+    </div>
+  </section>
+
+  <div class="sake-info-grid">
+    <section class="sake-panel" th:if="${!#lists.isEmpty(page.taste) or !#lists.isEmpty(page.aroma)}">
+      <h2>どんな味わい？</h2>
+      <div th:if="${!#lists.isEmpty(page.taste)}"><h3>味わい</h3><ul class="sake-chips"><li th:each="item : ${page.taste}" th:text="${item}"></li></ul></div>
+      <div th:if="${!#lists.isEmpty(page.aroma)}"><h3>香り</h3><ul class="sake-chips"><li th:each="item : ${page.aroma}" th:text="${item}"></li></ul></div>
+    </section>
+    <section class="sake-panel" th:if="${!#lists.isEmpty(page.recommendedFor)}">
+      <h2>こんな人におすすめ</h2><ul class="sake-list"><li th:each="item : ${page.recommendedFor}" th:text="${item}"></li></ul>
+    </section>
+    <section class="sake-panel" th:if="${!#lists.isEmpty(page.drinking)}">
+      <h2>おすすめの飲み方</h2><ul class="sake-list"><li th:each="item : ${page.drinking}" th:text="${item}"></li></ul>
+    </section>
+    <section class="sake-panel" th:if="${!#lists.isEmpty(page.food)}">
+      <h2>合う料理</h2><ul class="sake-list"><li th:each="item : ${page.food}" th:text="${item}"></li></ul>
+    </section>
+  </div>
+
   <section class="sake-panel sake-purchase" id="purchase" th:if="${!#lists.isEmpty(page.prices) or !#lists.isEmpty(page.purchaseLinks)}">
     <h2>価格・購入先</h2>
     <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">
@@ -34,7 +77,6 @@
   <section class="sake-related" th:if="${!#lists.isEmpty(similar)}">
     <h2>似ている日本酒</h2><ul><li th:each="item : ${similar}"><a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}"></a></li></ul>
   </section>
->>>>>>> refs/remotes/origin/master
 </main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
