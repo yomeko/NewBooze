@@ -83,7 +83,9 @@ public class SakeSearchController {
      * 該当IDの銘柄が存在しない場合は404(Not Found)を返す。
      */
     @GetMapping("/sake/{id}")
-    public String detail(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal, Model model) {
+    public String detail(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal,
+            @RequestParam(defaultValue = "newest") String reviewSort,
+            @RequestParam(defaultValue = "0") int reviewPage, Model model) {
         var sake = catalogService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var page = pages.pageFor(sake);
@@ -96,8 +98,9 @@ public class SakeSearchController {
         var saved = principal == null ? java.util.Optional.<SakeInteractionService.Review>empty()
                 : interactions.review(principal.getUserId(), id);
         model.addAttribute("hasReview", saved.isPresent());
+        model.addAttribute("publicReviews", interactions.publicReviews(id, reviewSort, reviewPage));
         if (!model.containsAttribute("review"))
-            model.addAttribute("review", saved.orElse(new SakeInteractionService.Review(0, "")));
+            model.addAttribute("review", saved.orElse(new SakeInteractionService.Review(0, "", true)));
         return "detail"; // templates/detail.html を返す
     }
 }

@@ -28,6 +28,8 @@ public record Sake(
         int price,
         String description,
         String imageUrl,
-        Map<String, Integer> tagScores
+        Map<String, Integer> tagScores,
+        Double averageRating,
+        long reviewCount
 ) {
 }

@@ -18,6 +18,7 @@
     <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
     <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
+    <p th:if="${publicReviews.total > 0}"><a href="#public-reviews" th:text="|★ ${#numbers.formatDecimal(publicReviews.average, 1, 1)} / 5（${publicReviews.total}件の評価）|"></a></p>
     <div class="sake-actions">
       <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
         <input type="hidden" name="selected" th:value="${!favorite}">
@@ -58,9 +59,33 @@
   </section>
   <p class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><a th:href="${page.officialUrl}" target="_blank" rel="noopener noreferrer">もっと詳しく：酒造の公式サイト ↗<span class="visually-hidden">（新しいタブで開く）</span></a></p>
 
+  <section class="sake-panel" id="public-reviews" aria-labelledby="public-reviews-title">
+    <h2 id="public-reviews-title">みんなの評価・コメント</h2>
+    <p th:if="${publicReviews.total > 0}" th:text="|平均 ★ ${#numbers.formatDecimal(publicReviews.average, 1, 1)} / 5 · ${publicReviews.total}件|"></p>
+    <p th:if="${publicReviews.total == 0}" class="sake-note">まだ公開された評価はありません。</p>
+    <form class="review-sort" method="get" th:action="@{/sake/{id}#public-reviews(id=${sake.id})}">
+      <label for="review-sort">レビューの並び順</label>
+      <select id="review-sort" name="reviewSort">
+        <option value="newest" th:selected="${publicReviews.sort == 'newest'}">新しい順（更新日）</option>
+        <option value="ratingDesc" th:selected="${publicReviews.sort == 'ratingDesc'}">評価が高い順</option>
+        <option value="ratingAsc" th:selected="${publicReviews.sort == 'ratingAsc'}">評価が低い順</option>
+      </select>
+      <button class="button" type="submit">並べ替える</button>
+    </form>
+    <article class="public-review" th:each="item : ${publicReviews.content}">
+      <div class="public-review-meta"><strong th:text="${item.displayName}"></strong><span th:text="|★ ${item.rating} / 5|"></span><time th:datetime="${item.updatedAt}" th:text="${#temporals.format(item.updatedAt, 'yyyy/MM/dd HH:mm')}"></time></div>
+      <p th:if="${!#strings.isEmpty(item.comment)}" th:text="${item.comment}"></p>
+    </article>
+    <nav class="review-pagination" aria-label="レビューのページ" th:if="${publicReviews.totalPages > 1}">
+      <a th:if="${publicReviews.hasPrevious}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber - 1})} + '#public-reviews'">← 前へ</a>
+      <span th:text="|${publicReviews.pageNumber + 1} / ${publicReviews.totalPages}ページ|"></span>
+      <a th:if="${publicReviews.hasNext}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber + 1})} + '#public-reviews'">次へ →</a>
+    </nav>
+  </section>
+
   <section class="sake-panel" id="review" aria-labelledby="review-title">
     <h2 id="review-title">自分の評価・コメント</h2>
-    <p class="sake-note">飲んだ感想を残しましょう。保存した内容は自分だけに表示されます。</p>
+    <p class="sake-note">公開すると、表示名・星・コメント・更新日が誰でも見られるようになり、平均評価に反映されます。</p>
     <p sec:authorize="isAnonymous()"><a th:href="@{/login}">ログインして評価する</a></p>
     <th:block sec:authorize="isAuthenticated()">
       <form class="sake-review-form" th:action="@{/mypage/sake/{id}/review(id=${sake.id})}" method="post">
@@ -69,6 +94,7 @@
         </div></fieldset>
         <label for="review-comment">コメント <span class="sake-note">（任意・500文字以内）</span></label>
         <textarea id="review-comment" name="comment" maxlength="500" rows="4" placeholder="香りや味わい、合わせた料理など" th:text="${review.comment}"></textarea>
+        <label class="review-visibility"><input type="checkbox" name="published" value="true" th:checked="${review.published}"> みんなに公開する（外すと自分だけに表示）</label>
         <button class="button primary" type="submit" th:text="${hasReview ? '評価を更新する' : '評価を保存する'}"></button>
       </form>
       <form class="sake-review-delete" th:if="${hasReview}" th:action="@{/mypage/sake/{id}/review/delete(id=${sake.id})}" method="post"><button class="button" type="submit">評価・コメントを削除する</button></form>

@@ -27,13 +27,14 @@ public class SakeInteractionController {
     @PostMapping("/review")
     public String review(@PathVariable long id, @RequestParam int rating,
             @RequestParam(defaultValue = "") String comment,
+            @RequestParam(defaultValue = "false") boolean published,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         try {
-            interactions.saveReview(principal.getUserId(), id, rating, comment);
+            interactions.saveReview(principal.getUserId(), id, rating, comment, published);
             redirect.addFlashAttribute("success", "評価を保存しました。");
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
-            redirect.addFlashAttribute("review", new SakeInteractionService.Review(rating, comment));
+            redirect.addFlashAttribute("review", new SakeInteractionService.Review(rating, comment, published));
         }
         return "redirect:/sake/" + id + "#review";
     }

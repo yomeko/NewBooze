@@ -46,3 +46,13 @@
   .sake-actions { align-items: stretch; }
   .sake-actions > *, .sake-actions form button { width: 100%; }
 }
+
+.review-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
+.review-sort select { width: auto; max-width: 100%; padding: 10px; font: inherit; }
+.public-review { border-top: 1px solid var(--line); padding: 20px 0; }
+.public-review-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+.public-review-meta time { color: #625b50; font-size: .8rem; }
+.public-review p { white-space: pre-wrap; margin: 10px 0 0; }
+.review-pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+.review-visibility { display: flex; align-items: center; gap: 8px; }
+.review-visibility input { width: auto; accent-color: var(--red); }

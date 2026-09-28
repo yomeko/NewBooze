@@ -14,7 +14,7 @@ class SakePageServiceTests {
         return new SakePageService(JsonMapper.builder().build(), new ByteArrayResource(json.getBytes(StandardCharsets.UTF_8)));
     }
     private Sake sake(long id) {
-        return new Sake(id, "元の銘柄名", "元の酒造", "", "", "", 0, 0, "", "", Map.of());
+        return new Sake(id, "元の銘柄名", "元の酒造", "", "", "", 0, 0, "", "", Map.of(), null, 0);
     }
     @Test void omitsBlankFieldsAndPrioritizesOfficialShop() throws Exception {
         var service = load("""

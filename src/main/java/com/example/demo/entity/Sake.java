@@ -34,6 +34,15 @@ public class Sake {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @org.hibernate.annotations.Formula("(select avg(r.rating) from sake_reviews r where r.sake_id = id and r.published = 1)")
+    private Double averageRating;
+
+    @org.hibernate.annotations.Formula("(select count(*) from sake_reviews r where r.sake_id = id and r.published = 1)")
+    private Long reviewCount;
+
+    @org.hibernate.annotations.Formula("(case when exists (select 1 from sake_reviews r where r.sake_id = id and r.published = 1) then 1 else 0 end)")
+    private Integer hasPublicReviews;
+
     /** 蔵元。新SQLでは未登録の銘柄も許容されるためnullable。 */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brewery_id")

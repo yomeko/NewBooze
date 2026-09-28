@@ -66,6 +66,9 @@
       <label for="search-sort">並び順</label>
       <select id="search-sort" name="sort">
         <option value="recommended" th:selected="${selectedSort == 'recommended'}">おすすめ</option>
+        <option value="ratingDesc" th:selected="${selectedSort == 'ratingDesc'}">平均評価が高い順</option>
+        <option value="ratingAsc" th:selected="${selectedSort == 'ratingAsc'}">平均評価が低い順</option>
+        <option value="reviewCount" th:selected="${selectedSort == 'reviewCount'}">評価件数が多い順</option>
         <option value="priceAsc" th:selected="${selectedSort == 'priceAsc'}">安い順</option>
         <option value="priceDesc" th:selected="${selectedSort == 'priceDesc'}">高い順</option>
         <option value="newest" th:selected="${selectedSort == 'newest'}">新着順</option>
@@ -82,6 +85,8 @@
     <article class="sake-card" th:each="sake : ${result.content}">
       <p class="badge" th:text="${sake.type}"></p>
       <h2 th:text="${sake.name}"></h2>
+      <p th:if="${sake.reviewCount > 0}" th:text="|★ ${#numbers.formatDecimal(sake.averageRating, 1, 1)} / 5（${sake.reviewCount}件）|"></p>
+      <p class="muted" th:unless="${sake.reviewCount > 0}">まだ評価がありません</p>
       <p class="muted" th:if="${!#strings.isEmpty(sake.breweryName)}" th:text="|蔵元：${sake.breweryName}|"></p>
       <!-- リテラル置換構文(|...|)の中に、numbers.formatIntegerでカンマ区切りの価格表示を組み込む -->
       <p class="muted" th:text="|${sake.region} ・ ${sake.abv}% ・ ${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></p>

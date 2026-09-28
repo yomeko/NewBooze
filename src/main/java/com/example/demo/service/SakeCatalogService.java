@@ -62,6 +62,9 @@ public class SakeCatalogService {
     /** 画面から受け取る値をホワイトリストで安全なSortに変換する。 */
     private Sort searchSort(String sortOrder) {
         return switch (sortOrder == null ? "recommended" : sortOrder) {
+            case "ratingDesc" -> Sort.by(Sort.Order.desc("hasPublicReviews"), Sort.Order.desc("averageRating"), Sort.Order.desc("reviewCount"), Sort.Order.asc("id"));
+            case "ratingAsc" -> Sort.by(Sort.Order.desc("hasPublicReviews"), Sort.Order.asc("averageRating"), Sort.Order.desc("reviewCount"), Sort.Order.asc("id"));
+            case "reviewCount" -> Sort.by(Sort.Order.desc("reviewCount"), Sort.Order.desc("averageRating"), Sort.Order.asc("id"));
             case "priceAsc" -> Sort.by(Sort.Order.asc("price"), Sort.Order.asc("id"));
             case "priceDesc" -> Sort.by(Sort.Order.desc("price"), Sort.Order.asc("id"));
             case "newest" -> Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
@@ -127,7 +130,7 @@ public class SakeCatalogService {
                 entity.getRegion(), entity.getAbv() == null ? 0 : entity.getAbv().doubleValue(),
                 entity.getPrice() == null ? 0 : entity.getPrice(), entity.getDescription(),
                 entity.getImageUrl(),
-                Map.copyOf(tags));
+                Map.copyOf(tags), entity.getAverageRating(), entity.getReviewCount() == null ? 0 : entity.getReviewCount());
     }
 
     private static String emptyToNull(String value) {
