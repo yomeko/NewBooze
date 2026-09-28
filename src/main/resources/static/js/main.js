@@ -76,6 +76,22 @@ document.addEventListener('DOMContentLoaded', () => {
     submit.hidden = step !== questions.length - 1;       // 最後の設問でのみ「結果を見る」を表示
   };
 
+  // 設問ごとに回答を保持し、選択したら次の設問へ進む。
+  questions.forEach((question, index) => {
+    question.querySelectorAll('input[type="radio"]').forEach(radio => {
+      radio.addEventListener('click', () => {
+        if (index !== step || !radio.checked) return;
+        const answer = question.querySelector('input[type="hidden"][name="choice"]');
+        answer.value = radio.value;
+        answer.disabled = false;
+        if (step < questions.length - 1) {
+          step++;
+          render();
+        }
+      });
+    });
+  });
+
   next.addEventListener('click', () => {
     // 未回答のまま次へ進ませない簡易バリデーション（サーバー側のth:requiredとは別に、
     // 途中の設問でも回答漏れに早く気づけるようクライアント側でもチェックする）

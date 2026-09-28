@@ -24,7 +24,7 @@
 
   <!--
     DiagnosisController.result()（POST /diagnosis/result）へ回答を送信するフォーム。
-    各設問は name="choice" のラジオボタンで、複数の設問分がまとめて
+    各設問の回答は name="choice" のhidden入力に保持し、複数の設問分がまとめて
     List<Long> choices として受け取られる（同名name属性の値は配列的に集約される）。
 
     th:each="question, state : ${questions}" の state はイテレーション状態変数で、
@@ -34,6 +34,7 @@
   <form method="post" th:action="@{/diagnosis/result}" id="diagnosis-form">
     <fieldset th:each="question, state : ${questions}" class="question" th:data-step="${state.index}">
       <legend th:text="|Q${state.index + 1}. ${question.text}|"></legend>
+      <input type="hidden" name="choice" disabled>
       <label th:each="choice : ${question.choices}">
         <!--
           th:required="${state.index == 0}"：
@@ -41,7 +42,7 @@
           2問目以降は表示自体がJSで制御されるため、ブラウザの標準バリデーションに頼らず、
           main.js側の「未選択なら次へ進ませない」チェックで代用している。
         -->
-        <input type="radio" name="choice" th:value="${choice.id}" th:required="${state.index == 0}">
+        <input type="radio" th:name="|question-${state.index}|" th:value="${choice.id}" th:required="${state.index == 0}">
         <span th:text="${choice.text}"></span>
       </label>
     </fieldset>
