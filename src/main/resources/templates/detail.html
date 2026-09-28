@@ -1,57 +1,41 @@
-<!--
-  S05: 地酒詳細画面
-  外部設計書 3.3 S05：名称・酒種・産地・度数・価格・説明文・画像を表示し、
-  詳細情報はDisclosure Triangle（<details>/<summary>）で開閉表示する。
-  ※出田担当の本番デザインに置き換え予定の暫定テンプレート。
--->
 <!doctype html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <!-- タイトルを銘柄名込みで動的に生成 -->
-  <title th:text="${sake.name + ' | NEWBOOZE'}"></title>
-  <link rel="stylesheet" th:href="@{/css/style.css}">
-</head>
-<body>
-
-<header th:replace="~{fragments/site-header :: siteHeader('search')}"></header>
-
-<main class="section page detail">
-  <a class="back" th:href="@{/search}">← 検索結果へ戻る</a>
-
-  <p class="badge" th:text="${sake.type}"></p>
-  <h1 th:text="${sake.name}"></h1>
-  <p class="lead" th:text="${sake.description}"></p>
-
-  <!-- 常時表示するスペック情報（外部設計書 7.2「常時表示項目」） -->
-  <dl class="spec">
-    <div th:if="${!#strings.isEmpty(sake.breweryName)}"><dt>蔵元</dt><dd th:text="${sake.breweryName}"></dd></div>
-    <div th:if="${!#strings.isEmpty(sake.breweryPrefecture)}"><dt>蔵元所在地</dt><dd th:text="${sake.breweryPrefecture}"></dd></div>
-    <div><dt>産地</dt><dd th:text="${sake.region}"></dd></div>
-    <div><dt>アルコール度数</dt><dd th:text="|${sake.abv}%|"></dd></div>
-    <div><dt>参考価格</dt><dd th:text="|${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></dd></div>
-  </dl>
-
-  <!--
-    Disclosure Triangle（開閉パネル）による詳細情報表示。
-    open属性付きの1つ目は初期状態で開いた状態にしている（味わいの特徴は主要情報のため）。
-  -->
-  <details open>
-    <summary>味わいの特徴</summary>
-    <!-- sake.tagScores（タグ名→強さのMap）をth:eachでそのままキー・値のペアとして展開 -->
-    <div class="tag-list">
-      <span th:each="tag : ${sake.tagScores}" th:text="|${tag.key} ${tag.value}/5|"></span>
+  <section class="sake-panel sake-purchase" id="purchase" th:if="${!#lists.isEmpty(page.prices) or !#lists.isEmpty(page.purchaseLinks)}">
+    <h2>価格・購入先</h2>
+    <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">
+      <li th:each="price : ${page.prices}"><span th:if="${!#strings.isEmpty(price.volume)}" th:text="${price.volume}"></span><strong th:if="${price.yen != null}" th:text="|${#numbers.formatInteger(price.yen, 1, 'COMMA')}円（税込）|"></strong></li>
+    </ul>
+    <p class="sake-note" th:if="${!#lists.isEmpty(page.prices)}">参考価格です。最新の価格・在庫は購入先でご確認ください。</p>
+    <div class="sake-actions" th:if="${!#lists.isEmpty(page.purchaseLinks)}">
+      <a th:each="link : ${page.purchaseLinks}" class="button" th:classappend="${link.official ? 'primary' : ''}" th:href="${link.url}" rel="noopener noreferrer" target="_blank"><span th:if="${link.official}">公式 · </span><span th:text="${link.label}"></span><span aria-hidden="true"> ↗</span><span class="visually-hidden">（新しいタブで開く）</span></a>
     </div>
-  </details>
+  </section>
+  <p class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><a th:href="${page.officialUrl}" target="_blank" rel="noopener noreferrer">もっと詳しく：酒造の公式サイト ↗<span class="visually-hidden">（新しいタブで開く）</span></a></p>
 
-  <details>
-    <summary>この銘柄について</summary>
-    <p>掲載情報は登録された地酒データをもとに表示しています。</p>
-  </details>
-
+  <section class="sake-panel" id="review" aria-labelledby="review-title">
+    <h2 id="review-title">自分の評価・コメント</h2>
+    <p class="sake-note">飲んだ感想を残しましょう。保存した内容は自分だけに表示されます。</p>
+    <p sec:authorize="isAnonymous()"><a th:href="@{/login}">ログインして評価する</a></p>
+    <th:block sec:authorize="isAuthenticated()">
+      <form class="sake-review-form" th:action="@{/mypage/sake/{id}/review(id=${sake.id})}" method="post">
+        <fieldset><legend>星の数（必須）</legend><div class="sake-rating">
+          <label th:each="score : ${#numbers.sequence(1, 5)}"><input type="radio" name="rating" th:value="${score}" th:checked="${review.rating == score}" required><span th:text="|${score} ★|"></span></label>
+        </div></fieldset>
+        <label for="review-comment">コメント <span class="sake-note">（任意・500文字以内）</span></label>
+        <textarea id="review-comment" name="comment" maxlength="500" rows="4" placeholder="香りや味わい、合わせた料理など" th:text="${review.comment}"></textarea>
+        <button class="button primary" type="submit" th:text="${hasReview ? '評価を更新する' : '評価を保存する'}"></button>
+      </form>
+      <form class="sake-review-delete" th:if="${hasReview}" th:action="@{/mypage/sake/{id}/review/delete(id=${sake.id})}" method="post"><button class="button" type="submit">評価・コメントを削除する</button></form>
+    </th:block>
+  </section>
+  <section class="sake-related" th:if="${!#lists.isEmpty(similar)}">
+    <h2>似ている日本酒</h2><ul><li th:each="item : ${similar}"><a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}"></a></li></ul>
+  </section>
+>>>>>>> refs/remotes/origin/master
 </main>
-
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 </body>

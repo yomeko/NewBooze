@@ -1,0 +1,172 @@
+[
+  {
+    "id": 1,
+    "name": "獺祭 純米大吟醸45",
+    "introduction": "山田錦を使い、米の外側を磨いて造る純米大吟醸。お米から生まれるほのかな甘さと、広がる香りが持ち味です。香りと甘みを楽しみたい方の最初の一本に。少し冷やして、小ぶりのワイングラスでも楽しめます。",
+    "brewery": "株式会社 獺祭",
+    "taste": [
+      "お米のやさしい甘み"
+    ],
+    "aroma": [
+      "華やか"
+    ],
+    "prices": [
+      {
+        "volume": "720ml",
+        "yen": 2475
+      }
+    ],
+    "drinking": [
+      "10〜12℃を目安に、少し冷やして",
+      "小ぶりのワイングラスで香りを楽しむ"
+    ],
+    "food": [],
+    "recommendedFor": [
+      "日本酒の香りと、お米の甘みを楽しんでみたい人"
+    ],
+    "officialUrl": "https://dassai.com/product/main/45.html",
+    "similarIds": [],
+    "purchaseLinks": [
+      {
+        "label": "獺祭 直販サイト（720ml）",
+        "url": "https://www.dassaistore.com/product-detail/47",
+        "official": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "新政 No.6",
+    "introduction": "爽やかな酸味とみずみずしい口当たりを楽しめる生酒です。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 3,
+    "name": "十四代 本丸",
+    "introduction": "やさしい旨みと上品な甘みが広がる、なめらかな味わいです。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 4,
+    "name": "黒龍 いっちょらい",
+    "introduction": "すっきりとした切れ味と、穏やかな吟醸香のバランスが魅力です。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 5,
+    "name": "而今 特別純米",
+    "introduction": "果実感のある香りに、米のふくらみと心地よい余韻が続きます。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 6,
+    "name": "田酒 特別純米",
+    "introduction": "米の旨みをしっかり感じられる、落ち着いた食中酒です。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 7,
+    "name": "出羽桜 桜花吟醸",
+    "introduction": "華やかな香りと軽やかな飲み口で、日本酒入門にもおすすめです。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 8,
+    "name": "八海山 特別本醸造",
+    "introduction": "淡麗でキレが良く、料理に寄り添うすっきりした味わいです。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 9,
+    "name": "風の森 秋津穂",
+    "introduction": "微発泡感と鮮やかな酸味を持つ、瑞々しい純米酒です。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  },
+  {
+    "id": 10,
+    "name": "鍋島 特別純米",
+    "introduction": "ジューシーな甘みとほどよい酸味を備えた、親しみやすい一本です。",
+    "brewery": "",
+    "taste": [],
+    "aroma": [],
+    "prices": [],
+    "drinking": [],
+    "food": [],
+    "recommendedFor": [],
+    "officialUrl": "",
+    "similarIds": [],
+    "purchaseLinks": []
+  }
+]

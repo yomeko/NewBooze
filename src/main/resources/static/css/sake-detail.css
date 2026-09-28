@@ -1,0 +1,48 @@
+/* Shared, photo-free sake page. Scoped to avoid changing other screens. */
+.sake-detail { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; overflow-wrap: anywhere; }
+.sake-intro { padding: 40px 0 36px; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+.sake-eyebrow { font-size: .8rem; letter-spacing: .15em; color: var(--red); margin: 0 0 32px; }
+.sake-brewery { color: #625b50; margin-bottom: 6px; }
+.sake-intro h1 { font-family: 'Shippori Mincho', serif; font-size: clamp(1.9rem, 5vw, 3rem); line-height: 1.5; margin: 0 0 20px; }
+.sake-introduction { max-width: 42em; font-size: 1.05rem; line-height: 2; margin-bottom: 28px; }
+.sake-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.sake-actions form { margin: 0; }
+.sake-detail .button { margin: 0; font: inherit; cursor: pointer; text-align: center; white-space: normal; }
+.sake-detail .button[aria-pressed='true'] { border-color: var(--red); color: var(--red); }
+.sake-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.sake-panel { padding: 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--cream); margin-bottom: 24px; }
+.sake-info-grid .sake-panel { margin: 0; }
+.sake-detail h2 { font-size: 1.2rem; margin: 0 0 18px; }
+.sake-detail h3 { font-size: .85rem; color: #625b50; margin: 18px 0 8px; }
+.sake-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.sake-chips li { background: #eee8db; border-radius: 6px; padding: 5px 12px; }
+.sake-list { padding-left: 1.3em; margin: 0; }
+.sake-list li + li { margin-top: 8px; }
+.sake-purchase { margin-top: 24px; }
+.sake-price-list { list-style: none; padding: 0; }
+.sake-price-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 0; }
+.sake-note { font-size: .85rem; color: #625b50; }
+.sake-official { margin: 24px 0 32px; }
+.sake-detail a:not(.button):not(.back) { color: var(--red); text-underline-offset: 4px; }
+.sake-review-form { display: grid; gap: 14px; }
+.sake-review-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.sake-rating { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.sake-rating label { display: flex; align-items: center; gap: 5px; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+.sake-rating label:has(input:checked) { background: #f3e5cb; border-color: #8d6323; }
+.sake-rating input { accent-color: var(--red); width: auto; margin: 0; }
+.sake-review-form textarea { width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 6px; padding: 12px; font: inherit; background: white; color: var(--ink); }
+.sake-review-form button { justify-self: start; }
+.sake-review-delete { margin-top: 12px; }
+.sake-message { padding: 12px 18px; background: #e6efdf; border-radius: 8px; }
+.sake-error { background: #f7e0dc; }
+.sake-related { margin-top: 32px; }
+.sake-related ul { padding-left: 1.3em; }
+.sake-detail :focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
+@media (max-width: 600px) {
+  .sake-detail { padding: 24px 16px 48px; }
+  .sake-info-grid { grid-template-columns: 1fr; gap: 16px; }
+  .sake-panel { padding: 20px; }
+  .sake-intro { padding-top: 28px; }
+  .sake-actions { align-items: stretch; }
+  .sake-actions > *, .sake-actions form button { width: 100%; }
+}
