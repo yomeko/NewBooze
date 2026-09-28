@@ -25,7 +25,9 @@
       </form>
       <a sec:authorize="isAnonymous()" class="button" th:href="@{/login}">♡ ログインしてお気に入りに追加</a>
       <a class="button" href="#review">☆ 評価・コメント</a>
-      <a class="button primary" th:if="${!#lists.isEmpty(page.purchaseLinks)}" href="#purchase">購入先を見る</a>
+      <th:block th:with="officialLinks=${page.purchaseLinks.?[official]}, purchaseUrl=${#lists.isEmpty(officialLinks) ? page.officialUrl : officialLinks[0].url}">
+        <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
+      </th:block>
     </div>
   </section>
 
@@ -46,16 +48,6 @@
     </section>
   </div>
 
-  <section class="sake-panel sake-purchase" id="purchase" th:if="${!#lists.isEmpty(page.prices) or !#lists.isEmpty(page.purchaseLinks)}">
-    <h2>価格・購入先</h2>
-    <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">
-      <li th:each="price : ${page.prices}"><span th:if="${!#strings.isEmpty(price.volume)}" th:text="${price.volume}"></span><strong th:if="${price.yen != null}" th:text="|${#numbers.formatInteger(price.yen, 1, 'COMMA')}円（税込）|"></strong></li>
-    </ul>
-    <p class="sake-note" th:if="${!#lists.isEmpty(page.prices)}">参考価格です。最新の価格・在庫は購入先でご確認ください。</p>
-    <div class="sake-actions" th:if="${!#lists.isEmpty(page.purchaseLinks)}">
-      <a th:each="link : ${page.purchaseLinks}" class="button" th:classappend="${link.official ? 'primary' : ''}" th:href="${link.url}" rel="noopener noreferrer" target="_blank"><span th:if="${link.official}">公式 · </span><span th:text="${link.label}"></span><span aria-hidden="true"> ↗</span><span class="visually-hidden">（新しいタブで開く）</span></a>
-    </div>
-  </section>
   <p class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><a th:href="${page.officialUrl}" target="_blank" rel="noopener noreferrer">もっと詳しく：酒造の公式サイト ↗<span class="visually-hidden">（新しいタブで開く）</span></a></p>
 
   <section class="sake-panel" id="public-reviews" aria-labelledby="public-reviews-title">

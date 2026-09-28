@@ -39,8 +39,10 @@ class SakeDetailTests {
     @Test void rendersJsonWithoutPhotosAndHidesMissingSections() throws Exception {
         mvc.perform(get("/sake/1")).andExpect(status().isOk())
             .andExpect(content().string(containsString("株式会社 獺祭")))
-            .andExpect(content().string(containsString("2,475円（税込）")))
-            .andExpect(content().string(containsString("https://www.dassaistore.com/product-detail/47")))
+            .andExpect(content().string(not(containsString("2,475円（税込）"))))
+            .andExpect(content().string(not(containsString("価格・購入先"))))
+            .andExpect(content().string(containsString("href=\"https://www.dassaistore.com/product-detail/47\"")))
+            .andExpect(content().string(not(containsString("href=\"#purchase\""))))
             .andExpect(content().string(not(containsString("<img"))))
             .andExpect(content().string(not(containsString("合う料理"))));
         mvc.perform(get("/sake/2")).andExpect(status().isOk())
