@@ -51,6 +51,18 @@ class SakeDetailTests {
         mvc.perform(get("/sake/9223372036854775807")).andExpect(status().isNotFound());
     }
 
+    @Test void purchaseAndFavoriteStayInsideStickyHeader() throws Exception {
+        for (var request : java.util.List.of(get("/sake/1"), get("/sake/1").with(user(account())))) {
+            String html = mvc.perform(request).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+            int start = html.indexOf("<section class=\"sake-intro\"");
+            String header = html.substring(start, html.indexOf("</section>", start));
+            assertThat(header).contains("sake-favorite", "https://www.dassaistore.com/product-detail/47");
+            assertThat(header.indexOf("sake-favorite")).isLessThan(header.indexOf("https://www.dassaistore.com/product-detail/47"));
+            assertThat(html).doesNotContain("sake-purchase-bar");
+        }
+    }
+
     @Test void reviewPersistsUpdatesEscapesTextAndIsPrivate() throws Exception {
         var owner = account();
         var other = account();
