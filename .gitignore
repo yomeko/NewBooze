@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# このPCだけのDB接続設定
+/application-local.properties
