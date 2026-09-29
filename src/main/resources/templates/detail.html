@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title th:text="${(#strings.isEmpty(page.name) ? sake.name : page.name) + ' | NEWBOOZE'}"></title>
+  <title th:text="${(#strings.isEmpty(page.name) ? sake.name : page.name) + ' | 一升の出会い'}"></title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
   <link rel="stylesheet" th:href="@{/css/sake-detail.css}">
 </head>
@@ -106,7 +106,7 @@
     <h2>似ている日本酒</h2><ul><li th:each="item : ${similar}"><a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}"></a></li></ul>
   </section>
 </main>
-<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>NEWBOOZE — 日本酒との新しい出会い</span></footer>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/sake-detail.js}"></script>
 </body>

@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  *  起動していないとこのテストも失敗する）
  */
 @SpringBootTest
-class NewBoozeApplicationTests {
+class IsshoNoDeaiApplicationTests {
 
 	@Test
 	void contextLoads() {

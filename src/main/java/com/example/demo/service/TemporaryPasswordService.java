@@ -45,7 +45,7 @@ public class TemporaryPasswordService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromAddress);
         message.setTo(user.getEmail());
-        message.setSubject("[NEWBOOZE] 仮パスワードのお知らせ");
+        message.setSubject("[一升の出会い] 仮パスワードのお知らせ");
         message.setText(user.getName() + " さん\n\n"
                 + "仮パスワードを発行しました。\n\n"
                 + "仮パスワード: " + temporaryPassword + "\n\n"
