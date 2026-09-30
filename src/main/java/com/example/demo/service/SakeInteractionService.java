@@ -28,7 +28,8 @@ public class SakeInteractionService {
     }
 
     public record Review(int rating, String comment, boolean published) {}
-    public record PublicReview(String displayName, int rating, String comment, java.time.LocalDateTime updatedAt) {}
+    public record PublicReview(long userId, String displayName, boolean hasProfileImage,
+            int positionX, int positionY, int zoom, int rating, String comment, java.time.LocalDateTime updatedAt) {}
     public record ReviewPage(java.util.List<PublicReview> content, long total, double average,
             int pageNumber, int totalPages, String sort) {
         public boolean hasPrevious() { return pageNumber > 0; }
@@ -53,10 +54,15 @@ public class SakeInteractionService {
         int totalPages = (int) Math.max(1, (total + 9) / 10);
         int page = Math.clamp(requestedPage, 0, totalPages - 1);
         var content = jdbc.query("""
-                SELECT u.name, r.rating, r.comment, r.updated_at FROM sake_reviews r
-                JOIN users u ON u.id = r.user_id WHERE r.sake_id = ? AND r.published = 1
+                SELECT u.id, u.name, p.user_id AS image_user_id,
+                       COALESCE(p.position_x, 50) AS position_x, COALESCE(p.position_y, 50) AS position_y,
+                       COALESCE(p.zoom, 100) AS zoom, r.rating, r.comment, r.updated_at FROM sake_reviews r
+                JOIN users u ON u.id = r.user_id
+                LEFT JOIN user_profile_images p ON p.user_id = u.id
+                WHERE r.sake_id = ? AND r.published = 1
                 """ + " ORDER BY " + order + " LIMIT 10 OFFSET ?",
-                (rs, row) -> new PublicReview(rs.getString("name"), rs.getInt("rating"),
+                (rs, row) -> new PublicReview(rs.getLong("id"), rs.getString("name"), rs.getObject("image_user_id") != null,
+                        rs.getInt("position_x"), rs.getInt("position_y"), rs.getInt("zoom"), rs.getInt("rating"),
                         rs.getString("comment"), rs.getTimestamp("updated_at").toLocalDateTime()), sakeId, page * 10);
         return new ReviewPage(content, total, summary[1], page, totalPages, sort);
     }

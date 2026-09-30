@@ -43,7 +43,9 @@ class SakeDetailTests {
             .andExpect(content().string(not(containsString("価格・購入先"))))
             .andExpect(content().string(containsString("href=\"https://www.dassaistore.com/product-detail/47\"")))
             .andExpect(content().string(not(containsString("href=\"#purchase\""))))
-            .andExpect(content().string(not(containsString("<img"))))
+            .andExpect(result -> assertThat(result.getResponse().getContentAsString()
+                    .replaceAll("(?s)<div class=\"mini-avatar review-avatar\"[^>]*>.*?</div>", ""))
+                    .doesNotContain("<img"))
             .andExpect(content().string(not(containsString("合う料理"))));
         mvc.perform(get("/sake/2")).andExpect(status().isOk())
             .andExpect(content().string(not(containsString("どんな味わい？"))))
@@ -117,6 +119,28 @@ class SakeDetailTests {
             .param("rating", "5").param("comment", "非公開に変更"));
         assertThat(interactions.publicReviews(1, "newest", 0).total()).isEqualTo(desc.total() - 1);
         mvc.perform(get("/sake/1")).andExpect(content().string(not(containsString("非公開に変更"))));
+    }
+
+    @Test void reviewAvatarUsesAuthorsImageAndCropAndRespectsPublication() throws Exception {
+        var owner = account();
+        var other = account();
+        byte[] image = new byte[] {1, 2, 3};
+        jdbc.update("INSERT INTO user_profile_images (user_id, image_data, content_type, position_x, position_y, zoom) VALUES (?, ?, ?, ?, ?, ?)",
+                owner.getUserId(), image, "image/png", 25, 75, 150);
+        interactions.saveReview(owner.getUserId(), 1, 4, "画像付き", true);
+        interactions.saveReview(other.getUserId(), 1, 3, "画像なし", true);
+        String imageUrl = "/sake/reviewers/" + owner.getUserId() + "/profile-image";
+        mvc.perform(get("/sake/1"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("src=\"" + imageUrl + "\"")))
+            .andExpect(content().string(containsString("object-position:25% 75%;transform:scale(1.5)")))
+            .andExpect(content().string(not(containsString("src=\"/sake/reviewers/" + other.getUserId()))));
+        mvc.perform(get(imageUrl)).andExpect(status().isOk())
+            .andExpect(content().contentType("image/png")).andExpect(content().bytes(image));
+        mvc.perform(get("/sake/reviewers/" + other.getUserId() + "/profile-image"))
+            .andExpect(status().isNotFound());
+        interactions.saveReview(owner.getUserId(), 1, 4, "非公開", false);
+        mvc.perform(get(imageUrl)).andExpect(status().isNotFound());
     }
 
     @Test void reviewPaginationAndSortFallbackAreBounded() throws Exception {

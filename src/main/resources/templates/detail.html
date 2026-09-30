@@ -75,7 +75,7 @@
       <button class="button" type="submit">並べ替える</button>
     </form>
     <article class="public-review" th:each="item : ${publicReviews.content}">
-      <div class="public-review-meta"><strong th:text="${item.displayName}"></strong><span th:text="|★ ${item.rating} / 5|"></span><time th:datetime="${item.updatedAt}" th:text="${#temporals.format(item.updatedAt, 'yyyy/MM/dd HH:mm')}"></time></div>
+      <div class="public-review-meta"><div class="mini-avatar review-avatar" aria-hidden="true"><img th:if="${item.hasProfileImage}" th:src="@{/sake/reviewers/{id}/profile-image(id=${item.userId})}" th:style="|object-position:${item.positionX}% ${item.positionY}%;transform:scale(${item.zoom / 100.0});transform-origin:${item.positionX}% ${item.positionY}%|" alt=""><span th:unless="${item.hasProfileImage}" th:text="${#strings.isEmpty(item.displayName) ? '酒' : #strings.substring(item.displayName,0,1)}">酒</span></div><strong th:text="${item.displayName}"></strong><span th:text="|★ ${item.rating} / 5|"></span><time th:datetime="${item.updatedAt}" th:text="${#temporals.format(item.updatedAt, 'yyyy/MM/dd HH:mm')}"></time></div>
       <p th:if="${!#strings.isEmpty(item.comment)}" th:text="${item.comment}"></p>
     </article>
     <nav class="review-pagination" aria-label="レビューのページ" th:if="${publicReviews.totalPages > 1}">
