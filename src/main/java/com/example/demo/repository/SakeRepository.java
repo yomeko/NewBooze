@@ -9,6 +9,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface SakeRepository extends JpaRepository<Sake, Long> {
 
+    @Query("SELECT s.id FROM Sake s")
+    java.util.List<Long> findAllIds();
+
     /**
      * S04（検索結果一覧画面）向けの多条件検索。
      * キーワード／酒種／価格帯／味わいタグで絞り込み、

@@ -23,7 +23,7 @@ public class HomeController {
 
     /**
      * トップページ表示。
-     * 注目銘柄（先頭5件、SakeCatalogService.featured()参照）を
+     * 注目銘柄（ランダムに最大5件、SakeCatalogService.featured()参照）を
      * マーキー表示用データとしてThymeleafテンプレート(home.html)へ渡す。
      */
     @GetMapping("/")

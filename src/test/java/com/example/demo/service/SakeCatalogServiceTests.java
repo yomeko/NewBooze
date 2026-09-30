@@ -15,6 +15,39 @@ class SakeCatalogServiceTests {
             repository, mock(SakeTagRepository.class));
 
     @Test
+    void featuredHandlesEmptyCatalogWithoutLoadingDetails() {
+        when(repository.findAllIds()).thenReturn(java.util.List.of());
+        org.assertj.core.api.Assertions.assertThat(service.featured()).isEmpty();
+        verify(repository, never()).findAllById(any());
+    }
+
+    @Test
+    void featuredSelectsAtMostFiveDistinctExistingIds() {
+        var ids = java.util.List.of(2L, 7L, 19L, 28L, 45L, 90L, 102L);
+        when(repository.findAllIds()).thenReturn(ids);
+        when(repository.findAllById(any())).thenAnswer(invocation -> {
+            java.util.List<Long> selected = invocation.getArgument(0);
+            org.assertj.core.api.Assertions.assertThat(selected)
+                    .hasSize(5).doesNotHaveDuplicates().isSubsetOf(ids);
+            return java.util.List.of();
+        });
+        service.featured();
+        verify(repository).findAllById(any());
+    }
+
+    @Test
+    void featuredIncludesAllIdsWhenFewerThanFiveExist() {
+        when(repository.findAllIds()).thenReturn(java.util.List.of(7L, 19L));
+        when(repository.findAllById(any())).thenAnswer(invocation -> {
+            java.util.List<Long> selected = invocation.getArgument(0);
+            org.assertj.core.api.Assertions.assertThat(selected).containsExactlyInAnyOrder(7L, 19L);
+            return java.util.List.of();
+        });
+        service.featured();
+        verify(repository).findAllById(any());
+    }
+
+    @Test
     void combinesTrimmedNameWithOtherFilters() {
         var pageable = PageRequest.of(1, 6,
                 Sort.by(Sort.Order.asc("price"), Sort.Order.asc("id")));

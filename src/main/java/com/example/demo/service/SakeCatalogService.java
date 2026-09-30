@@ -4,6 +4,8 @@ import com.example.demo.dto.SakePageDto;
 import com.example.demo.model.Sake;
 import com.example.demo.repository.SakeRepository;
 import com.example.demo.repository.SakeTagRepository;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,8 +84,14 @@ public class SakeCatalogService {
 
     @Transactional(readOnly = true)
     public List<Sake> featured() {
-        return mapAll(sakeRepository.findAll(
-                PageRequest.of(0, FEATURED_SIZE, CATALOG_ORDER)).getContent());
+        // IDだけを抽選し、選ばれた最大5件の詳細を取得する。
+        List<Long> ids = new ArrayList<>(sakeRepository.findAllIds());
+        Collections.shuffle(ids);
+        List<Long> selected = ids.stream().limit(FEATURED_SIZE).toList();
+        if (selected.isEmpty()) return List.of();
+        var entities = new ArrayList<>(sakeRepository.findAllById(selected));
+        entities.sort(java.util.Comparator.comparingInt(entity -> selected.indexOf(entity.getId())));
+        return mapAll(entities);
     }
 
     @Transactional(readOnly = true)

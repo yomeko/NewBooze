@@ -940,3 +940,28 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .site-header .main-nav a { width: 100%; min-height: 48px; padding: 10px 2px; text-align: left; }
   .site-header .main-nav a[aria-current="page"]::after { width: 3px; height: auto; top: 10px; right: auto; bottom: 10px; }
 }
+
+/* ホーム：銘柄へのリンクと暮らしのトピック */
+.marquee-track { min-width: 200%; }
+.marquee-track > a { flex: 1 0 auto; padding: 0 17px; color: inherit; text-decoration: none; }
+.marquee-track > a:hover { text-decoration: underline; }
+.marquee:focus-within .marquee-track, .marquee:hover .marquee-track { animation-play-state: paused; }
+.marquee:focus-within { overflow: auto; }
+.marquee:focus-within .marquee-track { animation: none; }
+.topics { background: var(--cream); }
+.topic-slide { padding: clamp(24px, 5vw, 48px); border: 1px solid var(--gold); background: #fffaf1; min-height: 320px; }
+.topic-slide + .topic-slide { margin-top: 20px; }
+.topic-slide[hidden], .topic-controls[hidden] { display: none; }
+.topic-slide:not([hidden]) { margin-top: 0; }
+.topic-slide h3 { font-size: clamp(22px, 3vw, 32px); margin: 12px 0 20px; }
+.topic-slide p { max-width: 780px; line-height: 1.9; }
+.topic-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 14px; margin-top: 22px; }
+.topic-controls button { padding: 10px 16px; border: 1px solid var(--ink); background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.topic-controls button:hover { background: var(--ink); color: white; }
+.topic-controls button:focus-visible, .marquee a:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee { white-space: normal; }
+  .marquee-track { animation: none; min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; }
+  .marquee-track > a { flex: 0 1 auto; }
+  .marquee-track > a[aria-hidden="true"] { display: none; }
+}
