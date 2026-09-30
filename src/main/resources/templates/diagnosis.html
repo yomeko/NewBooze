@@ -40,19 +40,13 @@
           th:required="${state.index == 0}"：
           最初の設問(1問目)にだけHTML標準のrequired属性を付けている。
           2問目以降は表示自体がJSで制御されるため、ブラウザの標準バリデーションに頼らず、
-          main.js側の「未選択なら次へ進ませない」チェックで代用している。
+          main.js側で選択時のみ次の設問へ進み、全問回答後に自動送信する。
         -->
         <input type="radio" th:name="|question-${state.index}|" th:value="${choice.id}" th:required="${state.index == 0}">
         <span th:text="${choice.text}"></span>
       </label>
     </fieldset>
 
-    <!-- ウィザードの操作ボタン。表示/非表示はmain.jsのrender()が制御する -->
-    <div class="quiz-controls">
-      <button class="button" type="button" id="previous" hidden>← 戻る</button>
-      <button class="button primary" type="button" id="next">次へ →</button>
-      <button class="button primary" type="submit" id="submit" hidden>結果を見る</button>
-    </div>
   </form>
 </main>
 

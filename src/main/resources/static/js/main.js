@@ -171,47 +171,31 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!questions.length) return;
 
   let step = 0; // 現在表示中の設問インデックス（0始まり）
-  const previous = document.querySelector('#previous');
-  const next = document.querySelector('#next');
-  const submit = document.querySelector('#submit');
+  const form = document.querySelector('#diagnosis-form');
+  let submitted = false;
 
-  // 現在のstepに応じて、表示する設問・各種ボタンの表示/非表示を切り替える
+  // 現在のstepに応じて、表示する設問を切り替える
   const render = () => {
     questions.forEach((question, index) => question.classList.toggle('active', index === step));
-    previous.hidden = step === 0;                       // 最初の設問では「戻る」を隠す
-    next.hidden = step === questions.length - 1;         // 最後の設問では「次へ」を隠す
-    submit.hidden = step !== questions.length - 1;       // 最後の設問でのみ「結果を見る」を表示
   };
 
-  // 設問ごとに回答を保持し、選択したら次の設問へ進む。
+  // 選択したら次の設問へ進み、最終回答後は自動で結果を表示する。
   questions.forEach((question, index) => {
     question.querySelectorAll('input[type="radio"]').forEach(radio => {
       radio.addEventListener('click', () => {
-        if (index !== step || !radio.checked) return;
+        if (submitted || index !== step || !radio.checked) return;
         const answer = question.querySelector('input[type="hidden"][name="choice"]');
         answer.value = radio.value;
         answer.disabled = false;
         if (step < questions.length - 1) {
           step++;
           render();
+        } else {
+          submitted = true;
+          form.requestSubmit();
         }
       });
     });
-  });
-
-  next.addEventListener('click', () => {
-    // 未回答のまま次へ進ませない簡易バリデーション（サーバー側のth:requiredとは別に、
-    // 途中の設問でも回答漏れに早く気づけるようクライアント側でもチェックする）
-    if (!questions[step].querySelector('input:checked')) {
-      alert('選択肢をひとつ選んでください。');
-      return;
-    }
-    step++;
-    render();
-  });
-  previous.addEventListener('click', () => {
-    step--;
-    render();
   });
 
   render(); // 初期表示（1問目のみ表示した状態にする）
