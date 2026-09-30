@@ -804,9 +804,9 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 .site-header {
   padding: 0;
   display: block;
-  background: #171918;
-  color: #f8f5ed;
-  border-bottom: 1px solid #383b39;
+  background: #fff;
+  color: #252827;
+  border-bottom: 1px solid #e3e5e3;
   box-shadow: 0 3px 18px #0002;
 }
 
@@ -830,14 +830,14 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #f8f5ed;
+  color: #252827;
   font-family: 'Zen Kaku Gothic New', sans-serif;
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -.04em;
 }
 
-.site-header .logo:hover { color: #fff; }
+.site-header .logo:hover { color: #252827; }
 .site-header .logo-name > span { color: #ef5140; }
 
 .logo-mark {
@@ -853,19 +853,19 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   align-items: center;
   gap: 11px;
   padding-left: 15px;
-  border: 1px solid #414543;
+  border: 1px solid #d8dcd9;
   border-radius: 9px;
-  background: #252827;
+  background: #f5f6f5;
 }
 
 .header-search:focus-within { border-color: #d0d558; box-shadow: 0 0 0 3px #d0d5581f; }
-.header-search svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: #9ca09d; stroke-width: 2; }
-.header-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #fff; }
-.header-search input::placeholder { color: #929693; }
-.header-search button { align-self: stretch; padding: 0 16px; border: 0; border-left: 1px solid #414543; background: transparent; color: #d8dbd8; font-weight: 700; cursor: pointer; }
+.header-search svg { width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: #68716b; stroke-width: 2; }
+.header-search input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: #252827; }
+.header-search input::placeholder { color: #68716b; }
+.header-search button { align-self: stretch; padding: 0 16px; border: 0; border-left: 1px solid #d8dcd9; background: transparent; color: #252827; font-weight: 700; cursor: pointer; }
 
 .header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; white-space: nowrap; }
-.site-header .header-login { padding: 10px 3px; color: #f8f5ed; font-size: 14px; font-weight: 700; }
+.site-header .header-login { padding: 10px 3px; color: #252827; font-size: 14px; font-weight: 700; }
 .site-header .header-signup { min-height: 42px; display: inline-flex; align-items: center; padding: 0 16px; border: 0; border-radius: 8px; background: #ef5140; color: #fff; font-weight: 700; cursor: pointer; }
 .site-header .nav-logout-form { align-items: center; }
 
@@ -876,8 +876,8 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   align-items: stretch;
   justify-content: center;
   gap: clamp(32px, 6vw, 82px);
-  border-top: 1px solid #2d302f;
-  background: #171918;
+  border-top: 1px solid #e3e5e3;
+  background: #fff;
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: thin;
@@ -889,13 +889,13 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   align-items: center;
   padding: 0 2px;
   border: 0;
-  color: #a9adaa;
+  color: #626a65;
   font-size: 15px;
   font-weight: 700;
 }
 
-.site-header .main-nav a:hover { color: #fff; border: 0; }
-.site-header .main-nav a[aria-current="page"] { color: #fff; }
+.site-header .main-nav a:hover { color: #252827; border: 0; }
+.site-header .main-nav a[aria-current="page"] { color: #252827; }
 .site-header .main-nav a[aria-current="page"]::after { content: ''; position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #ef5140; }
 
 .collection-page { display: grid; align-items: center; }
@@ -916,7 +916,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .logo-mark { width: 40px; height: 40px; }
   .header-actions .header-login { display: none; }
   .site-header .header-signup { min-height: 40px; padding: 0 12px; font-size: 13px; }
-  .menu-toggle { display: block; min-width: 40px; min-height: 40px; color: #fff; }
+  .menu-toggle { display: block; min-width: 40px; min-height: 40px; color: #252827; }
   .header-search { height: 44px; }
   .site-header .main-nav {
     position: static;
@@ -928,7 +928,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
     align-items: stretch;
     gap: 0;
     border: 0;
-    border-top: 1px solid #383b39;
+    border-top: 1px solid #e3e5e3;
     box-shadow: none;
   }
   .site-header .main-nav.open { display: flex; }
