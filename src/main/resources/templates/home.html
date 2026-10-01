@@ -97,10 +97,6 @@
     </div>
     <div class="card-grid">
       <article class="sake-card" th:each="sake : ${featured}">
-        <a class="featured-image-link" th:if="${!#strings.isEmpty(sake.imageUrl)}" th:href="@{/sake/{id}(id=${sake.id})}">
-          <img class="featured-image" th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" loading="lazy" width="360" height="240">
-        </a>
-        <p class="featured-image-placeholder" th:if="${#strings.isEmpty(sake.imageUrl)}">商品写真は準備中です</p>
         <p class="badge" th:text="${sake.type}"></p>
         <h3 th:text="${sake.name}"></h3>
         <p class="muted" th:text="${sake.region}"></p>

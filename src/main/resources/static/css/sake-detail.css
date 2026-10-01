@@ -1,4 +1,4 @@
-/* Shared, photo-free sake page. Scoped to avoid changing other screens. */
+/* Shared sake detail page. Scoped to avoid changing other screens. */
 .sake-detail { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; overflow-wrap: anywhere; }
 .sake-intro { position: sticky; top: 0; z-index: 20; padding: 16px 0; margin-top: 24px; border-bottom: 1px solid var(--line); background: var(--paper); max-height: 45dvh; overflow-y: auto; }
 .sake-home-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 0; font-size: .9rem; font-weight: 700; text-underline-offset: 4px; }
@@ -70,3 +70,10 @@ html:has(.sake-detail-page) { scroll-padding-top: calc(var(--sake-intro-height, 
 .review-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
 
 .sake-home-link img { flex-shrink: 0; object-fit: contain; }
+
+/* 瓶やラベル全体を見せる商品写真。未登録時はfigureごと非表示。 */
+.sake-product-photo { margin: 24px 0 0; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--cream); }
+.sake-product-photo img { display: block; width: 100%; max-width: 480px; height: clamp(240px, 55vw, 420px); margin: 0 auto; object-fit: contain; }
+@media (max-width: 600px) {
+  .sake-product-photo { padding: 16px; }
+}

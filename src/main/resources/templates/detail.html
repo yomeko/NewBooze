@@ -36,6 +36,10 @@
     </div>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
   </section>
+  <!-- 写真は共通の商品詳細本文に表示し、固定の商品ヘッダーには含めない。 -->
+  <figure class="sake-product-photo" th:if="${!#strings.isEmpty(sake.imageUrl)}">
+    <img th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" width="480" height="480" decoding="async">
+  </figure>
   <div class="sake-intro-actions">
     <p th:if="${publicReviews.total > 0}"><a href="#public-reviews" th:text="|★ ${#numbers.formatDecimal(publicReviews.average, 1, 1)} / 5（${publicReviews.total}件の評価）|"></a></p>
     <div class="sake-actions">
