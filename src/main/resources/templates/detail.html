@@ -19,14 +19,12 @@
     <img th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" width="480" height="480" decoding="async">
   </figure>
   <div class="sake-product-details">
-  <!-- 商品名・紹介文・操作ボタンを同じsticky領域に入れ、この位置が画面上端に達したらまとめて固定する。 -->
   <section class="sake-intro" aria-labelledby="sake-name">
-    <!-- ページ先頭まで戻らずホームへ移動できるよう、リンクも固定領域に配置する。 -->
     <a class="sake-home-link" th:href="@{/}"><img th:src="@{/images/site-icon.png}" src="/images/site-icon.png" alt="" width="32" height="32">ホームに戻る</a>
     <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
     <div class="sake-heading-row">
       <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
-      <!-- お気に入り → 購入先の順で商品ヘッダー内に置き、商品名と一緒に固定する。 -->
+      <!-- お気に入り → 購入先の順で商品ヘッダー内に置く。 -->
       <div class="sake-header-actions">
         <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
           <input type="hidden" name="selected" th:value="${!favorite}">
@@ -117,6 +115,5 @@
 </main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>
-<script th:src="@{/js/sake-detail.js}"></script>
 </body>
 </html>

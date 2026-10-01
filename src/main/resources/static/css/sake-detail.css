@@ -1,9 +1,9 @@
 /* Shared sake detail page. Scoped to avoid changing other screens. */
 .sake-detail { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; overflow-wrap: anywhere; }
-.sake-intro { position: sticky; top: 0; z-index: 20; padding: 16px 0; margin-top: 24px; border-bottom: 1px solid var(--line); background: var(--paper); max-height: 45dvh; overflow-y: auto; }
+.sake-intro { padding: 16px 0; margin-top: 24px; border-bottom: 1px solid var(--line); background: var(--paper); }
 .sake-home-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 0; font-size: .9rem; font-weight: 700; text-underline-offset: 4px; }
 .sake-intro-actions { padding: 20px 0 28px; }
-html:has(.sake-detail-page) { scroll-padding-top: calc(var(--sake-intro-height, 45dvh) + 16px); }
+html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-heading-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin-bottom: 20px; }
 .sake-heading-row h1 { flex: 1 1 240px; margin: 0; }
 .sake-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
