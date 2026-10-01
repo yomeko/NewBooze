@@ -36,20 +36,21 @@
     <p class="hero-note">登録・ログインなしですぐに診断できます</p>
   </section>
 
-  <!--
-    マーキー（注目銘柄の横スクロール表示）
-    非推奨の<marquee>タグは使わず、featured一覧を「2回連続で」出力することで、
-    CSS側の@keyframes scroll（-50%だけ左へ移動）と組み合わせ、
-    継ぎ目のないシームレスループを実現している（内部設計書 4.1参照）。
-    2つ目のth:eachにはaria-hidden="true"を付け、
-    スクリーンリーダーには複製分を読み上げさせないようにしている。
-  -->
-  <section class="marquee" th:if="${!#lists.isEmpty(featured)}" aria-label="注目銘柄">
-    <div class="marquee-track">
-      <a th:each="sake : ${featured}" th:href="@{/sake/{id}(id=${sake.id})}" th:text="|✦ ${sake.name}　　|"></a>
-      <a th:each="sake : ${featured}" th:href="@{/sake/{id}(id=${sake.id})}" aria-hidden="true" tabindex="-1" th:text="|✦ ${sake.name}　　|"></a>
+  <section class="section discovery-guide" aria-labelledby="guide-title">
+    <div class="section-heading">
+      <p class="eyebrow">HOW IT WORKS</p>
+      <h2 id="guide-title">はじめての日本酒選びを、かんたんに。</h2>
+      <p class="lead">難しい分類を覚える前に、あなたの感覚から探してみましょう。</p>
     </div>
+    <ol class="guide-grid">
+      <li><span>01</span><h3>4つの質問に回答</h3><p>気分、口当たり、飲みたい場面、甘さの印象を選びます。</p></li>
+      <li><span>02</span><h3>好みの特徴を発見</h3><p>フルーティー、軽快、旨口など、今の好みを分かりやすく表示します。</p></li>
+      <li><span>03</span><h3>気になる一本へ</h3><p>おすすめから詳細を開き、日本酒や造り手について知るきっかけにできます。</p></li>
+    </ol>
+    <div class="actions guide-actions"><a class="button primary" th:href="@{/diagnosis}">4つの質問で日本酒診断を始める</a></div>
+    <p class="hero-note">登録・ログイン不要</p>
   </section>
+
 
   <section class="section topics" aria-labelledby="topics-title" aria-roledescription="カルーセル">
     <div class="section-heading">
@@ -83,22 +84,10 @@
       <button type="button" data-topic="previous" aria-controls="topic-slides" aria-label="前のトピック">← 前へ</button>
       <span class="topic-position" aria-live="polite" aria-atomic="true">1 / 3</span>
       <button type="button" data-topic="next" aria-controls="topic-slides" aria-label="次のトピック">次へ →</button>
-      <button type="button" data-topic="pause">自動切り替えを停止</button>
+      <button type="button" data-topic="pause">自動切り替えを開始</button>
     </div>
   </section>
 
-  <section class="section discovery-guide" aria-labelledby="guide-title">
-    <div class="section-heading">
-      <p class="eyebrow">HOW IT WORKS</p>
-      <h2 id="guide-title">はじめての日本酒選びを、かんたんに。</h2>
-      <p class="lead">難しい分類を覚える前に、あなたの感覚から探してみましょう。</p>
-    </div>
-    <ol class="guide-grid">
-      <li><span>01</span><h3>4つの質問に回答</h3><p>気分、口当たり、飲みたい場面、甘さの印象を選びます。</p></li>
-      <li><span>02</span><h3>好みの特徴を発見</h3><p>フルーティー、軽快、旨口など、今の好みを分かりやすく表示します。</p></li>
-      <li><span>03</span><h3>気になる一本へ</h3><p>おすすめから詳細を開き、日本酒や造り手について知るきっかけにできます。</p></li>
-    </ol>
-  </section>
 
   <!-- 注目の地酒カード一覧（HomeControllerがSakeCatalogService.featured()で渡したランダムな最大5件） -->
   <section class="section">
@@ -108,6 +97,10 @@
     </div>
     <div class="card-grid">
       <article class="sake-card" th:each="sake : ${featured}">
+        <a class="featured-image-link" th:if="${!#strings.isEmpty(sake.imageUrl)}" th:href="@{/sake/{id}(id=${sake.id})}">
+          <img class="featured-image" th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" loading="lazy" width="360" height="240">
+        </a>
+        <p class="featured-image-placeholder" th:if="${#strings.isEmpty(sake.imageUrl)}">商品写真は準備中です</p>
         <p class="badge" th:text="${sake.type}"></p>
         <h3 th:text="${sake.name}"></h3>
         <p class="muted" th:text="${sake.region}"></p>

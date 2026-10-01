@@ -16,6 +16,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const header = document.querySelector('.site-header');
+  if (header) {
+    // 縮小による高さの変化で切り替えが往復しないよう、閾値を離す。
+    const compact = () => {
+      if (window.scrollY > 160) header.classList.add('is-compact');
+      else if (window.scrollY < 24) header.classList.remove('is-compact');
+    };
+    window.addEventListener('scroll', compact, { passive: true });
+    compact();
+  }
+  if (toggle && nav) {
+    const closeMenu = () => {
+      nav.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'メニューを開く');
+    };
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && nav.classList.contains('open')) {
+        closeMenu();
+        toggle.focus();
+      }
+    });
+    window.matchMedia('(max-width: 980px)').addEventListener('change', closeMenu);
+  }
+
   // 写真は確認画面で確定するまで送信せず、表示範囲と同じ正方形を保存する。
   const imageEditor = document.querySelector('#image-editor');
   if (imageEditor) {

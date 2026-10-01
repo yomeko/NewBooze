@@ -19,7 +19,7 @@ function setup() {
     document: {
       addEventListener(type, handler) { handler(); },
       querySelector(selector) {
-        if (['.menu-toggle', 'header nav', '#open-image-editor'].includes(selector)) return null;
+        if (['.menu-toggle', 'header nav', '.site-header', '#open-image-editor'].includes(selector)) return null;
         return element(selector);
       },
       querySelectorAll() { return []; },

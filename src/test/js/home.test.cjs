@@ -16,9 +16,11 @@ function setup(reduced = false) {
   return { slides, selectors, click(name) { selectors[`[data-topic="${name}"]`].handlers.click(); },
     tick() { assert.ok(pending); pending(); }, running() { return !!pending; }, root };
 }
-test('carousel advances automatically, wraps in both directions, and pauses', () => {
+test('carousel starts manual, supports optional autoplay, wraps and pauses', () => {
   const c = setup();
   assert.deepEqual(c.slides.map(s => s.hidden), [false, true, true]);
+  assert.equal(c.running(), false);
+  c.click('pause');
   c.tick();
   assert.deepEqual(c.slides.map(s => s.hidden), [true, false, true]);
   c.click('previous'); c.click('previous');

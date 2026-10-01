@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const pause = root.querySelector('[data-topic="pause"]');
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let index = 0;
-  let paused = motion.matches;
+  let paused = true;
   let hovered = false;
   let timer;
   const render = () => {
     slides.forEach((slide, i) => { slide.hidden = i !== index; });
     position.textContent = `${index + 1} / ${slides.length}`;
-    pause.textContent = paused ? '自動切り替えを再開' : '自動切り替えを停止';
+    pause.textContent = paused ? '自動切り替えを開始' : '自動切り替えを停止';
   };
   const schedule = () => {
     clearTimeout(timer);
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   root.addEventListener('focusin', schedule);
   root.addEventListener('focusout', () => setTimeout(schedule, 0));
   document.addEventListener('visibilitychange', schedule);
-  motion.addEventListener('change', () => { paused = motion.matches; render(); schedule(); });
+  motion.addEventListener('change', () => { if (motion.matches) paused = true; render(); schedule(); });
   controls.hidden = false;
   render();
   schedule();

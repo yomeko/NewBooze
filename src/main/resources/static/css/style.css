@@ -802,6 +802,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 }
 
 .site-header {
+  height: auto;
   padding: 0;
   display: block;
   background: #fff;
@@ -875,12 +876,11 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: clamp(32px, 6vw, 82px);
+  gap: clamp(14px, 2.5vw, 38px);
   border-top: 1px solid #e3e5e3;
   background: #fff;
-  overflow-x: auto;
+  flex-wrap: wrap;
   white-space: nowrap;
-  scrollbar-width: thin;
 }
 
 .site-header .main-nav a {
@@ -909,7 +909,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .header-actions { justify-self: end; }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 980px) {
   .site-header { min-height: 0; padding: 0; }
   .header-main { min-height: 68px; padding: 12px 5%; gap: 12px; }
   .site-header .logo { font-size: 19px; }
@@ -959,4 +959,25 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .marquee-track { animation: none; min-width: 0; display: flex; flex-wrap: wrap; gap: 12px; }
   .marquee-track > a { flex: 0 1 auto; }
   .marquee-track > a[aria-hidden="true"] { display: none; }
+}
+
+/* スクロール後も検索とナビを利用できるコンパクトなヘッダー */
+.site-header.is-compact .header-main { min-height: 56px; padding-top: 6px; padding-bottom: 6px; }
+.site-header.is-compact .logo-mark { width: 32px; height: 32px; }
+.site-header.is-compact .header-search { height: 38px; }
+.site-header.is-compact .main-nav { min-height: 42px; }
+.guide-actions { justify-content: center; margin-top: 28px; }
+.featured-image-link { display: block; }
+.featured-image { display: block; width: 100%; height: 240px; object-fit: contain; background: #fffaf1; margin-bottom: 20px; }
+.featured-image-placeholder { display: grid; place-items: center; min-height: 160px; background: #fffaf1; color: var(--muted); font-size: 14px; }
+@media (max-width: 980px) {
+  .site-header.is-compact .header-search { display: none; }
+  .site-header.is-compact:focus-within .header-search { display: flex; }
+  .site-header .main-nav { max-height: 60vh; overflow-y: auto; }
+}
+@media (max-width: 400px) {
+  .header-main { gap: 8px; padding-right: 4%; padding-left: 4%; }
+  .site-header .logo { font-size: 16px; gap: 5px; }
+  .header-actions { gap: 5px; }
+  .site-header .header-signup { padding: 0 8px; font-size: 12px; }
 }
