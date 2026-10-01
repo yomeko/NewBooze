@@ -77,3 +77,13 @@ html:has(.sake-detail-page) { scroll-padding-top: calc(var(--sake-intro-height, 
 @media (max-width: 600px) {
   .sake-product-photo { padding: 16px; }
 }
+
+/* 商品写真を左、説明とリンクを右に配置する。 */
+.sake-product-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: start; margin-top: 24px; }
+.sake-product-layout > .sake-product-photo { margin: 0; }
+.sake-product-details { min-width: 0; }
+.sake-product-details:only-child { grid-column: 1 / -1; }
+.sake-product-details .sake-intro { margin-top: 0; }
+@media (max-width: 600px) {
+  .sake-product-layout { grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+}
