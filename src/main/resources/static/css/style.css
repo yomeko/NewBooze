@@ -966,7 +966,8 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 .site-header.is-compact .logo-mark { width: 32px; height: 32px; }
 .site-header.is-compact .header-search { height: 38px; }
 .site-header.is-compact .main-nav { min-height: 42px; }
-.guide-actions { justify-content: center; margin-top: 28px; }
+.guide-cta { margin-top: 28px; text-align: center; }
+.guide-actions { justify-content: center; margin: 0; }
 @media (max-width: 980px) {
   .site-header.is-compact .header-search { display: none; }
   .site-header.is-compact:focus-within .header-search { display: flex; }
@@ -977,4 +978,13 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .site-header .logo { font-size: 16px; gap: 5px; }
   .header-actions { gap: 5px; }
   .site-header .header-signup { padding: 0 8px; font-size: 12px; }
+}
+
+/* 注目銘柄は4枚を1列・2列・4列で揃える。 */
+.home-page .featured-grid { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 600px) {
+  .home-page .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1200px) {
+  .home-page .featured-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }

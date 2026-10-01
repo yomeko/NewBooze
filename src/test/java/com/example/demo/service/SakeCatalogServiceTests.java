@@ -22,13 +22,13 @@ class SakeCatalogServiceTests {
     }
 
     @Test
-    void featuredSelectsAtMostFiveDistinctExistingIds() {
+    void featuredSelectsAtMostFourDistinctExistingIds() {
         var ids = java.util.List.of(2L, 7L, 19L, 28L, 45L, 90L, 102L);
         when(repository.findAllIds()).thenReturn(ids);
         when(repository.findAllById(any())).thenAnswer(invocation -> {
             java.util.List<Long> selected = invocation.getArgument(0);
             org.assertj.core.api.Assertions.assertThat(selected)
-                    .hasSize(5).doesNotHaveDuplicates().isSubsetOf(ids);
+                    .hasSize(4).doesNotHaveDuplicates().isSubsetOf(ids);
             return java.util.List.of();
         });
         service.featured();
@@ -36,7 +36,7 @@ class SakeCatalogServiceTests {
     }
 
     @Test
-    void featuredIncludesAllIdsWhenFewerThanFiveExist() {
+    void featuredIncludesAllIdsWhenFewerThanFourExist() {
         when(repository.findAllIds()).thenReturn(java.util.List.of(7L, 19L));
         when(repository.findAllById(any())).thenAnswer(invocation -> {
             java.util.List<Long> selected = invocation.getArgument(0);

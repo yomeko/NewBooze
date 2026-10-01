@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SakeCatalogService {
     private static final int PAGE_SIZE = 6;
-    private static final int FEATURED_SIZE = 5;
+    private static final int FEATURED_SIZE = 4;
     private static final Sort CATALOG_ORDER = Sort.by(Sort.Direction.ASC, "id");
 
     private final SakeRepository sakeRepository;
@@ -84,7 +84,7 @@ public class SakeCatalogService {
 
     @Transactional(readOnly = true)
     public List<Sake> featured() {
-        // IDだけを抽選し、選ばれた最大5件の詳細を取得する。
+        // IDだけを抽選し、選ばれた最大4件の詳細を取得する。
         List<Long> ids = new ArrayList<>(sakeRepository.findAllIds());
         Collections.shuffle(ids);
         List<Long> selected = ids.stream().limit(FEATURED_SIZE).toList();
