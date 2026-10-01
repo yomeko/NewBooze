@@ -15,16 +15,11 @@
   <p class="sake-message" role="status" th:if="${success}" th:text="${success}"></p>
   <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <div class="sake-product-layout">
+  <div class="sake-product-sidebar">
   <figure class="sake-product-photo" th:if="${!#strings.isEmpty(sake.imageUrl)}">
     <img th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" width="480" height="480" decoding="async">
   </figure>
-  <div class="sake-product-details">
-  <section class="sake-intro" aria-labelledby="sake-name">
-    <a class="sake-home-link" th:href="@{/}"><img th:src="@{/images/site-icon.png}" src="/images/site-icon.png" alt="" width="32" height="32">ホームに戻る</a>
-    <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
-    <div class="sake-heading-row">
-      <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
-      <!-- お気に入り → 購入先の順で商品ヘッダー内に置く。 -->
+    <!-- 写真とお気に入り・購入リンクをまとめて追従させる。 -->
       <div class="sake-header-actions">
         <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
           <input type="hidden" name="selected" th:value="${!favorite}">
@@ -36,6 +31,13 @@
           <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
         </th:block>
       </div>
+  </div>
+  <div class="sake-product-details">
+  <section class="sake-intro" aria-labelledby="sake-name">
+    <a class="sake-home-link" th:href="@{/}"><img th:src="@{/images/site-icon.png}" src="/images/site-icon.png" alt="" width="32" height="32">ホームに戻る</a>
+    <p class="sake-brewery" th:if="${!#strings.isEmpty(page.brewery)}" th:text="${page.brewery}"></p>
+    <div class="sake-heading-row">
+      <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
     </div>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
   </section>

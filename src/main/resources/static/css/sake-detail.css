@@ -78,12 +78,16 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
   .sake-product-photo { padding: 16px; }
 }
 
-/* 商品写真を左、説明とリンクを右に配置する。 */
+/* 写真と購入操作を左、商品説明を右に配置する。 */
 .sake-product-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: start; margin-top: 24px; }
-.sake-product-layout > .sake-product-photo { margin: 0; }
+.sake-product-sidebar { position: sticky; top: 16px; min-width: 0; }
+.sake-product-sidebar .sake-product-photo { margin: 0; }
+.sake-product-sidebar .sake-product-photo img { height: min(420px, max(120px, calc(100dvh - 180px))); }
+.sake-product-sidebar .sake-header-actions { justify-content: center; margin-top: 16px; }
 .sake-product-details { min-width: 0; }
 .sake-product-details:only-child { grid-column: 1 / -1; }
 .sake-product-details .sake-intro { margin-top: 0; }
 @media (max-width: 600px) {
   .sake-product-layout { grid-template-columns: 1fr; gap: 16px; margin-top: 16px; }
+  .sake-product-sidebar { position: static; }
 }
