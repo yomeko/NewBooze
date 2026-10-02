@@ -21,6 +21,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class SakeDetailTests {
+    @Test void hashtagsSearchSharedDiagnosisTags() throws Exception {
+        for (String keyword : java.util.List.of("#辛口", "＃辛口", "辛口")) {
+            mvc.perform(get("/search").param("keyword", keyword))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("八海山 特別本醸造")))
+                .andExpect(content().string(not(containsString("獺祭 純米大吟醸45"))));
+        }
+        mvc.perform(get("/sake/8"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("#辛口</a>")));
+        mvc.perform(get("/search").param("keyword", "#存在しないタグ"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("条件に合う日本酒が見つかりませんでした。")));
+    }
+
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired SakeInteractionService interactions;

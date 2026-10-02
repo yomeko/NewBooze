@@ -38,14 +38,17 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
                    b.prefecture LIKE CONCAT('%', :keyword, '%') OR
                    s.sakeType.name LIKE CONCAT('%', :keyword, '%') OR
                    s.region LIKE CONCAT('%', :keyword, '%') OR
-                   s.description LIKE CONCAT('%', :keyword, '%'))
+                   s.description LIKE CONCAT('%', :keyword, '%') OR
+                   EXISTS (SELECT st.id FROM SakeTag st
+                           WHERE st.sake = s AND st.score > 0
+                             AND st.tag.name = :keyword))
               AND (:name IS NULL OR s.name LIKE CONCAT('%', :name, '%'))
               AND (:sakeTypeName IS NULL OR s.sakeType.name = :sakeTypeName)
               AND (:minPrice IS NULL OR s.price >= :minPrice)
               AND (:maxPrice IS NULL OR s.price <= :maxPrice)
               AND (:taste IS NULL OR EXISTS (
                     SELECT st.id FROM SakeTag st
-                    WHERE st.sake = s AND st.tag.name = :taste
+                    WHERE st.sake = s AND st.score > 0 AND st.tag.name = :taste
               ))
             """)
     Page<Sake> search(

@@ -41,7 +41,7 @@
     </div>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
     <ul class="sake-chips sake-description-tags" aria-label="味わいのタグ" th:if="${!#lists.isEmpty(sakeTags)}">
-      <li th:each="tag : ${sakeTags}" th:text="${tag}"></li>
+      <li th:each="tag : ${sakeTags}"><a th:href="@{/search(keyword=${'#' + tag})}" th:text="|#${tag}|"></a></li>
     </ul>
   </section>
   <div class="sake-intro-actions">

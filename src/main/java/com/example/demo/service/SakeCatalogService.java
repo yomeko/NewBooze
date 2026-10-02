@@ -40,6 +40,13 @@ public class SakeCatalogService {
         String normalizedName = emptyToNull(name);
         String normalizedType = emptyToNull(type);
         String normalizedTaste = emptyToNull(taste);
+        if (normalizedKeyword != null && (normalizedKeyword.startsWith("#") || normalizedKeyword.startsWith("＃"))) {
+            normalizedKeyword = emptyToNull(normalizedKeyword.substring(1));
+            if (normalizedTaste == null) {
+                normalizedTaste = normalizedKeyword;
+                normalizedKeyword = null;
+            }
+        }
         int pageNumber = Math.max(0, requestedPage);
         Page<com.example.demo.entity.Sake> page = findPage(
                 normalizedKeyword, normalizedName, normalizedType, minPrice, maxPrice,
