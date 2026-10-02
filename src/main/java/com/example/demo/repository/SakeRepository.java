@@ -22,6 +22,9 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
      * これはSpecification（動的クエリビルダAPI）を使わずに済む簡易な方法だが、
      * 条件が増えると可読性が落ちるため、将来的にはSpecificationへの移行も検討する。
      *
+     * タグ名は完全一致で検索し、詳細ページに表示する正のスコアのタグだけを対象にする。
+     * EXISTSを使うことで、複数のタグを持つ商品も検索結果で重複しない。
+     *
      * @param name       銘柄名の部分一致キーワード（未指定時はnull）
      * @param keyword    全体検索キーワード（未指定時はnull）
      * @param sakeTypeName 酒種名（未指定時はnull）

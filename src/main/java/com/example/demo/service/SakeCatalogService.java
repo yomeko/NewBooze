@@ -40,8 +40,11 @@ public class SakeCatalogService {
         String normalizedName = emptyToNull(name);
         String normalizedType = emptyToNull(type);
         String normalizedTaste = emptyToNull(taste);
+        // 半角・全角の#を除き、DBに保存されているタグ名に合わせる。
         if (normalizedKeyword != null && (normalizedKeyword.startsWith("#") || normalizedKeyword.startsWith("＃"))) {
             normalizedKeyword = emptyToNull(normalizedKeyword.substring(1));
+            // 味わいが未指定ならタグ条件へ移し、商品説明などの部分一致検索を避ける。
+            // 味わいが指定済みの場合はその条件を維持し、キーワードとの両方で絞り込む。
             if (normalizedTaste == null) {
                 normalizedTaste = normalizedKeyword;
                 normalizedKeyword = null;

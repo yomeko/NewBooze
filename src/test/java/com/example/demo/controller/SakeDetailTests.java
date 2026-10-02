@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class SakeDetailTests {
+    // 入力表記の違い、詳細ページのリンク、未登録タグの検索結果をまとめて確認する。
     @Test void hashtagsSearchSharedDiagnosisTags() throws Exception {
         for (String keyword : java.util.List.of("#辛口", "＃辛口", "辛口")) {
             mvc.perform(get("/search").param("keyword", keyword))
