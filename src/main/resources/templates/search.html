@@ -80,7 +80,7 @@
   </form>
 
   <!-- 検索結果件数の表示 -->
-  <p class="result-count"><strong th:text="${result.totalElements}">0</strong> 件の日本酒</p>
+  <p class="result-count" id="search-results"><strong th:text="${result.totalElements}">0</strong> 件の日本酒</p>
 
   <!-- 検索結果一覧（SakePageDto.content分のみ表示。1ページ分はService側でスライス済み） -->
   <div class="card-grid">

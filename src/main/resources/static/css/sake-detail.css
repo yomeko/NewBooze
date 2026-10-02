@@ -26,6 +26,10 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .sake-chips li { background: #eee8db; border-radius: 6px; padding: 5px 12px; }
 .sake-description-tags { margin-top: 16px; font-size: .9rem; }
+.sake-tag-panel .sake-chips li { padding: 0; }
+.sake-tag-panel .sake-chips a { display: flex; align-items: center; min-height: 44px; padding: 8px 12px; border: 1px solid transparent; border-radius: 6px; text-decoration: none; }
+.sake-tag-panel .sake-chips a:hover { background: #f7e0dc; border-color: var(--red); }
+.sake-tag-panel .sake-note { margin: 0; }
 .sake-list { padding-left: 1.3em; margin: 0; }
 .sake-list li + li { margin-top: 8px; }
 .sake-purchase { margin-top: 24px; }

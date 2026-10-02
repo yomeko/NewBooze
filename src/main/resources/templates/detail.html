@@ -40,10 +40,6 @@
       <h1 id="sake-name" th:text="${#strings.isEmpty(page.name) ? sake.name : page.name}"></h1>
     </div>
     <p class="sake-introduction" th:if="${!#strings.isEmpty(page.introduction)}" th:text="${page.introduction}"></p>
-    <!-- 診断と共通のタグに#を付け、クリック時もハッシュタグ検索として渡す。 -->
-    <ul class="sake-chips sake-description-tags" aria-label="味わいのタグ" th:if="${!#lists.isEmpty(sakeTags)}">
-      <li th:each="tag : ${sakeTags}"><a th:href="@{/search(keyword=${'#' + tag})}" th:text="|#${tag}|"></a></li>
-    </ul>
   </section>
   <div class="sake-intro-actions">
     <p th:if="${publicReviews.total > 0}"><a href="#public-reviews" th:text="|★ ${#numbers.formatDecimal(publicReviews.average, 1, 1)} / 5（${publicReviews.total}件の評価）|"></a></p>
@@ -53,6 +49,13 @@
   </div>
 
   <div class="sake-info-grid">
+    <section class="sake-panel sake-tag-panel" aria-labelledby="sake-tags-title" th:if="${!#lists.isEmpty(sakeTags)}">
+      <h2 id="sake-tags-title">味わいのタグ</h2>
+      <p class="sake-note">タグを選ぶと、同じ特徴の日本酒が見つかります。</p>
+      <ul class="sake-chips sake-description-tags">
+        <li th:each="tag : ${sakeTags}"><a th:href="@{/search(keyword=${'#' + tag})} + '#search-results'" th:text="|#${tag}|" th:attr="aria-label=|${tag}の日本酒を検索|"></a></li>
+      </ul>
+    </section>
     <section class="sake-panel" th:if="${!#lists.isEmpty(page.taste) or !#lists.isEmpty(page.aroma)}">
       <h2>どんな味わい？</h2>
       <div th:if="${!#lists.isEmpty(page.taste)}"><h3>味わい</h3><ul class="sake-chips"><li th:each="item : ${page.taste}" th:text="${item}"></li></ul></div>
