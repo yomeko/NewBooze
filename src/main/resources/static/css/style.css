@@ -989,3 +989,26 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 @media (min-width: 1200px) {
   .home-page .featured-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* 共通サイトメニュー：通常ナビゲーションとは独立したドロワー */
+.site-header .menu-toggle { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 10px; border: 1px solid #e3e5e3; border-radius: 8px; color: #252827; cursor: pointer; }
+.menu-toggle svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.site-menu { position: fixed; inset: 0 0 0 auto; width: min(400px, 100%); height: 100dvh; max-width: 100%; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-left: 1px solid #e3e5e3; background: #fff; color: #252827; box-shadow: -12px 0 40px #0002; }
+.site-menu::backdrop { background: #17201d80; backdrop-filter: blur(3px); }
+body.site-menu-open { overflow: hidden; }
+.site-menu-panel { min-height: 100%; padding: 24px 26px max(24px, env(safe-area-inset-bottom)); }
+.site-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.site-menu-heading h2 { margin: 0; font-family: inherit; font-size: 21px; }
+.site-menu-close { width: 44px; height: 44px; border: 1px solid #e3e5e3; border-radius: 8px; background: #fff; color: #252827; font-size: 30px; cursor: pointer; }
+.site-menu .site-menu-links { position: static; display: flex; flex-direction: column; align-items: stretch; width: 100%; gap: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.site-menu-links a { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e3e5e3; color: #252827; font-size: 15px; overflow-wrap: anywhere; }
+.site-menu-links a > span:last-child { color: #ef5140; font-size: 24px; }
+.site-menu-links a:hover { color: #ef5140; }
+.site-menu-links .site-menu-divider { margin-top: 24px; border-top: 1px solid #e3e5e3; }
+.menu-toggle:focus-visible, .site-menu-close:focus-visible, .site-menu-links a:focus-visible { outline: 2px solid #ef5140; outline-offset: 3px; }
+@media (max-width: 980px) {
+  .site-header .main-nav { display: flex; flex-direction: row; align-items: center; flex-wrap: nowrap; gap: 26px; max-height: none; overflow-x: auto; padding: 0 5%; }
+  .site-header .main-nav a { width: auto; flex-shrink: 0; min-height: 48px; text-align: center; }
+  .site-header .main-nav a[aria-current="page"]::after { top: auto; bottom: 0; left: 0; right: 0; width: auto; height: 3px; }
+}
+@media (max-width: 380px) { .site-menu-panel { padding: 20px; } .site-header .menu-toggle { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }

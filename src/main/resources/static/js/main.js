@@ -2,17 +2,28 @@
 // 出田担当の本番デザイン差し替え時も、th:src="@{/js/main.js}" として
 // 各テンプレート(home/search/detail/diagnosis等)から共通で読み込まれる想定。
 document.addEventListener('DOMContentLoaded', () => {
-  // ---- ハンバーガーメニュー（画面幅が狭い時のナビゲーション開閉） ----
+  // 通常ナビゲーションとは別に、共通のサイトメニューを開く。
   const toggle = document.querySelector('.menu-toggle');
-  const nav = document.querySelector('header nav');
-  if (toggle && nav) {
-    toggle.setAttribute('aria-expanded', 'false');
-    // クリックのたびに.openクラスを付け外しし、CSS側(@media(max-width:700px))で
-    // nav.openの表示・非表示を切り替える仕組み
+  const menu = document.querySelector('#site-menu');
+  if (toggle && menu) {
     toggle.addEventListener('click', () => {
-      const isOpen = nav.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(isOpen));
-      toggle.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+      menu.showModal();
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.classList.add('site-menu-open');
+    });
+    menu.querySelector('.site-menu-close').addEventListener('click', () => menu.close());
+    menu.addEventListener('click', event => {
+      if (event.target === menu) {
+        const bounds = menu.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right ||
+            event.clientY < bounds.top || event.clientY > bounds.bottom) menu.close();
+      }
+    });
+    // Escキーで閉じた場合にも状態とフォーカスを戻す。
+    menu.addEventListener('close', () => {
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.classList.remove('site-menu-open');
+      toggle.focus();
     });
   }
 
@@ -26,21 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('scroll', compact, { passive: true });
     compact();
   }
-  if (toggle && nav) {
-    const closeMenu = () => {
-      nav.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', 'メニューを開く');
-    };
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && nav.classList.contains('open')) {
-        closeMenu();
-        toggle.focus();
-      }
-    });
-    window.matchMedia('(max-width: 980px)').addEventListener('change', closeMenu);
-  }
-
   // 写真は確認画面で確定するまで送信せず、表示範囲と同じ正方形を保存する。
   const imageEditor = document.querySelector('#image-editor');
   if (imageEditor) {

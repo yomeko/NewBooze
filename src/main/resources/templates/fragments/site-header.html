@@ -22,7 +22,7 @@
       <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
         <button type="submit" class="header-signup">ログアウト</button>
       </form>
-      <button class="menu-toggle" type="button" aria-label="メニューを開く" aria-controls="main-navigation" aria-expanded="false">☰</button>
+      <button class="menu-toggle" type="button" aria-label="メニューを開く" aria-controls="site-menu" aria-expanded="false" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
     </div>
   </div>
 
@@ -35,6 +35,23 @@
     <a th:href="@{/goods}" th:attr="aria-current=${currentPage == 'goods'} ? 'page' : null">関連商品</a>
     <a sec:authorize="isAuthenticated()" th:href="@{/mypage}" th:attr="aria-current=${currentPage == 'mypage'} ? 'page' : null">マイページ</a>
   </nav>
+  <dialog id="site-menu" class="site-menu" aria-labelledby="site-menu-title">
+    <div class="site-menu-panel">
+      <div class="site-menu-heading">
+        <h2 id="site-menu-title">メニュー</h2>
+        <button class="site-menu-close" type="button" aria-label="メニューを閉じる" autofocus>×</button>
+      </div>
+      <nav class="site-menu-links" aria-label="サイトメニュー">
+        <a th:href="@{/brewery-map}"><span>酒蔵のマップ</span><span aria-hidden="true">›</span></a>
+        <a th:href="@{/contact}"><span>お問い合わせ</span><span aria-hidden="true">›</span></a>
+        <a th:href="@{/categories}"><span>カテゴリ</span><span aria-hidden="true">›</span></a>
+        <a th:href="@{/tags}"><span>おすすめのタグ</span><span aria-hidden="true">›</span></a>
+        <a class="site-menu-divider" th:href="@{/about}"><span>運営者情報</span><span aria-hidden="true">›</span></a>
+        <a th:href="@{/privacy}"><span>プライバシーポリシー</span><span aria-hidden="true">›</span></a>
+        <a th:href="@{/external-transmission}"><span>利用者情報の送信について</span><span aria-hidden="true">›</span></a>
+      </nav>
+    </div>
+  </dialog>
 </header>
 </body>
 </html>

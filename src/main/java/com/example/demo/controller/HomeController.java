@@ -50,6 +50,41 @@ public class HomeController {
                 "日本酒のある時間を豊かにする関連商品を紹介します。");
     }
 
+    @GetMapping("/brewery-map")
+    public String breweryMap(Model model) {
+        return collectionPage(model, "brewery-map", "酒蔵のマップ", "酒蔵のマップの掲載内容を準備しています。");
+    }
+
+    @GetMapping("/contact")
+    public String contact(Model model) {
+        return collectionPage(model, "contact", "お問い合わせ", "お問い合わせの掲載内容を準備しています。");
+    }
+
+    @GetMapping("/categories")
+    public String categories(Model model) {
+        return collectionPage(model, "categories", "カテゴリ", "カテゴリの掲載内容を準備しています。");
+    }
+
+    @GetMapping("/tags")
+    public String tags(Model model) {
+        return collectionPage(model, "tags", "おすすめのタグ", "おすすめのタグの掲載内容を準備しています。");
+    }
+
+    @GetMapping("/about")
+    public String about(Model model) {
+        return collectionPage(model, "about", "運営者情報", "運営者情報の掲載内容を準備しています。");
+    }
+
+    @GetMapping("/privacy")
+    public String privacy(Model model) {
+        return collectionPage(model, "privacy", "プライバシーポリシー", "プライバシーポリシーの掲載内容を準備しています。");
+    }
+
+    @GetMapping("/external-transmission")
+    public String externalTransmission(Model model) {
+        return collectionPage(model, "external-transmission", "利用者情報の送信について", "利用者情報の送信についての掲載内容を準備しています。");
+    }
+
     private String collectionPage(Model model, String currentPage, String title, String description) {
         model.addAttribute("currentPage", currentPage);
         model.addAttribute("title", title);
