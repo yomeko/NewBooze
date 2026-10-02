@@ -25,6 +25,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-detail h3 { font-size: .85rem; color: #625b50; margin: 18px 0 8px; }
 .sake-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
 .sake-chips li { background: #eee8db; border-radius: 6px; padding: 5px 12px; }
+.sake-description-tags { margin-top: 16px; font-size: .9rem; }
 .sake-list { padding-left: 1.3em; margin: 0; }
 .sake-list li + li { margin-top: 8px; }
 .sake-purchase { margin-top: 24px; }

@@ -90,6 +90,11 @@ public class SakeSearchController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var page = pages.pageFor(sake);
         model.addAttribute("sake", sake);
+        model.addAttribute("sakeTags", sake.tagScores().entrySet().stream()
+                .filter(tag -> tag.getValue() > 0)
+                .sorted(java.util.Map.Entry.<String, Integer>comparingByValue().reversed()
+                        .thenComparing(java.util.Map.Entry.comparingByKey()))
+                .map(java.util.Map.Entry::getKey).toList());
         model.addAttribute("page", page);
         model.addAttribute("similar", page.similarIds().stream()
                 .map(catalogService::findById).flatMap(java.util.Optional::stream)
