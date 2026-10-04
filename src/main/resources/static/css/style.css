@@ -1012,3 +1012,76 @@ body.site-menu-open { overflow: hidden; }
   .site-header .main-nav a[aria-current="page"]::after { top: auto; bottom: 0; left: 0; right: 0; width: auto; height: 3px; }
 }
 @media (max-width: 380px) { .site-menu-panel { padding: 20px; } .site-header .menu-toggle { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }
+
+/* 読みやすい見出し、先頭から見渡せるナビ、回答を修正できる診断。 */
+.hero-phrase { display: inline-block; white-space: nowrap; }
+.site-header .menu-toggle { width: auto; gap: 4px; grid-template-columns: auto auto; }
+.menu-label { font-size: 12px; font-weight: 700; }
+.header-actions a[aria-current="page"] { color: var(--red); text-decoration: underline; }
+.mobile-account-actions { display: none; }
+.nav-overflow { position: relative; border-top: 1px solid #e3e5e3; background: #fff; }
+.site-header .main-nav { border-top: 0; }
+.nav-scroll-button { display: none; }
+.nav-scroll-hint { margin: 0; padding: 3px 5% 7px; background: #fff; color: #626a65; font-size: 11px; }
+.quiz-progress, .quiz-controls, .quiz-hint { max-width: 780px; }
+.quiz-progress p { margin-bottom: 8px; font-weight: 700; color: var(--red); }
+.quiz-progress progress { display: block; width: 100%; height: 8px; accent-color: var(--red); border: 0; border-radius: 10px; overflow: hidden; background: #e8dfd0; }
+.quiz-progress progress::-webkit-progress-bar { background: #e8dfd0; }
+.quiz-progress progress::-webkit-progress-value { background: var(--red); }
+.quiz-progress progress::-moz-progress-bar { background: var(--red); }
+.button:disabled, .nav-scroll-button:disabled { opacity: .4; cursor: default; transform: none; }
+.question[hidden], .sake-card-image [hidden], .nav-scroll-hint[hidden] { display: none; }
+.question legend:focus-visible { outline: 2px solid var(--red); outline-offset: 5px; }
+.taste-result { padding: 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--cream); }
+.taste-result h2 { margin: 0 0 20px; }
+.tendency-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.tendency { padding: 16px; border: 1px solid var(--line); border-radius: 6px; }
+.tendency.strongest { border-color: var(--red); background: #fff0e9; }
+.tendency-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tendency-heading span { color: var(--muted); font-size: 11px; }
+.strongest .tendency-heading span { color: var(--red); font-weight: 700; }
+.tendency-bar { height: 7px; margin: 14px 0 8px; background: #e8dfd0; border-radius: 5px; overflow: hidden; }
+.tendency-bar span { display: block; height: 100%; background: #aa9174; }
+.strongest .tendency-bar span { background: var(--red); }
+.tendency small { color: var(--muted); }
+.answer-summary { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.answer-summary li { margin: 16px 0; }
+.answer-summary li p { margin: 4px 0; }
+.recommendation-heading { margin: 36px 0 0; }
+.recommendations { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: stretch; }
+.recommendation-card { display: flex; flex-direction: column; }
+.recommendation-card > a { margin-top: auto; padding-top: 18px; }
+.sake-card-image { display: grid; place-items: center; height: 180px; margin: 0 0 18px; border-radius: 6px; background: #f4f2ec; overflow: hidden; }
+.sake-card-image img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 12px; }
+.sake-image-fallback { display: flex; flex-direction: column; align-items: center; color: var(--muted); font-size: 12px; }
+.sake-image-fallback > span { font-size: 42px; color: #aa9174; }
+.taste-indicators { margin: 0; font-size: 13px; }
+.taste-indicators > div { display: grid; grid-template-columns: 48px 1fr; align-items: start; gap: 8px; min-height: 54px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.taste-indicators dt { font-weight: 700; }
+.taste-indicators dd { margin: 0; min-width: 0; }
+.taste-level { float: right; margin-left: 6px; color: var(--muted); font-size: 11px; }
+.taste-indicators meter { display: block; width: 100%; height: 10px; margin-top: 4px; }
+.taste-indicators meter::-webkit-meter-optimum-value { background: var(--gold); }
+.taste-indicators meter::-moz-meter-bar { background: var(--gold); }
+.sake-card .taste-note { margin: 8px 0 18px; font-size: 11px; color: var(--muted); }
+.sake-card .recommendation-reason { padding: 12px; border-radius: 4px; background: #f6ead8; font-size: 13px; }
+.card-description { font-size: 14px; }
+@media (max-width: 980px) {
+  .nav-overflow { display: flex; align-items: stretch; padding: 0 5%; }
+  .site-header .main-nav { position: static; min-width: 0; flex: 1; justify-content: flex-start; gap: 22px; padding: 0; overflow-y: hidden; }
+  .nav-scroll-button { display: block; width: 28px; flex: 0 0 28px; border: 0; padding: 0; background: #fff; color: var(--red); font-size: 28px; cursor: pointer; }
+  .nav-scroll-button[hidden] { display: none; }
+  .site-header .header-actions > a[href$="/mypage"] { display: inline-flex; font-size: 12px; }
+  .header-actions > .nav-logout-form { display: none; }
+  .menu-label { display: none; }
+  .mobile-account-actions { display: flex; align-items: center; gap: 12px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+  .mobile-account-actions:empty { display: none; }
+}
+@media (max-width: 700px) {
+  .hero h1 { font-size: clamp(27px, 7.8vw, 43px); line-height: 1.55; letter-spacing: -.035em; }
+  .taste-result { padding: 20px 16px; }
+  .tendency-list { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .tendency { padding: 12px 14px; }
+  .quiz-controls { gap: 12px; }
+  .quiz-controls .button { flex: 1; padding-left: 12px; padding-right: 12px; }
+}

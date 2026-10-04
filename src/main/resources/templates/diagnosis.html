@@ -23,31 +23,25 @@
   <h1>日本酒診断</h1>
   <p class="lead">専門知識は必要ありません。4つの質問に答えて、今のあなたに合いそうな日本酒を見つけましょう。</p>
 
-  <!--
-    DiagnosisController.result()（POST /diagnosis/result）へ回答を送信するフォーム。
-    各設問の回答は name="choice" のhidden入力に保持し、複数の設問分がまとめて
-    List<Long> choices として受け取られる（同名name属性の値は配列的に集約される）。
-
-    th:each="question, state : ${questions}" の state はイテレーション状態変数で、
-    state.index により「Q1.」「Q2.」…という設問番号や、
-    fieldsetのdata-step属性（JS側で使用可能な情報として）を出し分けている。
-  -->
   <form method="post" th:action="@{/diagnosis/result}" id="diagnosis-form">
+    <div class="quiz-progress">
+      <p id="quiz-position" role="status" aria-live="polite" aria-atomic="true" th:text="|全${#lists.size(questions)}問中 1問目|">全4問中 1問目</p>
+      <progress id="quiz-progress" value="1" th:max="${#lists.size(questions)}" aria-labelledby="quiz-position"></progress>
+    </div>
     <fieldset th:each="question, state : ${questions}" class="question" th:data-step="${state.index}">
-      <legend th:text="|Q${state.index + 1}. ${question.text}|"></legend>
+      <legend tabindex="-1" th:text="|Q${state.index + 1}. ${question.text}|"></legend>
       <input type="hidden" name="choice" disabled>
       <label th:each="choice : ${question.choices}">
-        <!--
-          th:required="${state.index == 0}"：
-          最初の設問(1問目)にだけHTML標準のrequired属性を付けている。
-          2問目以降は表示自体がJSで制御されるため、ブラウザの標準バリデーションに頼らず、
-          main.js側で選択時のみ次の設問へ進み、全問回答後に自動送信する。
-        -->
-        <input type="radio" th:name="|question-${state.index}|" th:value="${choice.id}" th:required="${state.index == 0}">
+        <input type="radio" th:name="|question-${state.index}|" th:value="${choice.id}">
         <span th:text="${choice.text}"></span>
       </label>
     </fieldset>
-
+    <p class="muted quiz-hint">回答を選んで「次へ」を押してください。「戻る」で回答を変更できます。</p>
+    <div class="quiz-controls">
+      <button class="button" type="button" id="quiz-back" disabled>← 戻る</button>
+      <button class="button primary" type="submit" id="quiz-next" disabled>次へ →</button>
+    </div>
+    <noscript><p>診断にはJavaScriptが必要です。ブラウザの設定で有効にしてください。</p></noscript>
   </form>
 </main>
 

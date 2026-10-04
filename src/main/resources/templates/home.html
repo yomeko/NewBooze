@@ -26,7 +26,7 @@
   <section class="hero">
     <div class="hero-copy">
       <p class="eyebrow">YOUR FIRST SAKE DISCOVERY</p>
-      <h1>日本酒を知らなくても、<br><em>好きな一本</em>に出会える</h1>
+      <h1><span class="hero-phrase">日本酒を</span><span class="hero-phrase">知らなくても、</span><br><span class="hero-phrase"><em>好きな一本</em>に</span><span class="hero-phrase">出会える</span></h1>
       <p>専門用語はいりません。気分や口当たりなど、4つの簡単な質問から<br>あなたの好みに合いそうな日本酒をご案内します。</p>
     </div>
     <div class="actions">
@@ -101,6 +101,7 @@
       <article class="sake-card" th:each="sake : ${featured}">
         <p class="badge" th:text="${sake.type}"></p>
         <h3 th:text="${sake.name}"></h3>
+      <div th:replace="~{fragments/sake-comparison :: comparison(sake=${sake})}"></div>
         <p class="muted" th:text="${sake.region}"></p>
         <p th:text="${sake.description}"></p>
         <!-- th:href の (id=${sake.id}) 記法：URLの{id}プレースホルダーに値を埋め込む -->

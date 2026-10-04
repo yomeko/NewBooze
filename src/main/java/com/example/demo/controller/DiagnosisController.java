@@ -43,6 +43,8 @@ public class DiagnosisController {
         if (preferences.isEmpty()) return "redirect:/diagnosis";
 
         model.addAttribute("preferences", preferences);
+        model.addAttribute("tendencies", com.example.demo.dto.TastePresentation.tendencies(preferences));
+        model.addAttribute("answers", diagnosisService.answerSummaries(choices));
         model.addAttribute("recommendations", diagnosisService.recommend(preferences));
         // 画面側で「診断結果を保存しました」等の案内を出し分けたい場合に使えるよう、
         // ログイン状態も合わせて渡しておく

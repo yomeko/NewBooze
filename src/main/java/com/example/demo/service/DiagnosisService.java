@@ -119,6 +119,20 @@ public class DiagnosisService {
         return scoreByTagName;
     }
 
+    /** 回答と加算された特徴を結果画面で確認できるようにする。 */
+    @Transactional(readOnly = true)
+    public List<AnswerSummary> answerSummaries(List<Long> choiceIds) {
+        if (choiceIds == null) return List.of();
+        return choiceIds.stream().map(id -> choiceRepository.findById(id).orElseThrow())
+                .map(choice -> new AnswerSummary(choice.getQuestion().getQuestionText(), choice.getChoiceText(),
+                        choiceTagRepository.findByIdChoiceId(choice.getId()).stream()
+                                .filter(tag -> tag.getWeight() > 0)
+                                .map(tag -> tag.getTag().getName()).distinct().toList()))
+                .toList();
+    }
+
+    public record AnswerSummary(String question, String answer, List<String> tags) {}
+
     /** diagnosis_sessions と diagnosis_answers への保存。 */
     private DiagnosisSession saveSession(Long userId, List<Long> selectedChoiceIds) {
         DiagnosisSession session = new DiagnosisSession();
@@ -170,7 +184,8 @@ public class DiagnosisService {
     /** S03: タグ別嗜好スコアをもとに、コサイン類似度で上位5件の地酒を推薦する。 */
     public List<Recommendation> recommend(Map<String, Integer> preferencesByTagName) {
         return catalogService.all().stream()
-                .map(sake -> new Recommendation(sake, cosine(preferencesByTagName, sake.tagScores())))
+                .map(sake -> new Recommendation(sake, cosine(preferencesByTagName, sake.tagScores()),
+                        com.example.demo.dto.TastePresentation.matchingTags(preferencesByTagName, sake.tagScores())))
                 .sorted(Comparator.comparingDouble(Recommendation::score).reversed())
                 .limit(5)
                 .toList();
@@ -188,6 +203,6 @@ public class DiagnosisService {
         return dot / (Math.sqrt(preferenceNorm) * Math.sqrt(featureNorm));
     }
 
-    public record Recommendation(Sake sake, double score) {
+    public record Recommendation(Sake sake, double score, List<String> matchingTags) {
     }
 }

@@ -21,29 +21,39 @@
   <p class="eyebrow">YOUR RESULT</p>
   <h1>あなたに合いそうな日本酒</h1>
 
-  <!-- preferences（タグ名→スコアのMap）の件数を表示。#maps.size()はThymeleafのMapユーティリティ -->
   <p class="lead">選んだ回答から見つかった、今のあなたの味わい傾向です。</p>
-
-  <!-- 診断で得られたタグ別スコアの一覧表示 -->
-  <div class="tag-list preference">
-    <span th:each="tag : ${preferences}" th:text="${tag.key}"></span>
+  <section class="taste-result" aria-labelledby="taste-title">
+    <h2 id="taste-title">あなたの強い傾向</h2>
+    <div class="tendency-list">
+      <div class="tendency" th:each="tag : ${tendencies}" th:classappend="${tag.strongest} ? ' strongest'">
+        <div class="tendency-heading"><strong th:text="${tag.name}"></strong><span th:text="${tag.strongest} ? '強い傾向' : 'ほかの傾向'"></span></div>
+        <div class="tendency-bar" aria-hidden="true"><span th:style="|width: ${tag.relativeStrength}%|"></span></div>
+        <small th:text="|回答からのスコア：${tag.score}|"></small>
+      </div>
+    </div>
+    <p class="muted">棒の長さは、今回の回答で最も強かった傾向を基準にしています。辛口・甘口は回答ごとに加算されるため、両方が現れることもあります。</p>
+    <details class="answer-summary"><summary>回答と味わい傾向のつながりを見る</summary>
+      <ol><li th:each="answer : ${answers}"><p th:text="${answer.question}"></p><strong th:text="${answer.answer}"></strong><p class="muted" th:text="|この回答が示す特徴：${#strings.listJoin(answer.tags, '・')}|"></p></li></ol>
+    </details>
+  </section>
+  <div class="section-heading recommendation-heading">
+    <h2>好みから選んだおすすめ</h2>
+    <p class="muted">回答の傾向と、銘柄に登録された味わいの特徴を比べて選びました。香り・甘さ・飲み口を同じ指標で比較できます。</p>
   </div>
-
-  <!--
-    推薦結果一覧。DiagnosisService.Recommendation（sake, score）のリストを展開する。
-    item.score（0〜1のコサイン類似度）を100倍しパーセント表示に変換している。
-    formatDecimal(値, 整数部の最小桁数, 小数部の桁数) で小数点以下0桁に丸めている。
-  -->
   <div class="card-grid recommendations">
-    <article class="sake-card" th:each="item : ${recommendations}">
-      <p class="badge">おすすめ</p>
-      <h2 th:text="${item.sake.name}"></h2>
+    <article class="sake-card recommendation-card" th:each="item, state : ${recommendations}">
+      <p class="badge" th:text="|おすすめ ${state.count}|"></p>
+      <h3 th:text="${item.sake.name}"></h3>
+      <div th:replace="~{fragments/sake-comparison :: comparison(sake=${item.sake})}"></div>
       <p class="muted" th:if="${!#strings.isEmpty(item.sake.breweryName)}" th:text="|蔵元：${item.sake.breweryName}|"></p>
       <p class="muted" th:text="|${item.sake.type} ・ ${item.sake.region}|"></p>
-      <p th:text="${item.sake.description}"></p>
+      <p class="recommendation-reason" th:if="${!#lists.isEmpty(item.matchingTags)}" th:text="|おすすめの理由：あなたの「${#strings.listJoin(item.matchingTags, '・')}」の傾向と共通する特徴があります。|"></p>
+      <p class="recommendation-reason" th:if="${#lists.isEmpty(item.matchingTags)}">好みと直接重なる登録タグはありません。新しい味わいの候補としてご覧ください。</p>
+      <p class="card-description" th:text="${item.sake.description}"></p>
       <a th:href="@{/sake/{id}(id=${item.sake.id})}">詳しく見る →</a>
     </article>
   </div>
+  <p class="empty" th:if="${#lists.isEmpty(recommendations)}">おすすめの銘柄は現在準備中です。</p>
 
   <a class="button" th:href="@{/diagnosis}">もう一度診断する</a>
 </main>

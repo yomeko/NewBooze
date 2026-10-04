@@ -87,6 +87,7 @@
     <article class="sake-card" th:each="sake : ${result.content}">
       <p class="badge" th:text="${sake.type}"></p>
       <h2 th:text="${sake.name}"></h2>
+      <div th:replace="~{fragments/sake-comparison :: comparison(sake=${sake})}"></div>
       <p th:if="${sake.reviewCount > 0}" th:text="|★ ${#numbers.formatDecimal(sake.averageRating, 1, 1)} / 5（${sake.reviewCount}件）|"></p>
       <p class="muted" th:unless="${sake.reviewCount > 0}">まだ評価がありません</p>
       <p class="muted" th:if="${!#strings.isEmpty(sake.breweryName)}" th:text="|蔵元：${sake.breweryName}|"></p>

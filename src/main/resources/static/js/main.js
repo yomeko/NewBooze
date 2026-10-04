@@ -36,6 +36,29 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.addEventListener('scroll', compact, { passive: true });
     compact();
+    const navigation = header.querySelector('#main-navigation');
+    const previous = header.querySelector('.nav-previous');
+    const next = header.querySelector('.nav-next');
+    const hint = header.querySelector('.nav-scroll-hint');
+    if (navigation && previous && next && hint) {
+      const updateNavigation = () => {
+        const overflow = navigation.scrollWidth > navigation.clientWidth + 2;
+        previous.hidden = !overflow;
+        next.hidden = !overflow;
+        previous.disabled = navigation.scrollLeft <= 2;
+        next.disabled = navigation.scrollLeft + navigation.clientWidth >= navigation.scrollWidth - 2;
+        hint.hidden = !overflow;
+      };
+      navigation.scrollLeft = 0;
+      navigation.addEventListener('scroll', updateNavigation, { passive: true });
+      window.addEventListener('resize', updateNavigation);
+      [previous, next].forEach((button, index) => button.addEventListener('click', () => {
+        navigation.scrollBy({ left: (index === 0 ? -1 : 1) * navigation.clientWidth * 0.7,
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      }));
+      updateNavigation();
+      document.fonts?.ready.then(updateNavigation);
+    }
   }
   // 写真は確認画面で確定するまで送信せず、表示範囲と同じ正方形を保存する。
   const imageEditor = document.querySelector('#image-editor');
@@ -185,39 +208,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---- S02診断画面：1問ずつ表示するウィザード形式の制御 ----
-  // 診断画面(diagnosis.html)以外ではこの要素が存在しないため、
-  // 見つからなければ何もせず終了する（他画面でエラーにならないようにするガード）
-  const questions = [...document.querySelectorAll('.question')];
-  if (!questions.length) return;
+  // 写真未登録・読み込み失敗でも同じ大きさの比較カードを保つ。
+  document.querySelectorAll('.sake-card-image img').forEach(img => {
+    const fallback = () => {
+      img.hidden = true;
+      img.parentElement.querySelector('.sake-image-fallback').hidden = false;
+    };
+    img.addEventListener('error', fallback);
+    if (img.complete && img.naturalWidth === 0) fallback();
+  });
 
-  let step = 0; // 現在表示中の設問インデックス（0始まり）
+  const questions = [...document.querySelectorAll('#diagnosis-form .question')];
+  if (!questions.length) return;
   const form = document.querySelector('#diagnosis-form');
+  const back = document.querySelector('#quiz-back');
+  const next = document.querySelector('#quiz-next');
+  const position = document.querySelector('#quiz-position');
+  const progress = document.querySelector('#quiz-progress');
+  let step = 0;
   let submitted = false;
 
-  // 現在のstepに応じて、表示する設問を切り替える
-  const render = () => {
-    questions.forEach((question, index) => question.classList.toggle('active', index === step));
+  const syncAnswer = question => {
+    const selected = question.querySelector('input[type="radio"]:checked');
+    const answer = question.querySelector('input[type="hidden"][name="choice"]');
+    answer.value = selected?.value || '';
+    answer.disabled = !selected;
+    return !!selected;
   };
-
-  // 選択したら次の設問へ進み、最終回答後は自動で結果を表示する。
-  questions.forEach((question, index) => {
+  const render = (focus = false) => {
+    questions.forEach((question, index) => {
+      question.classList.toggle('active', index === step);
+      question.hidden = index !== step;
+    });
+    position.textContent = `全${questions.length}問中 ${step + 1}問目`;
+    progress.value = step + 1;
+    back.disabled = step === 0 || submitted;
+    next.disabled = submitted || !syncAnswer(questions[step]);
+    next.textContent = step === questions.length - 1 ? '診断結果を見る' : '次へ →';
+    if (focus) questions[step].querySelector('legend').focus({ preventScroll: true });
+  };
+  questions.forEach(question => {
     question.querySelectorAll('input[type="radio"]').forEach(radio => {
-      radio.addEventListener('click', () => {
-        if (submitted || index !== step || !radio.checked) return;
-        const answer = question.querySelector('input[type="hidden"][name="choice"]');
-        answer.value = radio.value;
-        answer.disabled = false;
-        if (step < questions.length - 1) {
-          step++;
-          render();
-        } else {
-          submitted = true;
-          form.requestSubmit();
-        }
+      radio.addEventListener('change', () => {
+        syncAnswer(question);
+        render();
       });
     });
   });
-
-  render(); // 初期表示（1問目のみ表示した状態にする）
+  back.addEventListener('click', () => {
+    if (step === 0 || submitted) return;
+    step--;
+    render(true);
+  });
+  form.addEventListener('submit', event => {
+    if (submitted) { event.preventDefault(); return; }
+    if (!syncAnswer(questions[step])) { event.preventDefault(); render(); return; }
+    if (step < questions.length - 1) {
+      event.preventDefault();
+      step++;
+      render(true);
+      return;
+    }
+    const incomplete = questions.findIndex(question => !syncAnswer(question));
+    if (incomplete !== -1) {
+      event.preventDefault();
+      step = incomplete;
+      render(true);
+      return;
+    }
+    submitted = true;
+    back.disabled = next.disabled = true;
+    next.textContent = '結果を準備中…';
+  });
+  // 戻る操作や履歴からの復帰でも回答を保持する。
+  window.addEventListener('pageshow', () => { submitted = false; render(); });
+  render();
 });

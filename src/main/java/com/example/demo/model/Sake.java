@@ -32,4 +32,7 @@ public record Sake(
         Double averageRating,
         long reviewCount
 ) {
+    public java.util.List<com.example.demo.dto.TastePresentation.Indicator> tasteIndicators() {
+        return com.example.demo.dto.TastePresentation.indicators(tagScores);
+    }
 }
