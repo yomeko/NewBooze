@@ -1,17 +1,17 @@
 # 一升の出会い DB設計書
 
-作成日：2026年10月3日
+作成日：2026年10月3日　実DB確認日：2026年10月5日
 
 ## 1. 対象と前提
 
-本書は NewBooze（日本酒紹介・好み診断アプリ）のDB設計を、既存の作成SQLと実装に基づいて整理したものです。定義の基準は `data/create_issho_no_deai.sql` です。実稼働DBへの接続・定義照合は行っていません。
+本書は NewBooze（日本酒紹介・好み診断アプリ）の現行DB構造を示す設計書です。2026年10月5日に指定のphpMyAdminへログインし、`issho_no_deai` と `newbooze` の全18テーブルのCREATE定義を確認しました。主な対象はローカル接続設定が指す `issho_no_deai` です。カラム・型・初期値・主キー・一意制約・索引・外部キー・削除規則・CHECK制約を実DBに照合し、保存ルールはアプリ実装を併せて参照しています。
 
-- DB：MySQL互換（MySQL / MariaDB）。この設計書では特定のサーバーバージョンを仮定しません。
-- 新規作成SQLのDB名：`issho_no_deai`。アプリの既定接続先：`newbooze`（ローカル設定で変更可能）。
+- 確認サーバー：127.0.0.1、MariaDB 10.11.19（Homebrew）。phpMyAdmin 5.2.3。
+- ローカル接続設定：`issho_no_deai`。既定設定：`newbooze`。両DBとも存在します。起動中プロセスの接続先までは本調査で確認していません。
 - ストレージエンジン：InnoDB。文字コード：utf8mb4。照合順序：utf8mb4_unicode_ci。
-- 時刻：新規作成SQLのセッションは日本時間（+09:00）。接続時にも時刻設定を統一します。
-- 全18テーブル。単独の `id` は BIGINT UNSIGNED・自動採番。中間テーブルは複合主キーを使用します。
-- 既存DBを変更するための資料ではなく、新規作成SQLの構造を説明する設計書です。
+- 接続URLの時刻指定：Asia/Tokyo。DBのセッション・グローバルタイムゾーンは未取得のため、接続時に統一して運用します。
+- 全18テーブル、外部キー23本。単独の `id` は BIGINT(20) UNSIGNED・自動採番。中間テーブルは複合主キーを使用します。
+- 調査では構造の参照のみを行いました。DBの定義・保存データは変更していません。
 
 ## 2. テーブル一覧
 
@@ -69,18 +69,19 @@ erDiagram
 
 ## 4. テーブル定義
 
-「必須」は NOT NULL を示します。PK＝主キー、FK＝外部キー。BOOLEAN は真偽値です。デフォルトなしの必須項目は登録時に値を指定します。
+「必須」は NOT NULL を示します。PK＝主キー、FK＝外部キー。型は実DBの表示に合わせています。BIGINT(20)・INT(11)等の括弧内は表示幅で、桁数制限ではありません。真偽値項目はTINYINT(1)で保持します。デフォルトなしの必須項目は登録時に値を指定します。
 
 ### 4.1 `users` — ユーザー情報と認証
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
 | `name` | VARCHAR(50) | ○ | — | — |
 | `email` | VARCHAR(255) | ○ | — | — |
 | `password_hash` | VARCHAR(255) | ○ | — | — |
 | `temporary_password` | TINYINT(1) | ○ | 0 | — |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
+| `admin` | TINYINT(1) | ○ | 0 | — |
 
 一意制約・索引・値制約：
 
@@ -90,7 +91,7 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
 | `name` | VARCHAR(100) | ○ | — | — |
 | `prefecture` | VARCHAR(50) | — | NULL | — |
 
@@ -102,7 +103,7 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
 | `name` | VARCHAR(50) | ○ | — | — |
 
 一意制約・索引・値制約：
@@ -113,7 +114,7 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
 | `name` | VARCHAR(50) | ○ | — | — |
 | `category` | VARCHAR(30) | ○ | — | — |
 
@@ -125,9 +126,9 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
 | `question_text` | VARCHAR(255) | ○ | — | — |
-| `sort_order` | INT | ○ | 0 | — |
+| `sort_order` | INT(11) | ○ | 0 | — |
 
 一意制約・索引・値制約：
 
@@ -138,13 +139,13 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `brewery_id` | BIGINT UNSIGNED | — | NULL | FK → breweries.id |
-| `sake_type_id` | BIGINT UNSIGNED | ○ | — | FK → sake_types.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `brewery_id` | BIGINT(20) UNSIGNED | — | NULL | FK → breweries.id |
+| `sake_type_id` | BIGINT(20) UNSIGNED | ○ | — | FK → sake_types.id |
 | `name` | VARCHAR(100) | ○ | — | — |
 | `region` | VARCHAR(50) | — | NULL | — |
 | `abv` | DECIMAL(4,1) | — | NULL | — |
-| `price` | INT UNSIGNED | — | NULL | — |
+| `price` | INT(10) UNSIGNED | — | NULL | — |
 | `description` | TEXT | — | NULL | — |
 | `image_url` | VARCHAR(255) | — | NULL | — |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
@@ -164,8 +165,8 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `question_id` | BIGINT UNSIGNED | ○ | — | FK → diagnosis_questions.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `question_id` | BIGINT(20) UNSIGNED | ○ | — | FK → diagnosis_questions.id |
 | `choice_text` | VARCHAR(255) | ○ | — | — |
 
 一意制約・索引・値制約：
@@ -180,8 +181,8 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `user_id` | BIGINT UNSIGNED | ○ | — | FK → users.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | FK → users.id |
 | `taken_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 
 一意制約・索引・値制約：
@@ -196,8 +197,8 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `user_id` | BIGINT UNSIGNED | ○ | — | FK → users.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | FK → users.id |
 | `sake_name` | VARCHAR(100) | ○ | — | — |
 | `comment` | VARCHAR(500) | — | NULL | — |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
@@ -214,13 +215,13 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `user_id` | BIGINT UNSIGNED | ○ | — | PK, FK → users.id |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → users.id |
 | `image_data` | MEDIUMBLOB | ○ | — | — |
 | `content_type` | VARCHAR(50) | ○ | — | — |
 | `updated_at` | DATETIME | ○ | CURRENT_TIMESTAMP / 更新時に現在時刻 | — |
-| `position_x` | INT | ○ | 50 | — |
-| `position_y` | INT | ○ | 50 | — |
-| `zoom` | INT | ○ | 100 | — |
+| `position_x` | INT(11) | ○ | 50 | — |
+| `position_y` | INT(11) | ○ | 50 | — |
+| `zoom` | INT(11) | ○ | 100 | — |
 
 親レコード削除時：
 
@@ -230,9 +231,9 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `choice_id` | BIGINT UNSIGNED | ○ | — | PK, FK → diagnosis_choices.id |
-| `tag_id` | BIGINT UNSIGNED | ○ | — | PK, FK → tags.id |
-| `weight` | TINYINT UNSIGNED | ○ | 1 | — |
+| `choice_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → diagnosis_choices.id |
+| `tag_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → tags.id |
+| `weight` | TINYINT(3) UNSIGNED | ○ | 1 | — |
 
 一意制約・索引・値制約：
 
@@ -247,10 +248,10 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `session_id` | BIGINT UNSIGNED | ○ | — | FK → diagnosis_sessions.id |
-| `question_id` | BIGINT UNSIGNED | ○ | — | FK → diagnosis_questions.id |
-| `choice_id` | BIGINT UNSIGNED | ○ | — | FK → diagnosis_choices.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `session_id` | BIGINT(20) UNSIGNED | ○ | — | FK → diagnosis_sessions.id |
+| `question_id` | BIGINT(20) UNSIGNED | ○ | — | FK → diagnosis_questions.id |
+| `choice_id` | BIGINT(20) UNSIGNED | ○ | — | FK → diagnosis_choices.id |
 
 一意制約・索引・値制約：
 
@@ -268,8 +269,8 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `user_id` | BIGINT UNSIGNED | ○ | — | PK, FK → users.id |
-| `post_id` | BIGINT UNSIGNED | ○ | — | PK, FK → drink_posts.id |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → users.id |
+| `post_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → drink_posts.id |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 
 一意制約・索引・値制約：
@@ -285,9 +286,9 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
-| `reporter_id` | BIGINT UNSIGNED | ○ | — | FK → users.id |
-| `post_id` | BIGINT UNSIGNED | ○ | — | FK → drink_posts.id |
+| `id` | BIGINT(20) UNSIGNED | ○ | 自動採番 | PK |
+| `reporter_id` | BIGINT(20) UNSIGNED | ○ | — | FK → users.id |
+| `post_id` | BIGINT(20) UNSIGNED | ○ | — | FK → drink_posts.id |
 | `reason` | VARCHAR(30) | ○ | — | — |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 
@@ -305,8 +306,8 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `user_id` | BIGINT UNSIGNED | ○ | — | PK, FK → users.id |
-| `sake_id` | BIGINT UNSIGNED | ○ | — | PK, FK → sake.id |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → users.id |
+| `sake_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → sake.id |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 
 一意制約・索引・値制約：
@@ -322,9 +323,9 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `sake_id` | BIGINT UNSIGNED | ○ | — | PK, FK → sake.id |
-| `tag_id` | BIGINT UNSIGNED | ○ | — | PK, FK → tags.id |
-| `score` | TINYINT UNSIGNED | ○ | 3 | — |
+| `sake_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → sake.id |
+| `tag_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → tags.id |
+| `score` | TINYINT(3) UNSIGNED | ○ | 3 | — |
 
 一意制約・索引・値制約：
 
@@ -339,9 +340,9 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `user_id` | BIGINT UNSIGNED | ○ | — | PK, FK → users.id |
-| `tag_id` | BIGINT UNSIGNED | ○ | — | PK, FK → tags.id |
-| `score` | INT | ○ | 0 | — |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → users.id |
+| `tag_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → tags.id |
+| `score` | INT(11) | ○ | 0 | — |
 
 一意制約・索引・値制約：
 
@@ -356,10 +357,10 @@ erDiagram
 
 | カラム | 型 | 必須 | 初期値・自動設定 | キー |
 |---|---|---|---|---|
-| `user_id` | BIGINT UNSIGNED | ○ | — | PK, FK → users.id |
-| `sake_id` | BIGINT UNSIGNED | ○ | — | PK, FK → sake.id |
-| `published` | BOOLEAN | ○ | FALSE | — |
-| `rating` | TINYINT UNSIGNED | ○ | — | — |
+| `user_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → users.id |
+| `sake_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → sake.id |
+| `published` | TINYINT(1) | ○ | 0 | — |
+| `rating` | TINYINT(3) UNSIGNED | ○ | — | — |
 | `comment` | VARCHAR(500) | ○ | '' | — |
 | `updated_at` | TIMESTAMP | ○ | CURRENT_TIMESTAMP / 更新時に現在時刻 | — |
 
@@ -375,6 +376,7 @@ erDiagram
 
 ## 5. 機能と保存ルール
 
+- 管理者権限：`users.admin` を真偽値として管理します。初期値0は一般ユーザー、1は管理者です。
 - 会員登録：メールアドレスは一意。パスワードは `password_hash` にハッシュを保存し、仮パスワード状態は `temporary_password` で管理します。
 - 日本酒検索：`sake` を中心に酒蔵・酒種・タグを参照します。酒蔵は未設定を許容します。
 - 診断：設問 → 選択肢 → タグの重みを集計します。ログイン中の回答は `diagnosis_sessions` と `diagnosis_answers` に保存します。未ログイン時は診断結果をDB保存しません。
@@ -405,3 +407,16 @@ erDiagram
 新規DB作成用SQLは [create_issho_no_deai.sql](../data/create_issho_no_deai.sql)、手順は [RESET_DATABASE.md](../data/RESET_DATABASE.md) を参照してください。作成SQLには全18テーブルと日本酒10件、診断4問・選択肢12件、酒種・タグの初期データが含まれます。ユーザーや投稿・レビューの初期データはありません。酒蔵マスタは空です。
 
 `CREATE DATABASE` は同名DBがある場合に失敗します。既存DBの削除・変更はせず、未使用DB名で実行します。旧DB向けの差分SQLは型や照合順序が異なるため、本書の新規作成SQLと混在させないでください。アプリは `ddl-auto=validate` を使用し、起動時にエンティティとDB定義の整合性を検証します。
+
+## 8. 実DB照合結果
+
+調査先は指定された `http://localhost:8081/phpmyadmin/index.php` です。両DBの「構造」画面と「作成を表示する」で全テーブルの定義を確認しました。認証情報・メールアドレス・パスワードハッシュ等の実レコードは設計書に含めません。
+
+- `issho_no_deai` と `newbooze` はともに18テーブルです。CREATE定義は、テーブルごとのAUTO_INCREMENT現在値を除いて一致しました。データ内容は別です。
+- 前版に不足していた `users.admin` を追加しました。実DBでは `created_at` の後に配置されています。現在の作成SQLでは `password_hash` の後に配置されており、列順が異なります。
+- `sake_reviews.published` の実型はTINYINT(1)、初期値は0です。SQLのBOOLEAN・FALSEと同等の真偽値表現です。
+- 全23本の外部キー、主キー・一意キー・索引、レビュー評価の1〜5 CHECKを確認しました。前版の関係図と削除規則に変更はありません。
+- 構造画面の表示行数は `issho_no_deai` が合計87行、`newbooze` が合計120行でした。InnoDBの表示行数は推定値であり、厳密なCOUNT集計ではありません。
+- `issho_no_deai` の構造画面では日本酒10行、酒種7行、タグ7行、設問4行、選択肢12行、酒蔵0行と表示されています。マスタの定義は確認済みですが、各商品の名称や価格等の全レコード内容は今回の構造調査の対象外です。
+
+今後の定義変更時は、この設計書と新規作成SQL・差分SQLを同時に更新します。第6章の改善候補は提案であり、実DBには適用していません。
