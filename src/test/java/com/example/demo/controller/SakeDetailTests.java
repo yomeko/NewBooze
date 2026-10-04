@@ -52,16 +52,17 @@ class SakeDetailTests {
         return new CustomUserDetails(users.saveAndFlush(user));
     }
 
-    @Test void rendersJsonWithoutPhotosAndHidesMissingSections() throws Exception {
+    @Test void rendersJsonWithoutProductPhotosAndHidesMissingSections() throws Exception {
+        jdbc.update("UPDATE sake SET image_url = NULL WHERE id = 1");
         mvc.perform(get("/sake/1")).andExpect(status().isOk())
             .andExpect(content().string(containsString("株式会社 獺祭")))
             .andExpect(content().string(not(containsString("2,475円（税込）"))))
             .andExpect(content().string(not(containsString("価格・購入先"))))
             .andExpect(content().string(containsString("href=\"https://www.dassaistore.com/product-detail/47\"")))
             .andExpect(content().string(not(containsString("href=\"#purchase\""))))
-            .andExpect(result -> assertThat(result.getResponse().getContentAsString()
-                    .replaceAll("(?s)<div class=\"mini-avatar review-avatar\"[^>]*>.*?</div>", ""))
-                    .doesNotContain("<img"))
+            .andExpect(content().string(not(containsString("class=\"sake-product-photo\""))))
+            .andExpect(content().string(containsString("class=\"logo-mark\"")))
+            .andExpect(content().string(containsString("class=\"sake-home-link\"")))
             .andExpect(content().string(not(containsString("合う料理"))));
         mvc.perform(get("/sake/2")).andExpect(status().isOk())
             .andExpect(content().string(not(containsString("どんな味わい？"))))
@@ -69,14 +70,19 @@ class SakeDetailTests {
         mvc.perform(get("/sake/9223372036854775807")).andExpect(status().isNotFound());
     }
 
-    @Test void purchaseAndFavoriteStayInsideStickyHeader() throws Exception {
+    @Test void purchaseAndFavoriteStayInsideProductSidebar() throws Exception {
         for (var request : java.util.List.of(get("/sake/1"), get("/sake/1").with(user(account())))) {
             String html = mvc.perform(request).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
-            int start = html.indexOf("<section class=\"sake-intro\"");
-            String header = html.substring(start, html.indexOf("</section>", start));
-            assertThat(header).contains("sake-favorite", "https://www.dassaistore.com/product-detail/47");
-            assertThat(header.indexOf("sake-favorite")).isLessThan(header.indexOf("https://www.dassaistore.com/product-detail/47"));
+            int start = html.indexOf("<div class=\"sake-product-sidebar\"");
+            int end = html.indexOf("<div class=\"sake-product-details\"");
+            assertThat(start).isGreaterThanOrEqualTo(0);
+            assertThat(end).isGreaterThan(start);
+            String sidebar = html.substring(start, end);
+            assertThat(sidebar).contains("sake-header-actions", "sake-favorite",
+                    "https://www.dassaistore.com/product-detail/47");
+            assertThat(sidebar.indexOf("sake-favorite"))
+                    .isLessThan(sidebar.indexOf("https://www.dassaistore.com/product-detail/47"));
             assertThat(html).doesNotContain("sake-purchase-bar");
         }
     }
