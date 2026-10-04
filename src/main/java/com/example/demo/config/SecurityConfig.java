@@ -28,6 +28,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                 // 未ログインでも閲覧可能な画面(S01〜S05, ログイン/新規登録, 静的リソース)
                 .requestMatchers(
                     "/", "/search", "/sake/**",
@@ -53,7 +54,7 @@ public class SecurityConfig {
                 // trueにすると常にホームへ強制遷移してしまうため注意。
                 .successHandler((request, response, authentication) -> {
                     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-                    response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : "/");
+                    response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : (user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) ? "/admin" : "/"));
                 })
                 .failureUrl("/login?error")
                 .permitAll()

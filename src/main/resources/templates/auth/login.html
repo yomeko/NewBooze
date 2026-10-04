@@ -28,7 +28,7 @@
 
         <!-- Spring Securityがログイン失敗時に /login?error を付けてリダイレクトしてくる -->
         <p class="auth-alert" th:if="${param.error}">
-            メールアドレスまたはパスワードが正しくありません
+            メールアドレス・管理者IDまたはパスワードが正しくありません
         </p>
         <!-- 新規登録完了後に /login?registered を付けて遷移させたい場合に使う想定の表示
              （現状AuthControllerは自動ログインするため未使用） -->
@@ -47,8 +47,8 @@
         -->
         <form th:action="@{/login}" method="post" novalidate>
             <div class="form-group">
-                <label for="username">メールアドレス</label>
-                <input id="username" type="email" name="username" autocomplete="email" placeholder="you@example.com">
+                <label for="username">メールアドレス / 管理者ID</label>
+                <input id="username" type="text" name="username" autocomplete="username" placeholder="you@example.com または admin">
             </div>
             <div class="form-group">
                 <label for="password">パスワード</label>

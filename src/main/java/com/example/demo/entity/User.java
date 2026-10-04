@@ -39,6 +39,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    @Column(nullable = false)
+    private boolean admin;
+
     /** 仮パスワードでログイン中ならtrue。変更完了後にfalseに戻す。 */
     @Column(name = "temporary_password", nullable = false)
     private boolean temporaryPassword;

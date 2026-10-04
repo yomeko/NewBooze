@@ -18,6 +18,7 @@
     <div class="header-actions">
       <a class="header-login" sec:authorize="isAnonymous()" th:href="@{/login}">ログイン</a>
       <a class="header-signup" sec:authorize="isAnonymous()" th:href="@{/signup}">新規登録</a>
+      <a class="header-login" sec:authorize="hasRole('ADMIN')" th:href="@{/admin}">管理画面</a>
       <a class="header-login" sec:authorize="isAuthenticated()" th:href="@{/mypage}">マイページ</a>
       <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post" class="nav-logout-form">
         <button type="submit" class="header-signup">ログアウト</button>

@@ -23,9 +23,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 現時点では管理者/一般等の権限区分を設けないため、
-        // 全ユーザー共通でROLE_USERのみ付与する
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return user.isAdmin()
+                ? List.of(new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_ADMIN"))
+                : List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 
     @Override

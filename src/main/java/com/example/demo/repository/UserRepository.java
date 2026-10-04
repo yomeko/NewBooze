@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    org.springframework.data.domain.Page<User> findByNameContainingIgnoreCase(String name, org.springframework.data.domain.Pageable pageable);
+
     // S07のログイン処理（email + password_hash照合）で使用
     Optional<User> findByEmail(String email);
 

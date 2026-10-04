@@ -18,6 +18,7 @@ CREATE TABLE `users` (
   `name` VARCHAR(50) NOT NULL,
   `email` VARCHAR(255) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
+  `admin` TINYINT(1) NOT NULL DEFAULT 0,
   `temporary_password` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
