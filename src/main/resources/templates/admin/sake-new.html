@@ -1,13 +1,15 @@
 <!doctype html><html lang="ja" xmlns:th="http://www.thymeleaf.org"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>管理画面 - 一升の出会い</title><link rel="stylesheet" th:href="@{/css/style.css}">
-<style>.admin-page{max-width:960px;margin:40px auto;padding:24px}.admin-page nav{display:flex;gap:24px;margin-bottom:28px}.admin-page table{width:100%;border-collapse:collapse}.admin-page td,.admin-page th{padding:12px;text-align:left;border-bottom:1px solid #ddd}.admin-page .form-group{margin-bottom:20px}.admin-page input,.admin-page select,.admin-page textarea{width:100%;padding:12px;border:1px solid #ccc;border-radius:6px}.admin-page .error{color:#b3261e}.admin-page .success{color:#23734b}</style>
+<link rel="stylesheet" th:href="@{/css/admin.css}">
 </head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
-<main class="admin-page"><h1>管理画面</h1><nav><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a></nav>
+<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}" aria-current="page">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a></nav>
 <h2>新しい日本酒を登録</h2><p class="success" role="status" th:if="${success}" th:text="${success}"></p><form th:action="@{/admin/sake/new}" th:object="${sakeForm}" method="post">
 <div class="form-group"><label for="name">銘柄名（必須）</label><input id="name" type="text" th:field="*{name}"><p class="error" th:errors="*{name}"></p></div>
+<div class="admin-form-row">
 <div class="form-group"><label for="region">地域</label><input id="region" type="text" th:field="*{region}"><p class="error" th:errors="*{region}"></p></div>
 <div class="form-group"><label for="abv">アルコール度数（%）</label><input id="abv" type="number" th:field="*{abv}" step="0.1" min="0" max="100"><p class="error" th:errors="*{abv}"></p></div>
-<div class="form-group"><label for="price">価格（円）</label><input id="price" type="number" th:field="*{price}" min="0"><p class="error" th:errors="*{price}"></p></div>
+<div class="form-group"><label for="price">参考価格（円・720mlあたり）</label><input id="price" type="number" th:field="*{price}" min="0" aria-describedby="price-help"><p id="price-help" class="field-help">720mlの税込価格を入力してください。価格が不明な場合は空欄にできます。</p><p class="error" th:errors="*{price}"></p></div>
+</div>
 <div class="form-group"><label for="sakeTypeId">酒種（必須）</label><select id="sakeTypeId" th:field="*{sakeTypeId}"><option value="">選択してください</option><option th:each="type : ${types}" th:value="${type.id}" th:text="${type.name}"></option></select><p class="error" th:errors="*{sakeTypeId}"></p></div>
 <div class="form-group"><label for="description">説明</label><textarea id="description" th:field="*{description}" rows="5"></textarea><p class="error" th:errors="*{description}"></p></div><button class="button primary" type="submit">日本酒を登録する</button></form></main><script th:src="@{/js/main.js}"></script></body></html>
