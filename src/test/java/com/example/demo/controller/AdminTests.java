@@ -31,6 +31,8 @@ class AdminTests {
     @Autowired SakeRepository sake;
     @Autowired SakeTypeRepository types;
     @Autowired PasswordEncoder encoder;
+    @Autowired com.example.demo.service.SakeImageService images;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     // 管理者だけが管理画面を開けて、通常ログイン後も管理画面へ進むことを確認する。
     @Test void adminLoginAndProtectedPages() throws Exception {
@@ -68,4 +70,39 @@ class AdminTests {
         mvc.perform(get("/search").param("keyword", "管理登録テスト"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("管理登録テスト")));
     }
+    @Test void registersAndServesProductImageAndRejectsInvalidFiles() throws Exception {
+        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var output = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
+                java.awt.image.BufferedImage.TYPE_INT_RGB), "png", output);
+        var file = new org.springframework.mock.web.MockMultipartFile("image", "photo.png", "image/png", output.toByteArray());
+        String typeId = types.findAll().getFirst().getId().toString();
+        long count = sake.count();
+        mvc.perform(multipart("/admin/sake/new").file(file).with(user("ordinary").roles("USER")).with(csrf()))
+                .andExpect(status().isForbidden());
+        mvc.perform(multipart("/admin/sake/new").file(file).with(admin))
+                .andExpect(status().isForbidden());
+        mvc.perform(multipart("/admin/sake/new")
+                .file(new org.springframework.mock.web.MockMultipartFile("image", "fake.png", "image/png", "invalid".getBytes()))
+                .with(admin).with(csrf()).param("name", "不正画像テスト").param("sakeTypeId", typeId))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("正しい画像を選択してください")));
+        assertThat(sake.count()).isEqualTo(count);
+        mvc.perform(multipart("/admin/sake/new").file(file).with(admin).with(csrf())
+                .param("name", "画像登録テスト").param("sakeTypeId", typeId))
+                .andExpect(redirectedUrl("/admin/sake/new"));
+        Long id = jdbc.queryForObject("SELECT id FROM sake WHERE name = ?", Long.class, "画像登録テスト");
+        String url = sake.findById(id).orElseThrow().getImageUrl();
+        try {
+            mvc.perform(get(url)).andExpect(status().isOk())
+                    .andExpect(content().contentType("image/png"))
+                    .andExpect(result -> assertThat(javax.imageio.ImageIO.read(
+                            new java.io.ByteArrayInputStream(result.getResponse().getContentAsByteArray())).getWidth()).isEqualTo(8));
+            mvc.perform(get("/sake/" + id)).andExpect(status().isOk())
+                    .andExpect(content().string(containsString("src=\"" + url + "\"")));
+            mvc.perform(get("/sake/images/invalid.png")).andExpect(status().isNotFound());
+        } finally {
+            images.delete(url);
+        }
+    }
+
 }

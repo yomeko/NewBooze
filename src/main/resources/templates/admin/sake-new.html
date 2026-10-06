@@ -9,7 +9,7 @@
 </head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
 <main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}" aria-current="page">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a></nav>
 <!-- th:objectでJavaのフォームを指定する。保存に失敗した場合も入力値とエラーがこのフォームへ戻る。 -->
-<h2>新しい日本酒を登録</h2><p class="success" role="status" th:if="${success}" th:text="${success}"></p><form th:action="@{/admin/sake/new}" th:object="${sakeForm}" method="post">
+<h2>新しい日本酒を登録</h2><p class="success" role="status" th:if="${success}" th:text="${success}"></p><form th:action="@{/admin/sake/new}" th:object="${sakeForm}" method="post" enctype="multipart/form-data">
 <div class="form-group"><label for="name">銘柄名（必須）</label><input id="name" type="text" th:field="*{name}"><p class="error" th:errors="*{name}"></p></div>
 <div class="admin-form-row">
 <div class="form-group"><label for="region">地域</label><input id="region" type="text" th:field="*{region}"><p class="error" th:errors="*{region}"></p></div>
@@ -18,4 +18,16 @@
 </div>
 <!-- DBにある酒種一覧から選ぶ。送るのはtype.id、画面に表示するのはtype.name。 -->
 <div class="form-group"><label for="sakeTypeId">酒種（必須）</label><select id="sakeTypeId" th:field="*{sakeTypeId}"><option value="">選択してください</option><option th:each="type : ${types}" th:value="${type.id}" th:text="${type.name}"></option></select><p class="error" th:errors="*{sakeTypeId}"></p></div>
-<div class="form-group"><label for="description">説明</label><textarea id="description" th:field="*{description}" rows="5"></textarea><p class="error" th:errors="*{description}"></p></div><button class="button primary" type="submit">日本酒を登録する</button></form></main><script th:src="@{/js/main.js}"></script></body></html>
+<div class="form-group"><label for="image">商品画像（任意）</label><input id="image" type="file" name="image" accept="image/jpeg,image/png" aria-describedby="image-help"><p id="image-help" class="field-help">JPEG・PNG形式、5MB以下の画像を選択してください。入力エラー後は画像を選び直してください。</p><p class="error" th:errors="*{image}"></p><img id="image-preview" alt="選択した商品画像のプレビュー" hidden style="max-width:240px;max-height:300px;object-fit:contain"></div>
+<div class="form-group"><label for="description">説明</label><textarea id="description" th:field="*{description}" rows="5"></textarea><p class="error" th:errors="*{description}"></p></div><button class="button primary" type="submit">日本酒を登録する</button></form></main><script th:src="@{/js/main.js}"></script><script>
+const imageInput = document.getElementById('image');
+const imagePreview = document.getElementById('image-preview');
+let previewUrl;
+imageInput.addEventListener('change', () => {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  const file = imageInput.files[0];
+  imagePreview.hidden = !file;
+  if (file) { previewUrl = URL.createObjectURL(file); imagePreview.src = previewUrl; }
+  else { imagePreview.removeAttribute('src'); }
+});
+</script></body></html>

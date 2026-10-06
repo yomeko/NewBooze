@@ -38,3 +38,6 @@ out/
 
 # このPCだけのDB接続設定
 /application-local.properties
+
+# 登録された日本酒の商品画像
+/uploads/

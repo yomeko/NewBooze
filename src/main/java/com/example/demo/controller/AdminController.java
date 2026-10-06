@@ -23,11 +23,13 @@ public class AdminController {
     private final UserRepository users;
     private final SakeRepository sake;
     private final SakeTypeRepository types;
+    private final com.example.demo.service.SakeImageService images;
 
-    public AdminController(UserRepository users, SakeRepository sake, SakeTypeRepository types) {
+    public AdminController(UserRepository users, SakeRepository sake, SakeTypeRepository types, com.example.demo.service.SakeImageService images) {
         this.users = users;
         this.sake = sake;
         this.types = types;
+        this.images = images;
     }
 
     /**
@@ -82,7 +84,25 @@ public class AdminController {
         item.setAbv(form.getAbv());
         item.setPrice(form.getPrice());
         item.setDescription(form.getDescription());
-        sake.save(item);
+        if (form.getImage() != null && !form.getImage().isEmpty()) {
+            try {
+                item.setImageUrl(images.store(form.getImage()));
+            } catch (IllegalArgumentException | java.io.IOException ex) {
+                errors.rejectValue("image", "invalid", ex instanceof IllegalArgumentException
+                        ? ex.getMessage() : "画像を保存できませんでした。別の画像を選択して再試行してください");
+                model.addAttribute("types", types.findAll(Sort.by("id")));
+                return "admin/sake-new";
+            }
+        }
+        try {
+            sake.saveAndFlush(item);
+        } catch (RuntimeException ex) {
+            if (item.getImageUrl() != null) {
+                try { images.delete(item.getImageUrl()); }
+                catch (java.io.IOException cleanup) { ex.addSuppressed(cleanup); }
+            }
+            throw ex;
+        }
         redirect.addFlashAttribute("success", "日本酒「" + item.getName() + "」を登録しました。");
         return "redirect:/admin/sake/new";
     }

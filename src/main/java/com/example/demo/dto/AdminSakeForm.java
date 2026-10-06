@@ -23,4 +23,5 @@ public class AdminSakeForm {
     private BigDecimal abv;
     @Min(0) private Integer price;
     @Size(max = 10000) private String description;
+    private org.springframework.web.multipart.MultipartFile image;
 }
