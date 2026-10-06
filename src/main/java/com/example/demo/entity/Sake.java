@@ -18,9 +18,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 地酒本体（sake）。
- * 要件定義書 5.3 では「DBスキーマ確定前は@Entityを付与しない」方針だったが、
- * newbooze.sql でスキーマが確定したため、ここで正式に @Entity 化する。
+ * データベースのsakeという表の1件を、Javaで扱うためのクラス。
+ * 日本酒の名前、酒蔵、酒種、産地、度数、価格などの基本情報を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "sake")
@@ -34,12 +34,15 @@ public class Sake {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 公開レビューだけから平均の星の数を計算する。レビューがなければnullになる。
     @org.hibernate.annotations.Formula("(select avg(r.rating) from sake_reviews r where r.sake_id = id and r.published = 1)")
     private Double averageRating;
 
+    // 公開レビューの件数。DBの専用列に保存せず、銘柄を読むときに計算する。
     @org.hibernate.annotations.Formula("(select count(*) from sake_reviews r where r.sake_id = id and r.published = 1)")
     private Long reviewCount;
 
+    // レビューの有無を並び替えに使う。公開レビューがあれば1、なければ0。
     @org.hibernate.annotations.Formula("(case when exists (select 1 from sake_reviews r where r.sake_id = id and r.published = 1) then 1 else 0 end)")
     private Integer hasPublicReviews;
 

@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * S02（診断画面）／S03（診断結果・推薦画面）を担当するController。
- * 外部設計書 3.1 の通り、診断自体は未ログインでも可能（認証不要）。
- * 結果の保存（diagnosis_sessions等）はログイン時のみ行う。
+ * 好み診断の質問画面と結果画面を担当する。
+ * 質問の回答をDiagnosisServiceへ渡し、好みの特徴とおすすめ銘柄をHTMLへ渡す。
+ * 誰でも診断できるが、回答と点数をデータベースへ保存するのはログイン中だけ。
  */
 @Controller
 public class DiagnosisController {
@@ -25,12 +25,20 @@ public class DiagnosisController {
         this.diagnosisService = diagnosisService;
     }
 
+    /**
+     * 質問文と選択肢の一覧を準備し、diagnosis.htmlへ渡す。
+     */
     @GetMapping("/diagnosis")
     public String diagnosis(Model model) {
         model.addAttribute("questions", diagnosisService.questions());
         return "diagnosis";
     }
 
+    /**
+     * フォームから届いた選択肢IDの一覧を、好みの点数とおすすめ銘柄に変換する。
+     * 未ログインならユーザーIDをnullにして、保存せず結果だけを表示する。
+     * 集計結果が空なら、回答を選び直せるよう質問画面へ戻す。
+     */
     @PostMapping("/diagnosis/result")
     public String result(@RequestParam(name = "choice", required = false) List<Long> choices,
                           // 未ログイン時、principalはnullになる（SecurityConfigで/diagnosis/**はpermitAllのため）

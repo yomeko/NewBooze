@@ -10,6 +10,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
+/**
+ * 日本酒の紹介文、飲み方、料理、購入リンクをJSONファイルから読み込む。
+ * 起動時に日本酒IDごとの一覧を作り、詳細画面を表示するときに対応する情報を返す。
+ * 基本情報はDBにあり、ここでは追加の紹介情報を扱う。
+ */
 @Service
 public class SakePageService {
     private final Map<Long, SakePage> pages;
@@ -17,6 +22,7 @@ public class SakePageService {
     public SakePageService(ObjectMapper mapper,
             @Value("${app.sake-pages:classpath:data/sake-pages.json}") Resource source) throws IOException {
         Map<Long, SakePage> loaded = new LinkedHashMap<>();
+        // JSONを読み終えたら入力を自動で閉じる。同じ銘柄IDが2件あれば起動時にエラーを出す。
         try (var input = source.getInputStream()) {
             for (SakePage page : mapper.readValue(input, SakePage[].class)) {
                 if (loaded.putIfAbsent(page.id(), page) != null)
@@ -26,8 +32,11 @@ public class SakePageService {
         pages = Map.copyOf(loaded);
     }
 
+    /**
+     * 銘柄IDに対応する紹介情報を返す。紹介情報や表示名が未登録ならDBの情報で補う。
+     */
     public SakePage pageFor(Sake sake) {
-        // A newly registered DB product works even before editorial data is supplied.
+        // JSONに紹介情報がまだない新規銘柄は、DBのID・名前・酒蔵だけで詳細画面を表示する。
         SakePage page = pages.getOrDefault(sake.id(), new SakePage(sake.id(), sake.name(), "",
                 sake.breweryName(), null, null, null, null, null, null, null, null, null));
         if (!page.name().isEmpty()) return page;

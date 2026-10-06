@@ -6,6 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * データベースのdrink_postsという表の1件を、Javaで扱うためのクラス。
+ * 投稿者、お酒の名前、感想、投稿日時を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ */
 @Entity
 @Table(name = "drink_posts")
 @Getter @Setter @NoArgsConstructor

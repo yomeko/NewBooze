@@ -8,7 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** favorites の複合主キー（user_id, sake_id）。 */
+/**
+ * favoritesの1件を区別する、ユーザーIDと日本酒IDの組み合わせ。
+ * 複合主キーとは、1つの番号だけではなく複数の値を合わせて使う識別子のこと。
+ * equalsは両方のIDが同じかを確認し、hashCodeも両方から計算して同じ組み合わせを扱えるようにする。
+ */
 @Embeddable
 @Getter
 @Setter

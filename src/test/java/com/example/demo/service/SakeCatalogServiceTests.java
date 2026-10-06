@@ -9,11 +9,16 @@ import org.springframework.data.domain.Sort;
 
 import static org.mockito.Mockito.*;
 
+/**
+ * DB操作を代役（mock）に置き換え、注目銘柄の抽選と検索条件の受け渡しを確認するテスト。
+ * whenで代役の返答を決め、verifyでサービスが想定したDB操作を呼んだか確認する。
+ */
 class SakeCatalogServiceTests {
     private final SakeRepository repository = mock(SakeRepository.class);
     private final SakeCatalogService service = new SakeCatalogService(
             repository, mock(SakeTagRepository.class));
 
+    // 銘柄が0件なら空の一覧を返し、不要な詳細取得をしないことを確認する。
     @Test
     void featuredHandlesEmptyCatalogWithoutLoadingDetails() {
         when(repository.findAllIds()).thenReturn(java.util.List.of());
@@ -21,6 +26,7 @@ class SakeCatalogServiceTests {
         verify(repository, never()).findAllById(any());
     }
 
+    // 登録されている銘柄から、重複せず最大4件を抽選することを確認する。
     @Test
     void featuredSelectsAtMostFourDistinctExistingIds() {
         var ids = java.util.List.of(2L, 7L, 19L, 28L, 45L, 90L, 102L);
@@ -35,6 +41,7 @@ class SakeCatalogServiceTests {
         verify(repository).findAllById(any());
     }
 
+    // 銘柄が4件未満なら、登録済みの全銘柄が抽選対象に残ることを確認する。
     @Test
     void featuredIncludesAllIdsWhenFewerThanFourExist() {
         when(repository.findAllIds()).thenReturn(java.util.List.of(7L, 19L));
@@ -47,6 +54,7 @@ class SakeCatalogServiceTests {
         verify(repository).findAllById(any());
     }
 
+    // 入力の前後の空白を取り除き、銘柄名とほかの検索条件を一緒にDBへ渡すことを確認する。
     @Test
     void combinesTrimmedNameWithOtherFilters() {
         var pageable = PageRequest.of(1, 6,
@@ -59,6 +67,7 @@ class SakeCatalogServiceTests {
         verify(repository).search("果実", "獺祭", "純米", 1500, 2999, "甘口", pageable);
     }
 
+    // 空白だけの銘柄名は、検索条件なしのnullとして扱うことを確認する。
     @Test
     void blankNameDoesNotRestrictExistingSearch() {
         var pageable = PageRequest.of(0, 6, Sort.by(Sort.Direction.ASC, "id"));

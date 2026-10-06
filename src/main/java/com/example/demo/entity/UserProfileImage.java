@@ -6,6 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * データベースのuser_profile_imagesという表の1件を、Javaで扱うためのクラス。
+ * ユーザーごとのプロフィール画像と表示位置・拡大率を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * ユーザーIDを画像のIDにも使うため、1人につき1件の画像情報を保存する。
+ */
 @Entity
 @Table(name = "user_profile_images")
 @Getter @Setter @NoArgsConstructor
@@ -19,10 +25,12 @@ public class UserProfileImage {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // 画像ファイルの内容をバイト列として保存する。MEDIUMBLOBは画像などを入れるDBの型。
     @Lob
     @Column(name = "image_data", nullable = false, columnDefinition = "MEDIUMBLOB")
     private byte[] imageData;
 
+    // 画像を返すときに使う形式名。例：image/jpegならJPEG画像としてブラウザが表示する。
     @Column(name = "content_type", nullable = false, length = 50)
     private String contentType;
 

@@ -10,6 +10,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 登録済みのユーザーへ新しい仮パスワードを発行し、メールで送る。
+ * 保存するのはパスワードそのものではなく、照合に使うハッシュ値。
+ * 発行すると以前のパスワードは置き換わり、仮パスワードを変更するまで利用中の印が付く。
+ */
 @Service
 public class TemporaryPasswordService {
     private static final String CHARACTERS =
@@ -30,12 +35,17 @@ public class TemporaryPasswordService {
         this.fromAddress = fromAddress;
     }
 
-    /** 登録がある場合だけ仮パスワードを発行する。戻り値で登録有無は公開しない。 */
+    /**
+     * 登録済みのアドレスにだけ仮パスワードを発行する。登録の有無を戻り値で伝えない。
+     */
     @Transactional
     public void issueFor(String email) {
         users.findByEmail(email.trim()).ifPresent(this::issueAndSend);
     }
 
+    /**
+     * 仮パスワードを作り、ハッシュ値と仮パスワード利用中の印を保存してメール送信する。
+     */
     private void issueAndSend(User user) {
         String temporaryPassword = generatePassword();
         user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
@@ -54,6 +64,9 @@ public class TemporaryPasswordService {
         mailSender.send(message);
     }
 
+    /**
+     * SecureRandom（推測されにくい乱数を作る道具）で14文字の仮パスワードを作る。
+     */
     private String generatePassword() {
         StringBuilder result = new StringBuilder(PASSWORD_LENGTH);
         for (int i = 0; i < PASSWORD_LENGTH; i++) {

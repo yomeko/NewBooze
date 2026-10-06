@@ -1,10 +1,6 @@
 <!--
-  S07: 新規登録画面
-  AuthController.signup()（POST /signup）へ送信する。
-  th:object="${signupForm}" によりdto.SignupFormのフィールドとth:field="*{...}"を紐付け、
-  バリデーションエラー時（@Validで検出）はth:errorsで各項目下にエラーメッセージを表示する。
-  デザインは home.html と同じヘッダー／フッターを踏襲し、
-  中央に1枚のカード(.auth-card)を配置する構成にリニューアルした。
+  アカウントの新規登録画面。フォームの入力先はAuthControllerのPOST /signup。
+  th:objectでsignupFormを選び、th:fieldで各入力欄をJavaの値へ結び付け、th:errorsで入力エラーを表示する。
 -->
 <!doctype html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
@@ -26,6 +22,7 @@
         <h1>新規登録</h1>
         <p class="auth-sub">アカウントを作成して、好み診断の結果やお気に入りを保存しましょう。</p>
 
+        <!-- novalidateでブラウザの自動チェックを省き、Javaの入力チェック結果を各入力欄の下へ表示する。 -->
         <form th:action="@{/signup}" th:object="${signupForm}" method="post" novalidate>
             <div class="form-group">
                 <label for="name">表示名</label>

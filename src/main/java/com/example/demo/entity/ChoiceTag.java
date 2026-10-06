@@ -15,9 +15,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 診断選択肢タグ中間テーブル（choice_tags）。
- * 診断で選択肢を選ぶと、ここに紐づく tag へ weight 分のスコアが加算される
- * （DiagnosisService の集計ロジックの入力データ）。
+ * データベースのchoice_tagsという表の1件を、Javaで扱うためのクラス。
+ * 診断の選択肢と特徴の対応、および選んだときの加点を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * 2つのIDの組み合わせで1件を区別する。@MapsIdで関連先のIDと組み合わせのIDをそろえる。
  */
 @Entity
 @Table(name = "choice_tags")
@@ -27,6 +28,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ChoiceTag {
 
+    // 選択肢IDと特徴IDをまとめた識別子。例：選択肢10と「甘口」の組み合わせ。
     @EmbeddedId
     private ChoiceTagId id = new ChoiceTagId();
 

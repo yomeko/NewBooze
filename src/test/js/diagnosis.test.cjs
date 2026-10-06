@@ -1,8 +1,11 @@
+// 診断画面の質問移動、回答の保持、最後の送信、二重送信防止を確認するテスト。
+// ブラウザの要素を小さな代役オブジェクトに置き換え、main.jsを実行して操作を再現する。
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
+// 画面要素と操作の代役を作り、対象のJavaScriptを実行してテスト用の操作口を返す。
 function setup() {
   const element = () => ({ disabled: false, handlers: {}, addEventListener(type, fn) { this.handlers[type] = fn; }, focus() {}, classList: { toggle() {} } });
   const questions = Array.from({ length: 4 }, (_, index) => {
@@ -35,6 +38,7 @@ function setup() {
   };
 }
 
+// 選択だけでは次へ進まず、戻った質問の回答を保持・変更できることを確認する。
 test('choosing an answer stays on the question; back preserves and can replace an answer', () => {
   const quiz = setup();
   assert.equal(quiz.position, '全4問中 1問目');
@@ -52,6 +56,7 @@ test('choosing an answer stays on the question; back preserves and can replace a
   assert.equal(quiz.questions[0].answer.value, '2');
 });
 
+// 全4問を答えた最後の操作だけで送信し、続けて押しても二重送信しないことを確認する。
 test('all four answers submit only on the explicit final action and prevent duplicate submission', () => {
   const quiz = setup();
   for (let index = 0; index < 3; index++) { quiz.choose(index); assert.equal(quiz.next(), false); }

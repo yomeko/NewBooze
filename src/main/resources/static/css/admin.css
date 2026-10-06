@@ -1,16 +1,21 @@
+/* 管理画面専用の見た目。.admin-page内だけに適用し、共通の色はstyle.cssの変数を使う。 */
 .admin-page { max-width: 960px; margin: 40px auto; padding: 24px; }
 .admin-page nav { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 28px; }
 .admin-nav a { padding: 10px 14px; border-bottom: 3px solid transparent; border-radius: 4px 4px 0 0; }
+/* 現在表示している管理メニューに背景と下線を付ける。aria-currentはHTML側が指定する。 */
 .admin-nav a[aria-current="page"] { background: #eadfd2; border-bottom-color: var(--accent, #8d3829); color: var(--accent, #8d3829); }
 .admin-nav a:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+/* ユーザー一覧の表。border-collapseで隣り合うセルの罫線を1本にまとめる。 */
 .admin-page table { width: 100%; border-collapse: collapse; }
 .admin-page td, .admin-page th { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
 .admin-page .form-group { margin-bottom: 20px; min-width: 0; }
 .admin-page input, .admin-page select, .admin-page textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; }
 .admin-page .error { color: #b3261e; }
 .admin-page .success { color: #23734b; }
+/* 地域・度数・価格を3列に並べる。minmax(0, 1fr)で長い入力内容でも列からはみ出しにくくする。 */
 .admin-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .admin-page .field-help { margin: 8px 0 0; font-size: 13px; color: #706b5e; line-height: 1.6; }
+/* 画面幅700px以下では入力欄を1列にし、スマートフォンでも読みやすくする。 */
 @media (max-width: 700px) {
   .admin-page { margin: 20px auto; padding: 20px; }
   .admin-form-row { grid-template-columns: 1fr; gap: 0; }

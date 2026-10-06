@@ -14,9 +14,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * ユーザー嗜好スコア（user_preferences）。
- * レコメンド計算におけるユーザー側の特徴ベクトルに相当する（外部設計書 4.3）。
- * 診断セッション完了時に DiagnosisService が集計結果をここへ保存／更新する想定。
+ * データベースのuser_preferencesという表の1件を、Javaで扱うためのクラス。
+ * ユーザーと特徴の対応、および診断で得た好みの点数を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * 2つのIDの組み合わせで1件を区別する。@MapsIdで関連先のIDと組み合わせのIDをそろえる。
  */
 @Entity
 @Table(name = "user_preferences")
@@ -39,6 +40,7 @@ public class UserPreference {
     @JoinColumn(name = "tag_id")
     private Tag tag;
 
+    // そのユーザーがこの特徴をどれだけ好むかを表す、診断回答からの合計点。
     @Column(nullable = false)
     private Integer score = 0;
 }

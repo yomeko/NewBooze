@@ -12,7 +12,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+/**
+ * 管理者の初期作成と権限を、DBの代わりのオブジェクトで確認するテスト。
+ * mockはDB操作の代役、whenは代役の返答、verifyは呼び出された操作の確認を表す。
+ */
 class AdminAccountTests {
+    // 初期管理者のパスワードがハッシュ化され、再起動時には重複して作られないことを確認する。
     @Test void createsHashedAdministratorOnlyOnce() throws Exception {
         var users = mock(UserRepository.class);
         var encoder = new BCryptPasswordEncoder();
@@ -31,6 +36,7 @@ class AdminAccountTests {
         verify(users, times(1)).save(any());
     }
 
+    // 一般ユーザーに管理者権限がなく、管理者だけが追加の権限を持つことを確認する。
     @Test void ordinaryUsersNeverReceiveAdminAuthority() {
         User user = new User();
         assertThat(new CustomUserDetails(user).getAuthorities())

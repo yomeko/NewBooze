@@ -3,8 +3,8 @@ package com.example.demo.model;
 import java.util.List;
 
 /**
- * DB未接続だった開発初期段階で使用していた、インメモリ用の診断設問モデル。
- * model.DiagnosisChoice同様、現在はDiagnosisServiceのDB連携版に置き換わり未使用。
+ * DBを使わなかった初期実装の、質問文と選択肢一覧をまとめたデータ。
+ * 現在の診断処理はDBから質問を取得し、dto.DiagnosisQuestionViewを画面へ渡す。
  *
  * @param id      設問ID（インメモリ用の暫定ID）
  * @param text    設問文

@@ -1,4 +1,4 @@
-/* Shared sake detail page. Scoped to avoid changing other screens. */
+/* 日本酒の詳細画面専用の見た目。sake-で始まるクラスを中心に、説明・写真・レビューを配置する。 */
 .sake-detail { max-width: 960px; margin: 0 auto; padding: 32px 24px 72px; overflow-wrap: anywhere; }
 .sake-intro { padding: 16px 0; margin-top: 24px; border-bottom: 1px solid var(--line); background: var(--paper); }
 .sake-home-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 4px 0; font-size: .9rem; font-weight: 700; text-underline-offset: 4px; }
@@ -9,6 +9,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sake-header-actions form { margin: 0; }
 .sake-detail .sake-favorite { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 1.6rem; color: var(--red); }
+/* お気に入り登録中のボタンを強調する。登録状態はHTMLのaria-pressedで指定する。 */
 .sake-detail .sake-favorite[aria-pressed='true'] { background: #f7e0dc; }
 .sake-eyebrow { font-size: .8rem; letter-spacing: .15em; color: var(--red); margin: 0 0 32px; }
 .sake-brewery { color: #625b50; margin-bottom: 6px; }
@@ -18,6 +19,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-actions form { margin: 0; }
 .sake-detail .button { margin: 0; font: inherit; cursor: pointer; text-align: center; white-space: normal; }
 .sake-detail .button[aria-pressed='true'] { border-color: var(--red); color: var(--red); }
+/* 味・飲み方・料理などの説明パネルを2列に配置する。600px以下の画面では1列に変更する。 */
 .sake-info-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 .sake-panel { padding: 26px; border: 1px solid var(--line); border-radius: 12px; background: var(--cream); margin-bottom: 24px; }
 .sake-info-grid .sake-panel { margin: 0; }
@@ -38,6 +40,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-note { font-size: .85rem; color: #625b50; }
 .sake-official { margin: 24px 0 32px; }
 .sake-detail a:not(.button):not(.back) { color: var(--red); text-underline-offset: 4px; }
+/* 本人のレビュー入力欄。星を選んだラベルは:has(input:checked)で色を変える。 */
 .sake-review-form { display: grid; gap: 14px; }
 .sake-review-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .sake-rating { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
@@ -51,6 +54,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-error { background: #f7e0dc; }
 .sake-related { margin-top: 32px; }
 .sake-related ul { padding-left: 1.3em; }
+/* キーボード操作で今どこにいるかがわかるよう、選択中の要素に枠を付ける。 */
 .sake-detail :focus-visible { outline: 3px solid var(--red); outline-offset: 4px; }
 @media (max-width: 600px) {
   .sake-detail { padding: 24px 16px 48px; }
@@ -61,11 +65,13 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
   .sake-actions > *, .sake-actions form button { width: 100%; }
 }
 
+/* 公開レビューの並び替え、投稿者・評価・更新日の表示、ページ移動リンクの見た目。 */
 .review-sort { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 20px 0; }
 .review-sort select { width: auto; max-width: 100%; padding: 10px; font: inherit; }
 .public-review { border-top: 1px solid var(--line); padding: 20px 0; }
 .public-review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .public-review-meta time { color: #625b50; font-size: .8rem; }
+/* pre-wrapで、入力されたコメントの改行と空白を表示に残し、長い行は折り返す。 */
 .public-review p { white-space: pre-wrap; margin: 10px 0 0; }
 .review-pagination { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
 .review-visibility { display: flex; align-items: center; gap: 8px; }
@@ -85,6 +91,7 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 
 /* 写真と購入操作を左、商品説明を右に配置する。 */
 .sake-product-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; align-items: start; margin-top: 24px; }
+/* 広い画面では写真と操作をスクロールに追従させる。下の600px以下の指定では通常の配置へ戻す。 */
 .sake-product-sidebar { position: sticky; top: 16px; min-width: 0; }
 .sake-product-sidebar .sake-product-photo { margin: 0; }
 .sake-product-sidebar .sake-product-photo img { height: min(420px, max(120px, calc(100dvh - 180px))); }

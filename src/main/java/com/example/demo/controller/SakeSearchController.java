@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * S04（検索結果一覧画面）／S05（地酒詳細画面）を担当するController。
- * SakeCatalogService を通じて JPA カタログを参照する。
+ * 日本酒の検索画面と詳細画面を担当する。
+ * 検索条件から銘柄を探し、HTMLが表示に使うデータをModelに入れる。
+ * 詳細画面ではデータベースの基本情報に、JSONの紹介文や公開レビューを組み合わせる。
  */
 @Controller
 public class SakeSearchController {
@@ -32,16 +33,9 @@ public class SakeSearchController {
     }
 
     /**
-     * S04: 検索結果一覧画面表示。
-     * 外部設計書 4.4の入出力仕様に対応。
-     *
-     * @param name    銘柄名の部分一致キーワード
-     * @param keyword 味の特徴・風味のキーワード。未入力時は空文字がデフォルトで入る
-     * @param type    酒種による絞り込み
-     * @param taste   辛口・甘口による絞り込み
-     * @param priceRange 公式販売価格の価格帯
-     * @param sort    並び順
-     * @param page    ページ番号（0始まり）。未指定時は1ページ目(0)
+     * URLの検索条件を受け取り、条件に合う銘柄を1ページ分取得する。
+     * {@code @RequestParam}はURLの?以降の値を受け取る指定。未指定の条件はdefaultValueを使う。
+     * 価格帯の文字列を最低・最高価格へ変換し、入力済みの条件も画面へ返す。
      */
     @GetMapping("/search")
     public String search(@RequestParam(defaultValue = "") String keyword,
@@ -79,8 +73,9 @@ public class SakeSearchController {
     }
 
     /**
-     * S05: 地酒詳細画面表示。
-     * 該当IDの銘柄が存在しない場合は404(Not Found)を返す。
+     * URLのIDに対応する銘柄、紹介情報、味わいタグ、レビューを用意する。
+     * 銘柄が存在しない場合は404を返す。お気に入りと自分のレビューはログイン中だけ調べる。
+     * 入力エラー後のレビューがすでに渡されていれば、それを上書きせず再表示する。
      */
     @GetMapping("/sake/{id}")
     public String detail(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal,

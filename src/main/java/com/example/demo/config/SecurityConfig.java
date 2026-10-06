@@ -9,25 +9,32 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import com.example.demo.security.CustomUserDetails;
 
+/**
+ * どのページを誰が使えるか、ログイン・ログアウトをどう処理するかを決める。
+ * Spring Securityは、この設定に従って画面処理より先にログイン状態や権限を確認する。
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     /**
-     * パスワードハッシュ化にBCryptを採用。
-     * ソルト生成・照合処理をライブラリ側が自動で行うため、
-     * 自前実装に比べて安全性・実装コストの両面で有利。
-     * (不確かですが、Spring Security公式でも標準的な選択肢として案内されています)
+     * パスワードをBCryptでハッシュ化し、ログイン時に照合する道具を用意する。
+     * ハッシュ化は、元の文字列をそのまま保存せず、照合用の値へ変換する処理。
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * URLごとのアクセス権限と、ログイン・ログアウトの動きを組み立てる。
+     * 上から順にURLを照合し、最初に一致した権限ルールを使う。
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
+                // 管理者専用のURLを先に確認する。hasRole("ADMIN")はROLE_ADMINという権限を要求する。
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                 // 未ログインでも閲覧可能な画面(S01〜S05, ログイン/新規登録, 静的リソース)
                 .requestMatchers(
@@ -45,13 +52,9 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")           // 独自のログイン画面を使用
                 .loginProcessingUrl("/login")  // フォームのPOST先。Spring Securityが自動で処理する
-                // 通常ログイン後はホーム画面へ誘導する。
-                // 好み診断は新規登録直後だけAuthControllerから/diagnosisへ遷移させる。
-                // 第2引数 false は「常にこのURLへ飛ばすわけではない」の意味で、
-                // お気に入り(/favorites)等の認証必須ページへ直接アクセスして
-                // ログイン画面に飛ばされたケースでは、Spring Securityが記憶している
-                // 元のリクエスト(SavedRequest)を優先して復元する。
-                // trueにすると常にホームへ強制遷移してしまうため注意。
+                // ログイン成功後の移動先をここで決める。
+                // 仮パスワードなら変更案内のあるマイページ、管理者なら管理画面、一般ユーザーならホーム。
+                // 新規登録後の診断への移動は、AuthControllerの登録処理が担当する。
                 .successHandler((request, response, authentication) -> {
                     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
                     response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : (user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) ? "/admin" : "/"));
@@ -64,9 +67,8 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/")
                 .permitAll()
             );
-            // CSRF保護はデフォルトで有効のままにしている。
-            // Thymeleafの<form>タグ(th:action使用時)は自動でCSRFトークンを埋め込むため、
-            // 特別な対応は不要。
+            // CSRF保護は、別のサイトから本人の意図しない保存操作をされるのを防ぐ仕組み。
+            // th:actionを使うPOSTフォームには、送信元を確認するためのトークンが自動で入る。
 
         return http.build();
     }

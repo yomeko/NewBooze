@@ -25,15 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 好み診断機能。
- * 内部設計書 第7章のデータフローに沿って、以下を行う。
- * ① 設問・選択肢をDBから取得して画面表示する
- * ② 回答から choice_tags を経由してタグ別スコアを集計する
- * ③ ログイン中であれば diagnosis_sessions / diagnosis_answers / user_preferences へ保存する
- * ④ 集計結果をもとに、地酒との類似度（コサイン類似度）を計算して上位N件を推薦する
- *
- * 地酒の特徴ベクトルは sake / sake_tags / tags から取得する。
- * diagnosis_seed.sql と sake_catalog_seed.sql は同じ tags.name を共通軸として使う。
+ * 回答を「甘口」「軽快」などの特徴ごとの点数に変え、好みに近い日本酒を選ぶ。
+ * 質問・選択肢・特徴の対応をデータベースから読み、ログイン中なら回答と点数も保存する。
+ * Serviceは画面から独立した処理をまとめる場所で、Controllerから呼び出される。
+ * {@code @Transactional}は複数の保存をひとまとまりにし、実行時エラーで失敗したら保存を取り消す指定。
  */
 @Service
 public class DiagnosisService {
@@ -65,7 +60,9 @@ public class DiagnosisService {
         this.catalogService = catalogService;
     }
 
-    /** S02: 設問一覧をsort_order順に取得する。設問ごとの選択肢も合わせて取得する。 */
+    /**
+     * DBの表示順に質問を読み、各質問と選択肢を画面用のデータにまとめる。
+     */
     @Transactional(readOnly = true)
     public List<DiagnosisQuestionView> questions() {
         return questionRepository.findAllByOrderBySortOrderAsc().stream()
@@ -73,6 +70,9 @@ public class DiagnosisService {
                 .toList();
     }
 
+    /**
+     * 1つの質問に属する選択肢を読み、質問文と選択肢一覧をまとめて返す。
+     */
     private DiagnosisQuestionView toView(DiagnosisQuestion question) {
         List<DiagnosisChoiceView> choices = choiceRepository.findByQuestionId(question.getId()).stream()
                 .map(choice -> new DiagnosisChoiceView(choice.getId(), choice.getChoiceText()))
@@ -81,11 +81,9 @@ public class DiagnosisService {
     }
 
     /**
-     * 選択された選択肢からタグ別スコアを集計し、ログイン中であればDBへ保存する。
-     *
-     * @param choiceIds   選択された diagnosis_choices.id の一覧（各設問1つずつ）
-     * @param loginUserId ログイン中のユーザーID。未ログインの場合はnull（この場合はDB保存を行わない）
-     * @return タグ名をキーとした嗜好スコア（画面表示・レコメンド計算の両方に使用）
+     * 選んだ各選択肢に対応する特徴へ、登録されたweight（加点）を足す。
+     * 画面表示用に特徴名で、DB保存用に特徴IDで集計する。
+     * ログイン中で回答があれば、診断の記録と特徴ごとの点数をひとまとまりで保存する。
      */
     @Transactional
     public Map<String, Integer> aggregateAndPersist(List<Long> choiceIds, Long loginUserId) {
@@ -105,6 +103,7 @@ public class DiagnosisService {
             for (ChoiceTag choiceTag : choiceTagRepository.findByIdChoiceId(choiceId)) {
                 Tag tag = choiceTag.getTag();
                 int weight = choiceTag.getWeight();
+                // 同じ特徴が別の回答にもあれば合計する。mergeは、初回は値を入れ、2回目以降は足す。
                 scoreByTagName.merge(tag.getName(), weight, Integer::sum);
                 scoreByTagId.merge(tag.getId(), weight, Integer::sum);
                 tagById.putIfAbsent(tag.getId(), tag);
@@ -119,7 +118,10 @@ public class DiagnosisService {
         return scoreByTagName;
     }
 
-    /** 回答と加算された特徴を結果画面で確認できるようにする。 */
+    /**
+     * 結果画面で回答理由を見られるよう、質問文・選んだ回答・加点された特徴をまとめる。
+     * 0点以下の特徴は理由に含めず、同じ特徴名は1回だけ載せる。
+     */
     @Transactional(readOnly = true)
     public List<AnswerSummary> answerSummaries(List<Long> choiceIds) {
         if (choiceIds == null) return List.of();
@@ -131,9 +133,13 @@ public class DiagnosisService {
                 .toList();
     }
 
+    // 質問・回答・特徴の一覧を、結果画面の説明欄へ渡すためのデータ。
     public record AnswerSummary(String question, String answer, List<String> tags) {}
 
-    /** diagnosis_sessions と diagnosis_answers への保存。 */
+    /**
+     * 診断1回分の記録を作り、その記録へ質問ごとの回答を結び付けて保存する。
+     * 届くのは選択肢IDだけなので、対応する質問は選択肢の情報から取得する。
+     */
     private DiagnosisSession saveSession(Long userId, List<Long> selectedChoiceIds) {
         DiagnosisSession session = new DiagnosisSession();
         // getReferenceById: 実体をSELECTで取得せず、IDのみを持つ参照(プロキシ)を作る。
@@ -158,10 +164,8 @@ public class DiagnosisService {
     }
 
     /**
-     * user_preferences への保存（upsert）。
-     * 設計判断：診断のたびに加算し続けると値が際限なく増え続けてしまうため、
-     * 「直近の診断結果 = 現在の嗜好傾向」として毎回スコアを上書きする方針とした。
-     * （内部設計書 第7章で「未確定」としていた集計方針の暫定決定。要チーム確認）
+     * 今回集計した特徴について、本人の点数があれば上書きし、なければ新規保存する。
+     * 過去の点数へ加算はしない。今回の集計に登場しない特徴の保存済み点数はここでは変更しない。
      */
     private void savePreferences(Long userId, Map<Long, Integer> scoreByTagId, Map<Long, Tag> tagById) {
         for (Map.Entry<Long, Integer> entry : scoreByTagId.entrySet()) {
@@ -181,7 +185,10 @@ public class DiagnosisService {
         }
     }
 
-    /** S03: タグ別嗜好スコアをもとに、コサイン類似度で上位5件の地酒を推薦する。 */
+    /**
+     * 全銘柄の特徴を好みの点数と比べ、似ている順に最大5件を返す。
+     * 各銘柄には、好みと共通する特徴から選んだおすすめ理由も付ける。
+     */
     public List<Recommendation> recommend(Map<String, Integer> preferencesByTagName) {
         return catalogService.all().stream()
                 .map(sake -> new Recommendation(sake, cosine(preferencesByTagName, sake.tagScores()),
@@ -191,8 +198,14 @@ public class DiagnosisService {
                 .toList();
     }
 
+    /**
+     * 好みと日本酒の「特徴ごとの点数の比率」がどれくらい似ているかを計算する。
+     * コサイン類似度という計算方法で、共通する特徴の点数を掛けて合計し、
+     * 双方の点数の大きさで割る。点数がすべて0なら、0で割らないよう類似度0を返す。
+     */
     private static double cosine(Map<String, Integer> preferences, Map<String, Integer> features) {
         if (preferences.isEmpty()) return 0;
+        // dotは共通特徴の点数の積の合計。2つのNormは、それぞれの点数を二乗した合計。
         double dot = 0, preferenceNorm = 0, featureNorm = 0;
         for (int value : preferences.values()) preferenceNorm += value * value;
         for (int value : features.values()) featureNorm += value * value;
@@ -203,6 +216,7 @@ public class DiagnosisService {
         return dot / (Math.sqrt(preferenceNorm) * Math.sqrt(featureNorm));
     }
 
+    // 1件のおすすめ銘柄、計算した類似度、画面に出す一致理由をまとめる。
     public record Recommendation(Sake sake, double score, List<String> matchingTags) {
     }
 }

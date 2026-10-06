@@ -17,7 +17,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Database-backed catalog used by search, detail, featured sake, and diagnosis. */
+/**
+ * 検索・詳細・ホーム・診断で使う日本酒の情報を、データベースから取り出す。
+ * DB保存用のentity.Sakeを、表示と点数計算に使いやすいmodel.Sakeへ変換する。
+ * {@code @Transactional}(readOnly = true)は、この処理でデータを変更せず読み取ることを示す。
+ */
 @Service
 public class SakeCatalogService {
     private static final int PAGE_SIZE = 6;
@@ -33,6 +37,10 @@ public class SakeCatalogService {
         this.sakeTagRepository = sakeTagRepository;
     }
 
+    /**
+     * 余分な空白を除き、入力された条件に合う銘柄を6件ずつ取得する。
+     * 指定ページが範囲を超えた場合は最後のページを使い、件数とページ情報も返す。
+     */
     @Transactional(readOnly = true)
     public SakePageDto search(String keyword, String name, String type, Integer minPrice, Integer maxPrice,
                               String taste, String sortOrder, int requestedPage) {
@@ -63,6 +71,9 @@ public class SakeCatalogService {
                 Math.max(1, page.getTotalPages()), page.getTotalElements());
     }
 
+    /**
+     * 検索条件と並び順をDBへ渡し、指定されたページ分だけ取得する。
+     */
     private Page<com.example.demo.entity.Sake> findPage(String keyword, String name, String type,
                                                          Integer minPrice, Integer maxPrice,
                                                          String taste, String sortOrder,
@@ -71,7 +82,10 @@ public class SakeCatalogService {
                 PageRequest.of(pageNumber, PAGE_SIZE, searchSort(sortOrder)));
     }
 
-    /** 画面から受け取る値をホワイトリストで安全なSortに変換する。 */
+    /**
+     * 画面の並び順を、あらかじめ決めたDBの並び替え条件に変換する。
+     * 知らない値はID順に戻し、同点の銘柄もIDで並べてページ間の順番を安定させる。
+     */
     private Sort searchSort(String sortOrder) {
         return switch (sortOrder == null ? "recommended" : sortOrder) {
             case "ratingDesc" -> Sort.by(Sort.Order.desc("hasPublicReviews"), Sort.Order.desc("averageRating"), Sort.Order.desc("reviewCount"), Sort.Order.asc("id"));
@@ -84,6 +98,10 @@ public class SakeCatalogService {
         };
     }
 
+    /**
+     * 1銘柄の基本情報と特徴の点数を取得する。なければ空のOptionalを返す。
+     * Optionalは「値があるか、ないか」を表す入れ物。
+     */
     @Transactional(readOnly = true)
     public Optional<Sake> findById(long id) {
         return sakeRepository.findById(id).map(entity -> {
@@ -92,6 +110,9 @@ public class SakeCatalogService {
         });
     }
 
+    /**
+     * 銘柄IDをランダムに並べて最大4件を選び、その銘柄だけ詳しい情報を取得する。
+     */
     @Transactional(readOnly = true)
     public List<Sake> featured() {
         // IDだけを抽選し、選ばれた最大4件の詳細を取得する。
@@ -104,21 +125,34 @@ public class SakeCatalogService {
         return mapAll(entities);
     }
 
+    /**
+     * 診断の比較対象として、すべての銘柄をID順で取得する。
+     */
     @Transactional(readOnly = true)
     public List<Sake> all() {
         return mapAll(sakeRepository.findAll(CATALOG_ORDER));
     }
 
+    /**
+     * 検索フォームの選択肢に使う、登録銘柄の酒種名を重複なしで取得する。
+     */
     @Transactional(readOnly = true)
     public List<String> types() {
         return sakeRepository.findDistinctTypeNames();
     }
 
+    /**
+     * 登録銘柄の産地名を、空欄と重複を除いて取得する。
+     */
     @Transactional(readOnly = true)
     public List<String> regions() {
         return sakeRepository.findDistinctRegions();
     }
 
+    /**
+     * DB保存用の銘柄一覧を、特徴の点数を含む画面用の一覧へ変換する。
+     * 特徴は複数銘柄分をまとめて読み、銘柄ごとのDBへの問い合わせを減らす。
+     */
     private List<Sake> mapAll(List<com.example.demo.entity.Sake> entities) {
         if (entities.isEmpty()) return List.of();
         Map<Long, Map<String, Integer>> tags = tagsBySakeId(
@@ -128,6 +162,10 @@ public class SakeCatalogService {
                 .toList();
     }
 
+    /**
+     * 「銘柄ID →（特徴名 → 点数）」という二段の対応表を作る。
+     * これにより、各銘柄へその銘柄の特徴だけを結び付けられる。
+     */
     private Map<Long, Map<String, Integer>> tagsBySakeId(List<Long> sakeIds) {
         return sakeTagRepository.findByIdSakeIdIn(sakeIds).stream()
                 .collect(Collectors.groupingBy(
@@ -138,6 +176,10 @@ public class SakeCatalogService {
                                 (left, right) -> left, LinkedHashMap::new)));
     }
 
+    /**
+     * DBの銘柄を、HTMLと診断の計算で使える読み取り用データへ移す。
+     * 酒蔵が未登録なら空文字、度数や価格が未登録なら0にそろえる。
+     */
     private Sake toView(com.example.demo.entity.Sake entity, Map<String, Integer> tags) {
         String breweryName = entity.getBrewery() == null ? "" : entity.getBrewery().getName();
         String breweryPrefecture = entity.getBrewery() == null
@@ -151,6 +193,9 @@ public class SakeCatalogService {
                 Map.copyOf(tags), entity.getAverageRating(), entity.getReviewCount() == null ? 0 : entity.getReviewCount());
     }
 
+    /**
+     * nullや空白だけの入力をnullに統一する。検索ではnullを「条件なし」として扱う。
+     */
     private static String emptyToNull(String value) {
         return value == null || value.trim().isEmpty() ? null : value.trim();
     }

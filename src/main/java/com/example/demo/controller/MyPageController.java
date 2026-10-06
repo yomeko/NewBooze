@@ -38,6 +38,11 @@ import javax.imageio.stream.ImageOutputStream;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * ログイン中の本人の情報を表示・変更するマイページの処理。
+ * プロフィール、画像、お気に入り、パスワード、アカウント削除を担当する。
+ * principalはログイン中のユーザー情報であり、更新対象のユーザーIDはここから取得する。
+ */
 @Controller
 @RequestMapping("/mypage")
 public class MyPageController {
@@ -65,6 +70,9 @@ public class MyPageController {
         this.sake = sake;
     }
 
+    /**
+     * 本人のプロフィール、好みの点数、お気に入り、登録に使う銘柄一覧を画面へ渡す。
+     */
     @GetMapping
     public String show(@AuthenticationPrincipal CustomUserDetails principal, Model model) {
         User user = current(principal);
@@ -76,6 +84,9 @@ public class MyPageController {
         return "mypage";
     }
 
+    /**
+     * プロフィールやパスワードを変更する設定画面を表示する。
+     */
     @GetMapping("/account")
     public String account(@AuthenticationPrincipal CustomUserDetails principal, Model model) {
         User user = current(principal);
@@ -84,6 +95,10 @@ public class MyPageController {
         return "account-settings";
     }
 
+    /**
+     * 画像の登録状況と、表示位置・拡大率をHTMLへ渡す。
+     * 画像がない場合は中央（50・50）と等倍（100%）を初期値にする。
+     */
     private void addProfileImageAttributes(User user, Model model) {
         profileImages.findById(user.getId()).ifPresentOrElse(image -> {
             model.addAttribute("hasProfileImage", true);
@@ -98,6 +113,10 @@ public class MyPageController {
         });
     }
 
+    /**
+     * ログイン中の本人の画像を、保存済みの画像形式で返す。
+     * 未登録なら404（見つからない）を返す。noCacheで使い回す前に画像の更新確認を求める。
+     */
     @GetMapping("/profile-image")
     @ResponseBody
     public ResponseEntity<byte[]> profileImage(@AuthenticationPrincipal CustomUserDetails principal) {
@@ -109,6 +128,11 @@ public class MyPageController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * 画像の有無・サイズ・形式を確認して保存する。
+     * 900KBを超える画像は圧縮し、小さい画像も実際に画像として読めるか確認する。
+     * 保存後は位置と拡大率を中央・等倍に戻し、設定画面へ移動する。
+     */
     @PostMapping("/profile-image")
     public String updateProfileImage(@RequestParam("profileImage") MultipartFile file,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) throws IOException {
@@ -144,6 +168,9 @@ public class MyPageController {
         return "redirect:/mypage/account#settings";
     }
 
+    /**
+     * 本人の画像を削除し、設定画面へ完了メッセージを渡す。
+     */
     @PostMapping("/profile-image/delete")
     public String deleteProfileImage(@AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         profileImages.deleteById(principal.getUserId());
@@ -151,6 +178,10 @@ public class MyPageController {
         return "redirect:/mypage/account#settings";
     }
 
+    /**
+     * 画像の表示位置と拡大率だけを変更する。
+     * 位置は0〜100%、拡大率は100〜300%に限り、画像がある場合だけ更新する。
+     */
     @PostMapping("/profile-image/position")
     public String updateProfileImagePosition(@RequestParam double positionX, @RequestParam double positionY,
             @RequestParam int zoom,
@@ -170,6 +201,9 @@ public class MyPageController {
         return "redirect:/mypage/account#settings";
     }
 
+    /**
+     * 本人と銘柄の組み合わせを保存する。登録済みなら重複して追加せず案内を出す。
+     */
     @PostMapping("/favorites")
     public String addFavorite(@RequestParam Long sakeId, @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirect) {
@@ -183,6 +217,9 @@ public class MyPageController {
         redirect.addFlashAttribute("success", "お気に入りに登録しました"); return "redirect:/mypage#favorites";
     }
 
+    /**
+     * 本人の指定銘柄のお気に入りを削除し、お気に入り欄へ戻る。
+     */
     @PostMapping("/favorites/{sakeId}/delete")
     public String removeFavorite(@PathVariable Long sakeId, @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirect) {
@@ -191,6 +228,10 @@ public class MyPageController {
         redirect.addFlashAttribute("success", "お気に入りから削除しました"); return "redirect:/mypage#favorites";
     }
 
+    /**
+     * 表示名とメールアドレスの形式・長さ・重複を確認してから保存する。
+     * ログイン中の情報も更新し、次の画面から変更後の表示名を使えるようにする。
+     */
     @PostMapping("/profile")
     public String updateProfile(@RequestParam String name, @RequestParam String email,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
@@ -206,6 +247,10 @@ public class MyPageController {
         return "redirect:/mypage/account#settings";
     }
 
+    /**
+     * 現在のパスワードが正しいか確認し、新しいパスワードをハッシュ化して保存する。
+     * 仮パスワード利用中の印も解除し、ログイン情報へ反映する。
+     */
     @PostMapping("/password")
     public String updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
@@ -220,6 +265,10 @@ public class MyPageController {
         return "redirect:/mypage/account#settings";
     }
 
+    /**
+     * 現在のパスワードで本人確認をしてからアカウントを削除する。
+     * ログイン情報とセッションも破棄し、ログイン画面へ移動する。
+     */
     @PostMapping("/account/delete")
     public String deleteAccount(@RequestParam String currentPassword,
             @AuthenticationPrincipal CustomUserDetails principal, HttpServletRequest request,
@@ -236,11 +285,24 @@ public class MyPageController {
         return "redirect:/login?deleted";
     }
 
+    /**
+     * ログイン情報のユーザーIDから、DBに保存されている最新の本人情報を取得する。
+     */
     private User current(CustomUserDetails principal) { return users.findById(principal.getUserId()).orElseThrow(); }
+    /**
+     * 設定画面へ戻り、次の表示で1回だけ入力エラーの説明を出す。
+     */
     private String error(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage/account#settings"; }
+    /**
+     * 画像の入力エラーを次の画面へ渡し、画像設定欄へ戻す。
+     */
     private String imageError(RedirectAttributes redirect, String message) { redirect.addFlashAttribute("error", message); return "redirect:/mypage/account#settings"; }
 
-    /** 画像を長辺1600px以下に縮小し、DBへ保存可能なサイズのJPEGへ変換する。 */
+    /**
+     * 画像の長辺を1600px以下にし、保存可能なサイズのJPEGを作る。
+     * まず画質を下げて試し、それでも大きければ縦横を80%に縮めて再試行する。
+     * 最大6段階で試し、900KB以下にできない場合や画像を読めない場合はnullを返す。
+     */
     private StoredImage compressProfileImage(byte[] source) throws IOException {
         BufferedImage original = ImageIO.read(new ByteArrayInputStream(source));
         if (original == null) return null;
@@ -263,6 +325,10 @@ public class MyPageController {
         return null;
     }
 
+    /**
+     * 元画像の縦横比に従ったサイズへ縮小し、JPEG用の画像を作る。
+     * JPEGは透明を扱えないため白い背景を先に塗り、その上に写真を描く。
+     */
     private BufferedImage resizeForJpeg(BufferedImage source, int width, int height) {
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics = result.createGraphics();
@@ -275,6 +341,9 @@ public class MyPageController {
         return result;
     }
 
+    /**
+     * 指定した画質でJPEGのバイト列を作る。使い終わった書き込み用の道具は必ず解放する。
+     */
     private byte[] writeJpeg(BufferedImage image, float quality) throws IOException {
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
         if (!writers.hasNext()) throw new IOException("JPEG writer is unavailable");
@@ -292,7 +361,11 @@ public class MyPageController {
         }
     }
 
+    // 保存する画像のバイト列と、画像形式名を一緒に返すためのデータ。
     private record StoredImage(byte[] data, String contentType) {}
+    /**
+     * DBの変更後のユーザー情報で、現在のログイン情報を作り直す。
+     */
     private void refreshPrincipal(User user) {
         CustomUserDetails details = new CustomUserDetails(user);
         SecurityContextHolder.getContext().setAuthentication(

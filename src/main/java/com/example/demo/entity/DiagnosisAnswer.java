@@ -14,10 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 診断回答（diagnosis_answers）。
- * newbooze.sql の制約定義より、session_id は ON DELETE CASCADE、
- * question_id・choice_id はデフォルト(RESTRICT)であるため、
- * 設問・選択肢自体は回答が残っている限り削除できない点に注意。
+ * データベースのdiagnosis_answersという表の1件を、Javaで扱うためのクラス。
+ * 1問分の回答。どの診断で、どの質問の、どの選択肢を選んだかを持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "diagnosis_answers")
@@ -31,6 +30,7 @@ public class DiagnosisAnswer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 複数の回答が1回の診断に属する。LAZYは関連情報が必要になるまで読み込みを遅らせる指定。
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false)
     private DiagnosisSession session;

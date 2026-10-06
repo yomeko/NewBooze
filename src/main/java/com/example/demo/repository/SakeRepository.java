@@ -7,8 +7,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+/**
+ * 日本酒を保存し、検索条件に合う銘柄やIDに対応する銘柄を取り出すためのDB操作窓口。
+ * JpaRepositoryを継承すると、save（保存）やfindById（IDで検索）などをSpringが用意する。
+ * findBy...などのメソッドは名前から検索条件を組み立て、@Queryがある場合は指定した検索文を使う。
+ */
 public interface SakeRepository extends JpaRepository<Sake, Long> {
 
+    // ホーム画面で抽選するため、銘柄の詳細ではなくIDだけを取得する。
     @Query("SELECT s.id FROM Sake s")
     java.util.List<Long> findAllIds();
 
@@ -63,9 +69,11 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
             @Param("taste") String taste,
             Pageable pageable);
 
+    // DISTINCTで同じ産地を1回だけ返し、未登録や空欄の産地は除く。
     @Query("SELECT DISTINCT s.region FROM Sake s WHERE s.region IS NOT NULL AND s.region <> '' ORDER BY s.region")
     java.util.List<String> findDistinctRegions();
 
+    // 登録されている銘柄から酒種名を重複なしで取り出し、検索フォームの選択肢にする。
     @Query("SELECT DISTINCT s.sakeType.name FROM Sake s ORDER BY s.sakeType.name")
     java.util.List<String> findDistinctTypeNames();
 }

@@ -17,6 +17,11 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * アプリとDBを使い、管理者のログイン・アクセス権限・銘柄登録を確認するテスト。
+ * MockMvcは実際のブラウザの代わりにURLへのアクセスを再現する。
+ * {@code @Transactional}により、このテスト内で変更したDBの内容は終了時に取り消される。
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -27,6 +32,7 @@ class AdminTests {
     @Autowired SakeTypeRepository types;
     @Autowired PasswordEncoder encoder;
 
+    // 管理者だけが管理画面を開けて、通常ログイン後も管理画面へ進むことを確認する。
     @Test void adminLoginAndProtectedPages() throws Exception {
         User admin = users.findByEmail("admin").orElseThrow();
         assertThat(admin.isAdmin()).isTrue();
@@ -41,6 +47,7 @@ class AdminTests {
         }
     }
 
+    // 名前検索、登録の入力チェック、権限とCSRFの確認、保存後の検索表示まで確認する。
     @Test void searchUsersAndRegisterSake() throws Exception {
         var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
         mvc.perform(get("/admin/users").with(admin).param("keyword", "admin"))

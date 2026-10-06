@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * タグマスタ（tags）。
- * 診断選択肢（choice_tags）と地酒（sake_tags）の双方から参照される、
- * レコメンドロジックの軸となるテーブル。外部設計書 5.2 参照。
+ * データベースのtagsという表の1件を、Javaで扱うためのクラス。
+ * 「甘口」「軽快」などの特徴名と分類を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "tags")

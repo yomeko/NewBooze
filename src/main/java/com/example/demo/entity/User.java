@@ -13,9 +13,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * アカウント情報（users）。
- * S07（ログイン／新規登録）実装時にこのEntityを利用する想定。
- * password_hash には平文パスワードを絶対に入れないこと（外部設計書 8.2 セキュリティ要件）。
+ * データベースのusersという表の1件を、Javaで扱うためのクラス。
+ * 表示名、ログインID、パスワードの照合用データ、管理者かどうかを持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "users")
@@ -25,6 +25,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class User {
 
+    // 主キー（この表の1件を区別する番号）。IDの採番はDBの自動連番に任せる。
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,17 +33,19 @@ public class User {
     @Column(nullable = false, length = 50)
     private String name;
 
+    // 未設定のnullを許さず、同じログインIDを複数のアカウントに登録できないようにする。
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    /** ハッシュ化済みパスワード。ハッシュアルゴリズムの選定はS07実装時に確定する（要確認事項）。 */
+    /** BCryptでハッシュ化したパスワード。入力されたパスワードを照合するための値。 */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    // trueなら管理者。CustomUserDetailsで管理画面に入る権限へ変換する。
     @Column(nullable = false)
     private boolean admin;
 
-    /** 仮パスワードでログイン中ならtrue。変更完了後にfalseに戻す。 */
+    /** 仮パスワードを発行済みならtrue。通常のパスワードへ変更するとfalseに戻す。 */
     @Column(name = "temporary_password", nullable = false)
     private boolean temporaryPassword;
 

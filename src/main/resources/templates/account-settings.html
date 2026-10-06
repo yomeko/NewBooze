@@ -1,3 +1,7 @@
+<!--
+  本人の画像・表示名・メールアドレス・パスワードを変更する設定画面。
+  各フォームはMyPageControllerの対応するURLへPOSTする。画像の切り抜き操作はmain.jsが担当する。
+-->
 <!doctype html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -11,22 +15,29 @@
   <nav class="account-settings-nav" aria-label="設定項目"><a href="#settings">プロフィール画像</a><a href="#profile-settings">プロフィール</a><a href="#password-settings">パスワード</a><a href="#delete-account">アカウント削除</a></nav>
   <p class="auth-alert" th:if="${user.temporaryPassword}">仮パスワードを利用中です。新しいパスワードに変更してください。</p>
   <p class="auth-alert success" th:if="${success}" th:text="${success}"></p><p class="auth-alert" th:if="${error}" th:text="${error}"></p>
+  <!-- 画像選択や読み込みのエラーをmain.jsがここへ表示する。role=alertで読み上げにも通知する。 -->
   <p id="profile-image-error" class="auth-alert" role="alert" hidden></p>
+  <!-- multipart/form-dataはファイルを送るための形式。main.jsで切り抜いたJPEGをこのフォームから送信する。 -->
   <section class="mypage-card" id="settings">
     <div class="profile-image-settings"><div class="avatar preview"><img th:if="${hasProfileImage}" th:src="@{/mypage/profile-image}" th:style="|object-position:${profileImagePositionX}% ${profileImagePositionY}%;transform:scale(${profileImageZoom / 100.0});transform-origin:${profileImagePositionX}% ${profileImagePositionY}%|" alt="現在のプロフィール画像"><span th:unless="${hasProfileImage}" th:text="${#strings.substring(user.name,0,1)}">酒</span></div><div class="profile-image-controls"><h2>プロフィール画像</h2><p class="muted">JPEG・PNG・GIF、20MBまで。写真を選んで切り抜いてから保存します。</p><div class="image-actions"><form id="profile-image-upload" th:action="@{/mypage/profile-image}" method="post" enctype="multipart/form-data"><label class="button file-button">写真を選択<input id="profile-image-file" type="file" name="profileImage" accept="image/jpeg,image/png,image/gif" required></label></form><button th:if="${hasProfileImage}" type="button" class="button" id="open-image-editor">表示範囲を調整</button><form th:if="${hasProfileImage}" th:action="@{/mypage/profile-image/delete}" method="post"><button class="link-button danger">画像を削除</button></form></div></div></div>
   </section>
+  <!-- プロフィールの変更先。入力欄のnameが、Java側の@RequestParamの名前に対応する。 -->
   <section class="mypage-card" id="profile-settings">
       <form th:action="@{/mypage/profile}" method="post"><h2>プロフィール</h2><div class="form-group"><label for="name">表示名・ニックネーム</label><input id="name" name="name" th:value="${user.name}" maxlength="50" required></div><div class="form-group"><label for="email">メールアドレス</label><input id="email" name="email" type="email" th:value="${user.email}" required></div><button class="button">変更を保存</button></form>
   </section>
+  <!-- 現在のパスワードと新しいパスワードを送り、本人確認と入力チェックはJava側でも行う。 -->
   <section class="mypage-card" id="password-settings">
       <form th:action="@{/mypage/password}" method="post"><h2>パスワード</h2><div class="form-group"><label for="currentPassword">現在のパスワード</label><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-group"><label for="newPassword">新しいパスワード</label><input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div><button class="button">パスワードを変更</button></form>
   </section>
+  <!-- 削除ボタンで確認ダイアログを出し、同意した場合だけ現在のパスワードを付けて送信する。 -->
   <section class="mypage-card danger-zone" id="delete-account"><div><p class="eyebrow">DANGER ZONE</p><h2>アカウント削除</h2><p class="muted">お気に入りや診断結果を含むすべてのデータが削除され、元に戻せません。</p></div><form th:action="@{/mypage/account/delete}" method="post" onsubmit="return confirm('アカウントを本当に削除しますか？');"><label for="deletePassword">確認のため現在のパスワードを入力</label><input id="deletePassword" name="currentPassword" type="password" autocomplete="current-password" required><button class="button danger-button">アカウントを削除</button></form></section>
 </main>
+<!-- main.jsが開閉する画像編集画面。初期状態はhiddenで隠し、aria属性で対話画面であることを伝える。 -->
 <div class="image-editor" id="image-editor" hidden role="dialog" aria-modal="true" aria-labelledby="image-editor-title">
   <div class="image-editor-panel">
     <header><button type="button" class="editor-close" aria-label="閉じる">×</button><h2 id="image-editor-title">プロフィール画像を切り抜く</h2></header>
     <p class="editor-help">写真をドラッグして、アイコンの丸い枠に合わせてください。</p>
+    <!-- 元画像の上に丸いマスクを重ねて見せる。保存する画像は同じ表示範囲の正方形で、アイコン表示時に丸く見せる。 -->
     <div class="crop-stage" id="crop-stage"><img id="profile-position-preview" th:attr="data-current-src=${hasProfileImage} ? @{/mypage/profile-image} : ''" alt="切り抜く写真"><div class="crop-mask" aria-hidden="true"></div></div>
     <div id="image-crop-controls">
       <label class="zoom-control"><span>−</span><input id="image-zoom" type="range" min="100" max="300" step="5" value="100" aria-label="画像の拡大率"><span>＋</span></label>

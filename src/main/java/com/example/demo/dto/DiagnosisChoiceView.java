@@ -1,9 +1,8 @@
 package com.example.demo.dto;
 
 /**
- * S02（診断画面）表示用の選択肢DTO。
- * DBのDiagnosisChoiceエンティティから、画面表示に必要な項目だけを抜き出したもの。
- * Thymeleaf側は record のアクセサ(id(), text())を "choice.id" "choice.text" の形で参照する。
+ * 診断画面へ渡す、選択肢の番号と表示文だけをまとめたデータ。
+ * recordは値をまとめるJavaの書き方で、id()やtext()などの読み取りメソッドが自動で作られる。
  */
 public record DiagnosisChoiceView(Long id, String text) {
 }

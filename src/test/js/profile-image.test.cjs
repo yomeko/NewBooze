@@ -1,8 +1,11 @@
+// プロフィール画像の選択・切り抜き・キャンセル・保存を確認するテスト。
+// 画像やファイル送信の代役を用意し、描いた範囲と送信回数を確認する。実際の画像は送信しない。
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
+// 画面要素と操作の代役を作り、対象のJavaScriptを実行してテスト用の操作口を返す。
 function setup() {
   const elements = new Map();
   const element = id => {
@@ -44,6 +47,7 @@ async function choose(app, file = { type: 'image/png', size: 1024 }) {
   await new Promise(resolve => setImmediate(resolve));
 }
 
+// 画像選択でプレビューだけを開き、キャンセルすると保存済みの画像を変更しないことを確認する。
 test('first upload opens the round-frame preview without submitting; cancel keeps the saved image', async () => {
   const app = setup();
   await choose(app);
@@ -57,6 +61,7 @@ test('first upload opens the round-frame preview without submitting; cancel keep
   assert.equal(app.revoked, 1);
 });
 
+// 表示した範囲と同じ切り抜きをJPEGにして、1回だけフォーム送信することを確認する。
 test('save submits the exact selected crop once as a JPEG', async () => {
   const app = setup();
   await choose(app);
@@ -71,6 +76,7 @@ test('save submits the exact selected crop once as a JPEG', async () => {
   assert.equal(app.submitted, 1);
 });
 
+// 形式が違うファイルや20MBを超えるファイルでは、編集画面も送信も開始しないことを確認する。
 test('invalid and oversized files never open the editor or submit', async () => {
   for (const file of [{ type: 'text/plain', size: 10 }, { type: 'image/png', size: 21 * 1024 * 1024 }]) {
     const app = setup();
@@ -81,6 +87,7 @@ test('invalid and oversized files never open the editor or submit', async () => 
   }
 });
 
+// 読み込めない画像は、保存せずエラーを表示することを確認する。
 test('an unreadable image reports an error without saving', async () => {
   const app = setup();
   app.element('#profile-position-preview').decode = async () => { throw Error('invalid image'); };

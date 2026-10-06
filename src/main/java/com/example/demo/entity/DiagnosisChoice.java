@@ -15,9 +15,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 診断選択肢（diagnosis_choices）。
- * question_id → diagnosis_questions.id は ON DELETE CASCADE のため、
- * 設問が削除されれば選択肢も自動的に削除される。
+ * データベースのdiagnosis_choicesという表の1件を、Javaで扱うためのクラス。
+ * 質問に属する選択肢とその表示文を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "diagnosis_choices")

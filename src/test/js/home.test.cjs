@@ -1,7 +1,10 @@
+// ホームのトピック切り替えを、ブラウザの代役で確認するテスト。
+// vmでhome.jsを実行し、ボタンクリックとタイマーを再現して表示中の記事を調べる。
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
+// 画面要素と操作の代役を作り、対象のJavaScriptを実行してテスト用の操作口を返す。
 function setup(reduced = false) {
   const element = () => ({ hidden: false, handlers: {}, addEventListener(t, f) { this.handlers[t] = f; } });
   const slides = [element(), element(), element()];
@@ -16,6 +19,7 @@ function setup(reduced = false) {
   return { slides, selectors, click(name) { selectors[`[data-topic="${name}"]`].handlers.click(); },
     tick() { assert.ok(pending); pending(); }, running() { return !!pending; }, root };
 }
+// 最初は手動で、自動切り替えの開始・停止、先頭と末尾の循環、マウス操作中の停止を確認する。
 test('carousel starts manual, supports optional autoplay, wraps and pauses', () => {
   const c = setup();
   assert.deepEqual(c.slides.map(s => s.hidden), [false, true, true]);
@@ -32,6 +36,7 @@ test('carousel starts manual, supports optional autoplay, wraps and pauses', () 
   c.root.handlers.mouseenter(); assert.equal(c.running(), false);
   c.root.handlers.mouseleave(); assert.equal(c.running(), true);
 });
+// 動きを減らす設定では自動切り替えを開始せず、手動で前後へ移れることを確認する。
 test('reduced motion starts paused while manual navigation remains available', () => {
   const c = setup(true);
   assert.equal(c.running(), false);

@@ -15,13 +15,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 地酒タグ中間テーブル（sake_tags）。レコメンドの特徴ベクトルの元データ。
- *
- * 中間テーブルに score のような「関連そのものが持つ属性」がある場合、
- * 単純な @ManyToMany では表現できないため、中間テーブル自体を Entity 化し、
- * 複合PKを @EmbeddedId + @MapsId で扱う（内部設計書 メモ：型安全に扱うための採用理由）。
- *
- * @MapsId により、sake / tag への外部キー値が SakeTagId 内の sakeId / tagId と自動的に同期する。
+ * データベースのsake_tagsという表の1件を、Javaで扱うためのクラス。
+ * 日本酒と特徴の対応、およびその特徴の強さを持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * 2つのIDの組み合わせで1件を区別する。@MapsIdで関連先のIDと組み合わせのIDをそろえる。
  */
 @Entity
 @Table(name = "sake_tags")
@@ -31,6 +28,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class SakeTag {
 
+    // 銘柄IDと特徴IDの組み合わせで、どの銘柄のどの特徴かを識別する。
     @EmbeddedId
     private SakeTagId id = new SakeTagId();
 

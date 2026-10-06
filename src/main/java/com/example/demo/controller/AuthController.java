@@ -21,12 +21,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+/**
+ * ログイン画面の表示と、アカウントの新規登録を担当する。
+ * 登録したユーザーはそのままログイン状態になり、好み診断へ進む。
+ * 通常のログイン時のパスワード確認は、Spring Security（ログインを管理する仕組み）が行う。
+ */
 @Controller
 public class AuthController {
 
-    // 新規登録直後の自動ログイン処理で、認証情報をHTTPセッションへ保存するために使用する。
-    // (Spring Security 5.7以降、SecurityContextHolderへの設定だけでは次のリクエストに
-    //  認証状態が引き継がれない仕様のため、SecurityContextRepository経由で明示的に保存する必要がある)
+    // 登録後のログイン情報をセッションへ保存し、次のページでも本人として扱えるようにする。
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     private final UserRepository userRepository;
@@ -38,16 +41,17 @@ public class AuthController {
     }
 
     /**
-     * S07: ログイン画面表示。
-     * フォームのPOST先(/login)自体はSecurityConfigでSpring Securityに委譲済みのため、
-     * このControllerでは画面表示のみを担当する。
+     * ログイン画面を表示する。returnする文字列はtemplates以下のHTML名。
+     * フォームから届くPOST /loginのパスワード確認はSecurityConfigの設定に従って処理される。
      */
     @GetMapping("/login")
     public String loginForm() {
         return "auth/login";
     }
 
-    /** S07: 新規登録画面表示 */
+    /**
+     * 空のSignupFormを用意して新規登録画面へ渡す。
+     */
     @GetMapping("/signup")
     public String signupForm(Model model) {
         model.addAttribute("signupForm", new SignupForm());
@@ -55,9 +59,9 @@ public class AuthController {
     }
 
     /**
-     * S07: 新規登録処理。
-     * 登録完了後はログイン画面を経由させず、そのまま自動ログインさせたうえで
-     * 好み診断(/diagnosis)へ誘導する（好み診断は新規登録直後のみ自動表示する）。
+     * 入力とメールアドレスの重複を確認し、ユーザーを保存する。
+     * {@code @Valid}が入力ルールを確認し、bindingResultに問題の内容が入る。
+     * 保存後は自動ログインさせ、redirectでブラウザを好み診断のURLへ移動させる。
      */
     @PostMapping("/signup")
     public String signup(@Valid @ModelAttribute("signupForm") SignupForm form,
@@ -88,11 +92,9 @@ public class AuthController {
     }
 
     /**
-     * 新規登録直後のユーザーを、パスワード再入力なしでログイン状態にする。
-     * 通常のログインフローと異なりCustomUserDetailsServiceは経由せず、
-     * 登録処理で取得済みのUserからCustomUserDetailsを直接生成する。
-     * （直前にパスワードのハッシュ照合が既に済んでいる＝本人性は保証されているため、
-     * 　ここで再度パスワード照合を行う必要はない）
+     * 登録が成功したユーザーをログイン状態にする。
+     * 登録処理で保存したUserを使って認証情報を作り、今回の処理とHTTPセッションに保存する。
+     * HTTPセッションは、次のページに移動してもログイン状態を覚えておくための仕組み。
      */
     private void autoLogin(User user, HttpServletRequest request, HttpServletResponse response) {
         CustomUserDetails userDetails = new CustomUserDetails(user);

@@ -16,9 +16,9 @@ import lombok.Setter;
 import jakarta.persistence.Column;
 
 /**
- * 診断セッション（diagnosis_sessions）。
- * ユーザー1回分の診断実施単位。DiagnosisController の userId 暫定処理は、
- * S07（ログイン機能）実装後にここへ差し替える（内部設計書 第8章「今後の課題」）。
+ * データベースのdiagnosis_sessionsという表の1件を、Javaで扱うためのクラス。
+ * ユーザーが行った1回分の診断と実施時刻を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "diagnosis_sessions")
@@ -36,6 +36,7 @@ public class DiagnosisSession {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // 実施日時はDBが設定する。insertable/updatable=falseでJavaからは書き込まない。
     @Column(name = "taken_at", insertable = false, updatable = false)
     private LocalDateTime takenAt;
 }

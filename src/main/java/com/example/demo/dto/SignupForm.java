@@ -4,7 +4,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-/** S07新規登録フォームの入力値を受け取るDTO */
+/**
+ * 新規登録フォームの表示名、メールアドレス、パスワードを受け取る入れ物。
+ * AuthControllerの@Validが、各項目の@NotBlank・@Email・@Sizeに従って入力を確認する。
+ * 確認結果はHTMLのth:errorsで表示され、正しい入力ならUserに移して保存する。
+ */
 public class SignupForm {
 
     @NotBlank(message = "表示名を入力してください")
@@ -19,6 +23,7 @@ public class SignupForm {
     @Size(min = 8, message = "パスワードは8文字以上で入力してください")
     private String password;
 
+    // getで値を読み、setで入力値を設定する。フォームとJavaの値を結び付けるために使う。
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 

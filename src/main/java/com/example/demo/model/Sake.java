@@ -3,7 +3,9 @@ package com.example.demo.model;
 import java.util.Map;
 
 /**
- * JPAエンティティを画面表示と推薦計算に適した形へ変換した読み取り専用DTO。
+ * 検索・詳細・診断で使う日本酒の基本情報と、特徴ごとの点数をまとめたデータ。
+ * 同じ名前のentity.SakeはDB保存用で、こちらは読み取り用。
+ * tagScoresは例えば「甘口 → 3」のように、特徴の名前とその強さを対応させる。
  *
  * @param id          地酒ID
  * @param name        銘柄名
@@ -15,7 +17,9 @@ import java.util.Map;
  * @param price       価格(円)
  * @param description 説明文
  * @param imageUrl    商品画像URL
- * @param tagScores   タグ名→強さスコアのマップ（コサイン類似度計算での特徴ベクトルとして使用）
+ * @param tagScores   特徴名と点数の対応表。好みとの類似度を計算するために使う
+ * @param averageRating 公開レビューの平均の星の数。レビューがない場合はnull
+ * @param reviewCount 公開レビューの件数
  */
 public record Sake(
         long id,
@@ -32,6 +36,9 @@ public record Sake(
         Double averageRating,
         long reviewCount
 ) {
+    /**
+     * この銘柄の特徴の点数を、比較カードの香り・甘さ・飲み口の表示に変換する。
+     */
     public java.util.List<com.example.demo.dto.TastePresentation.Indicator> tasteIndicators() {
         return com.example.demo.dto.TastePresentation.indicators(tagScores);
     }

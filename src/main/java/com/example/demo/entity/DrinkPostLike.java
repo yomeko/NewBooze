@@ -6,6 +6,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * データベースのdrink_post_likesという表の1件を、Javaで扱うためのクラス。
+ * 誰がどの投稿に「いいね」を付けたかを持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * 2つのIDの組み合わせで1件を区別する。@MapsIdで関連先のIDと組み合わせのIDをそろえる。
+ */
 @Entity @Table(name = "drink_post_likes") @Getter @Setter @NoArgsConstructor
 public class DrinkPostLike {
     @EmbeddedId private DrinkPostLikeId id = new DrinkPostLikeId();

@@ -1,9 +1,8 @@
-/* =========================================================
-   一升の出会い（地酒サーチ）暫定スタイルシート
-   出田担当の本番デザインに置き換えられるまでの仮UI。
-   フォントは要件定義書 6.2 の通り、見出しに Shippori Mincho、
-   本文に Zen Kaku Gothic New を採用（和風テイストの方向性）。
-   ========================================================= */
+/* 一升の出会いの全画面で使う共通スタイル。
+   CSSは文字・色・余白・配置を決め、操作による状態の切り替えはmain.jsが担当する。
+   基本の指定の後に、読みやすさ・共通ヘッダー・画面別の調整を重ねている。
+   同じ優先度なら後の指定が使われるため、見た目の調整時はファイル後半も確認する。
+   @mediaは画面幅や利用者の設定に合わせて指定を切り替える仕組み。 */
 
 /* Google Fontsから和文フォントを読み込む */
 @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
@@ -67,8 +66,7 @@ nav a, .sake-card a, .back {
   color: var(--ink);
   cursor: pointer;
 }
-/* PC表示では非表示。画面幅700px以下（下部のメディアクエリ参照）でのみ表示される
-   ハンバーガーメニュー用ボタン */
+/* メニューボタンの基本指定。後半の共通ヘッダーの指定で、全画面に「その他」ボタンとして表示する。 */
 .menu-toggle {
   display: none;
   border: 0;
@@ -117,10 +115,8 @@ h1, h2, h3 {
   color: #fff;
 }
 
-/* ---- マーキー（注目銘柄の横スクロール表示） ----
-   要件定義書 4.3／内部設計書 4.1 の通り、非推奨の<marquee>タグは使わず、
-   CSSアニメーション(@keyframes scroll)＋JS側でのコンテンツ複製（main.js側ではなく
-   home.htmlのth:each側で同じ内容を2回出力）によってシームレスループを実現している */
+/* 横へ流れる表示のスタイル。現在のhome.htmlはこの欄を使わず、注目銘柄をカードで表示する。
+   この動きを使う場合は、同じ内容を2回並べて半分ずつ動かす構成が必要。 */
 .marquee {
   overflow: hidden;
   background: var(--ink);
@@ -140,8 +136,7 @@ h1, h2, h3 {
 .page {
   max-width: 1250px;
   margin: auto;
-  /* ヘッダー(76px)+フッター分を差し引いた高さを最低確保し、
-     コンテンツが少ないページでもフッターが浮かないようにする */
+  /* 画面の高さから140pxを引いた最小の高さを確保し、本文が少なくてもページの余白を保つ。 */
   min-height: calc(100vh - 140px);
 }
 .section-heading { margin-bottom: 28px; }
@@ -391,6 +386,7 @@ summary { cursor: pointer; font-weight: 700; }
 
 /* ---- S08 マイページ ---- */
 .mypage { padding: 54px 7% 80px; }
+/* 本人の名前・画像・設定へのリンクを並べる。画像はoverflow:hiddenと角丸で円形に見せる。 */
 .profile-hero { display:flex; align-items:center; gap:22px; margin-bottom:38px; }
 .profile-hero h1 { margin:2px 0; font-size:34px; }
 .profile-hero p { margin:0; }
@@ -413,6 +409,7 @@ summary { cursor: pointer; font-weight: 700; }
 .page-back a { color:var(--red); font-weight:700; }
 .account-settings-page { max-width:1180px; margin:0 auto; }
 .account-settings-page>.mypage-card { margin-top:20px; }
+/* アカウント削除の欄。説明と本人確認フォームを並べ、赤色で操作を区別する。 */
 .danger-zone { display:grid; grid-template-columns:1fr minmax(280px,.8fr); align-items:center; gap:40px; border-top-color:var(--red); }
 .danger-zone h2,.danger-zone p { margin:4px 0; }
 .danger-zone form { display:grid; gap:10px; }
@@ -424,6 +421,7 @@ summary { cursor: pointer; font-weight: 700; }
 .card-title p,.card-title h2 { margin:0; }
 .card-title h2 { font-size:23px; }
 .card-title>a { margin-left:auto; color:var(--red); font-size:13px; font-weight:700; }
+/* マイページの好みの表示。特徴名と棒グラフを横に並べ、棒の長さはHTMLが点数から設定する。 */
 .taste-item { display:grid; grid-template-columns:145px 1fr; align-items:center; gap:15px; margin:14px 0; }
 .taste-item small { display:block; color:#817a6d; }
 .score { height:7px; background:#eee6d8; overflow:hidden; }
@@ -436,6 +434,7 @@ summary { cursor: pointer; font-weight: 700; }
 .post-list article p { margin:5px 0 0; }
 .post-list article>div span { display:flex; gap:12px; align-items:baseline; }
 .post-list article>div span b { color:var(--red); font-size:13px; }
+/* 銘柄の選択とお気に入り登録の操作を並べる。各登録行の末尾に削除ボタンを置く。 */
 .favorite-form { display:grid; grid-template-columns:auto minmax(220px,1fr) auto; align-items:end; gap:12px; padding:18px; background:#f0e7d8; }
 .favorite-form label { font-size:13px; font-weight:700; }
 .favorite-form select,.report-menu select { padding:10px; border:1px solid var(--line); background:#fff; font:inherit; }
@@ -457,11 +456,13 @@ summary { cursor: pointer; font-weight: 700; }
 .profile-image-settings h3,.profile-image-settings p { margin:0 0 6px; }
 .profile-image-controls { flex:1; }
 .image-actions,.image-actions form { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+/* 見た目のボタン全体に透明なファイル入力を重ね、押すと画像選択が開くようにする。 */
 .file-button { position:relative; overflow:hidden; }
 .file-button input { position:absolute; inset:0; opacity:0; cursor:pointer; }
 .link-button.danger { color:var(--red); }
 .modal-open { overflow:hidden; }
 .image-editor[hidden] { display:none; }
+/* 画像編集画面を画面全体の上に重ねる。fixedでスクロールから独立し、z-indexで前面に出す。 */
 .image-editor { position:fixed; inset:0; z-index:20; display:grid; place-items:center; padding:20px; background:#171612cc; }
 .image-editor-panel { width:min(620px,100%); max-height:95vh; overflow:auto; background:#181713; color:#fff; border-radius:18px; box-shadow:0 25px 70px #0008; }
 .image-editor-panel>header { display:grid; grid-template-columns:44px 1fr; align-items:center; padding:15px 20px; }
@@ -469,9 +470,11 @@ summary { cursor: pointer; font-weight: 700; }
 .editor-close { justify-self:start; border:0; background:none; color:#fff; font-size:30px; cursor:pointer; }
 .image-editor-panel header .button { justify-self:end; border-radius:22px; padding:8px 18px; }
 .editor-help { margin:0; padding:0 22px 14px; color:#d3cec4; text-align:center; font-size:13px; }
+/* 画像の切り抜きプレビュー。1:1の枠からはみ出した部分を隠し、指の移動を画像操作として扱う。 */
 .crop-stage { position:relative; width:100%; aspect-ratio:1; overflow:hidden; background:#090909; cursor:grab; touch-action:none; user-select:none; }
 .crop-stage:active { cursor:grabbing; }
 .crop-stage img { position:absolute; max-width:none; display:block; pointer-events:none; }
+/* 丸い枠の外側を大きな影で暗くする。画像自体を丸く切り抜くのではなく、表示範囲を案内する装飾。 */
 .crop-mask { position:absolute; inset:0; border:3px solid var(--gold); border-radius:50%; box-shadow:0 0 0 999px #0007; pointer-events:none; }
 #image-crop-controls { padding:20px 28px 24px; }
 .crop-position-control { display:grid; grid-template-columns:auto 1fr; gap:14px; margin-top:12px; }
@@ -578,6 +581,7 @@ a { text-underline-offset: .2em; }
 
 a:hover, .link-button:hover { color: var(--red); }
 
+/* キーボードで選択したリンク・ボタン・入力欄を青い枠で示す。 */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -779,6 +783,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .profile-image-settings { flex-direction: column; }
 }
 
+/* OSやブラウザで「動きを減らす」を選んだ場合、スクロールや切り替えの動きを短くする。 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
@@ -789,6 +794,7 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 }
 
 /* ---- 共通サイトヘッダー（ブランド／検索／行き先ナビ／操作） ---- */
+/* 画面には見せず、スクリーンリーダーの読み上げ用にはラベルを残す。display:noneとは用途が違う。 */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -811,11 +817,13 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   box-shadow: 0 3px 18px #0002;
 }
 
+/* ホーム画面のヘッダーは、スクロールしても画面上部に残るsticky配置にする。 */
 .home-page > .site-header {
   position: sticky;
   top: 0;
 }
 
+/* ロゴ・検索・アカウント操作を横並びにする。980px以下では検索欄を2行目へ移す。 */
 .header-main {
   width: min(100%, 1440px);
   min-height: 78px;
@@ -994,8 +1002,10 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 .site-header .menu-toggle { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 10px; border: 1px solid #e3e5e3; border-radius: 8px; color: #252827; cursor: pointer; }
 .menu-toggle svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 .site-menu { position: fixed; inset: 0 0 0 auto; width: min(400px, 100%); height: 100dvh; max-width: 100%; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-left: 1px solid #e3e5e3; background: #fff; color: #252827; box-shadow: -12px 0 40px #0002; }
+/* dialogの背後を暗くし、メニューが開いている間は本文のスクロールを止める。 */
 .site-menu::backdrop { background: #17201d80; backdrop-filter: blur(3px); }
 body.site-menu-open { overflow: hidden; }
+/* safe-area-inset-bottomはスマートフォンの画面下部の操作領域に重ならないための余白。 */
 .site-menu-panel { min-height: 100%; padding: 24px 26px max(24px, env(safe-area-inset-bottom)); }
 .site-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
 .site-menu-heading h2 { margin: 0; font-family: inherit; font-size: 21px; }
@@ -1014,6 +1024,7 @@ body.site-menu-open { overflow: hidden; }
 @media (max-width: 380px) { .site-menu-panel { padding: 20px; } .site-header .menu-toggle { width: 40px; height: 40px; min-width: 40px; min-height: 40px; } }
 
 /* 読みやすい見出し、先頭から見渡せるナビ、回答を修正できる診断。 */
+/* 見出しを意味の区切りごとにまとめ、その区切りの途中で折り返さないようにする。 */
 .hero-phrase { display: inline-block; white-space: nowrap; }
 .site-header .menu-toggle { width: auto; gap: 4px; grid-template-columns: auto auto; }
 .menu-label { font-size: 12px; font-weight: 700; }
@@ -1023,6 +1034,7 @@ body.site-menu-open { overflow: hidden; }
 .site-header .main-nav { border-top: 0; }
 .nav-scroll-button { display: none; }
 .nav-scroll-hint { margin: 0; padding: 3px 5% 7px; background: #fff; color: #626a65; font-size: 11px; }
+/* 診断の進捗と前後の操作。hiddenは非表示、disabledは操作できない状態として見せる。 */
 .quiz-progress, .quiz-controls, .quiz-hint { max-width: 780px; }
 .quiz-progress p { margin-bottom: 8px; font-weight: 700; color: var(--red); }
 .quiz-progress progress { display: block; width: 100%; height: 8px; accent-color: var(--red); border: 0; border-radius: 10px; overflow: hidden; background: #e8dfd0; }
@@ -1032,6 +1044,7 @@ body.site-menu-open { overflow: hidden; }
 .button:disabled, .nav-scroll-button:disabled { opacity: .4; cursor: default; transform: none; }
 .question[hidden], .sake-card-image [hidden], .nav-scroll-hint[hidden] { display: none; }
 .question legend:focus-visible { outline: 2px solid var(--red); outline-offset: 5px; }
+/* 診断結果の特徴をカードと棒で見せる。最も高い点数の特徴はstrongestクラスで強調する。 */
 .taste-result { padding: 28px; border: 1px solid var(--line); border-radius: 10px; background: var(--cream); }
 .taste-result h2 { margin: 0 0 20px; }
 .tendency-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
@@ -1049,12 +1062,15 @@ body.site-menu-open { overflow: hidden; }
 .answer-summary li p { margin: 4px 0; }
 .recommendation-heading { margin: 36px 0 0; }
 .recommendations { grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); align-items: stretch; }
+/* おすすめカードを縦に並べる。リンクのmargin-top:autoで、説明の長さが違っても末尾をそろえる。 */
 .recommendation-card { display: flex; flex-direction: column; }
 .recommendation-card > a { margin-top: auto; padding-top: 18px; }
+/* 比較カードの写真枠を同じ高さにそろえ、containで瓶やラベル全体を見せる。 */
 .sake-card-image { display: grid; place-items: center; height: 180px; margin: 0 0 18px; border-radius: 6px; background: #f4f2ec; overflow: hidden; }
 .sake-card-image img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 12px; }
 .sake-image-fallback { display: flex; flex-direction: column; align-items: center; color: var(--muted); font-size: 12px; }
 .sake-image-fallback > span { font-size: 42px; color: #aa9174; }
+/* 香り・甘さ・飲み口の共通表示。meterはHTMLから渡す0〜5の点数を棒として表示する。 */
 .taste-indicators { margin: 0; font-size: 13px; }
 .taste-indicators > div { display: grid; grid-template-columns: 48px 1fr; align-items: start; gap: 8px; min-height: 54px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .taste-indicators dt { font-weight: 700; }

@@ -3,10 +3,9 @@ package com.example.demo.model;
 import java.util.Map;
 
 /**
- * DB未接続だった開発初期段階で使用していた、インメモリ用の診断選択肢モデル。
- * entity.DiagnosisChoice（JPA Entity）・dto.DiagnosisChoiceView（画面表示用DTO）とは別物。
- * 現在はDiagnosisServiceがDB連携版（choice_tagsテーブル参照）に移行済みのため未使用だが、
- * 過去の実装経緯を残すため当面削除せずに残している。
+ * DBを使わなかった初期実装の、選択肢と特徴ごとの加点をまとめたデータ。
+ * 現在の診断はentity.DiagnosisChoiceとdto.DiagnosisChoiceViewを使う。
+ * この型は現在の診断処理からは呼び出されていない。
  *
  * @param id         選択肢ID（インメモリ用の暫定ID）
  * @param text       選択肢の表示文言

@@ -15,7 +15,10 @@ import lombok.Setter;
 import jakarta.persistence.Column;
 
 /**
- * お気に入り（favorites）。S06（お気に入り一覧画面）実装時に使用する想定。
+ * データベースのfavoritesという表の1件を、Javaで扱うためのクラス。
+ * 誰がどの日本酒をお気に入りに登録したかを持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
+ * 2つのIDの組み合わせで1件を区別する。@MapsIdで関連先のIDと組み合わせのIDをそろえる。
  */
 @Entity
 @Table(name = "favorites")
@@ -25,6 +28,7 @@ import jakarta.persistence.Column;
 @AllArgsConstructor
 public class Favorite {
 
+    // ユーザーIDと日本酒IDの組み合わせなので、同じ人の同じ銘柄は1件として扱う。
     @EmbeddedId
     private FavoriteId id = new FavoriteId();
 

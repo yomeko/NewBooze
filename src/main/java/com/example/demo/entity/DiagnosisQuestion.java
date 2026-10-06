@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * 診断設問マスタ（diagnosis_questions）。
- * 既存の com.example.demo.model.DiagnosisQuestion（record・インメモリ用）とは別物。
- * こちらはDB永続化用のJPA Entityであり、パッケージが異なるため名前が重複してもコンパイルは通る。
+ * データベースのdiagnosis_questionsという表の1件を、Javaで扱うためのクラス。
+ * 診断の質問文と表示順を持つ。
+ * {@code @Entity}はDBの表に対応する指定、@Tableはその表の名前を示す。
  */
 @Entity
 @Table(name = "diagnosis_questions")

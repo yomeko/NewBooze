@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 
+/**
+ * 飲酒投稿に不適切な言葉、同じ内容の再投稿、短時間の大量投稿がないかを確認する。
+ * 問題がある場合は画面に出す説明文を返し、問題がなければnullを返す。
+ */
 @Service
 public class PostModerationService {
     private static final List<String> BLOCKED_TERMS = List.of(
@@ -14,6 +18,9 @@ public class PostModerationService {
     private final DrinkPostRepository posts;
     public PostModerationService(DrinkPostRepository posts) { this.posts = posts; }
 
+    /**
+     * 銘柄名と感想を確認する。禁止語、24時間以内の同内容、10分以内に5件以上の順で調べる。
+     */
     public String validate(Long userId, String sakeName, String comment) {
         String combined = normalize(sakeName + " " + comment);
         if (BLOCKED_TERMS.stream().anyMatch(combined::contains))
@@ -27,6 +34,7 @@ public class PostModerationService {
         return null;
     }
 
+    // 全角・半角をそろえ、空白や一部の記号を除いて禁止語の表記の違いを減らす。
     static String normalize(String value) {
         return Normalizer.normalize(value, Normalizer.Form.NFKC).toLowerCase(Locale.JAPANESE)
                 .replaceAll("[\\s・ー_.,!！?？-]", "");

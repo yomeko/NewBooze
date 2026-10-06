@@ -1,12 +1,14 @@
-// 全画面共通のUI挙動をまとめたスクリプト。
-// 出田担当の本番デザイン差し替え時も、th:src="@{/js/main.js}" として
-// 各テンプレート(home/search/detail/diagnosis等)から共通で読み込まれる想定。
+// 全画面から読み込む操作用スクリプト。メニュー、ヘッダー、画像編集、診断を担当する。
+// Javaが用意したHTMLに対して、クリックや入力に応じた表示の切り替えを行う。
+// HTMLの読み込みが終わってから動かす。querySelectorは指定したIDやクラスの要素を探す。
+// ページごとに存在する要素が違うので、見つかった機能だけを初期化する。
 document.addEventListener('DOMContentLoaded', () => {
   // 通常ナビゲーションとは別に、共通のサイトメニューを開く。
   const toggle = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#site-menu');
   if (toggle && menu) {
     toggle.addEventListener('click', () => {
+      // dialogを開き、読み上げ用の開閉状態と、背景のスクロールを止めるCSSのクラスも更新する。
       menu.showModal();
       toggle.setAttribute('aria-expanded', 'true');
       document.body.classList.add('site-menu-open');
@@ -14,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menu.querySelector('.site-menu-close').addEventListener('click', () => menu.close());
     menu.addEventListener('click', event => {
       if (event.target === menu) {
+        // メニューの長方形の範囲とクリック位置を比較し、外側の背景をクリックしたときだけ閉じる。
         const bounds = menu.getBoundingClientRect();
         if (event.clientX < bounds.left || event.clientX > bounds.right ||
             event.clientY < bounds.top || event.clientY > bounds.bottom) menu.close();
@@ -41,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const next = header.querySelector('.nav-next');
     const hint = header.querySelector('.nav-scroll-hint');
     if (navigation && previous && next && hint) {
+      // メニュー項目が横幅に収まらないときだけ矢印と案内を出し、端まで来た矢印は押せなくする。
       const updateNavigation = () => {
         const overflow = navigation.scrollWidth > navigation.clientWidth + 2;
         previous.hidden = !overflow;
@@ -53,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
       navigation.addEventListener('scroll', updateNavigation, { passive: true });
       window.addEventListener('resize', updateNavigation);
       [previous, next].forEach((button, index) => button.addEventListener('click', () => {
+        // 表示幅の70%ずつ横へ移動する。動きを減らす設定の人には、移動アニメーションを使わない。
         navigation.scrollBy({ left: (index === 0 ? -1 : 1) * navigation.clientWidth * 0.7,
           behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
       }));
@@ -74,16 +79,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const error = document.querySelector('#image-crop-error');
     const fileError = document.querySelector('#profile-image-error');
     const close = document.querySelector('.editor-close');
+    // sourceUrlは選んだ画像をブラウザ内で見るための一時URL。busyは保存中の二重操作を防ぐ印。
+    // requestIdは画像読み込みの順番を区別し、古い読み込みが後から完了しても画面へ反映しないために使う。
     let sourceUrl = null;
     let returnFocus = null;
     let busy = false;
     let requestId = 0;
     let drag = null;
+    // 元の画像から切り抜く正方形の辺と左上位置を計算する。
+    // 拡大率が上がるほど切り抜く範囲は小さくなり、x・yの0〜100で左右・上下の位置を決める。
     const crop = () => {
       const side = Math.min(preview.naturalWidth, preview.naturalHeight) * 100 / Number(zoom.value);
       return { side, left: (preview.naturalWidth - side) * Number(x.value) / 100,
         top: (preview.naturalHeight - side) * Number(y.value) / 100 };
     };
+    // 切り抜く範囲をプレビュー枠いっぱいに拡大し、保存される部分を画面で確認できるようにする。
     const render = () => {
       if (!preview.naturalWidth) return;
       const { side, left, top } = crop();
@@ -93,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preview.style.top = `${-top / side * 100}%`;
     };
     const reset = () => { x.value = y.value = 50; zoom.value = 100; render(); };
+    // 編集画面を閉じ、入力したファイルと一時URLを解放し、開いたときの操作位置へフォーカスを戻す。
     const dismiss = () => {
       if (busy) return;
       requestId++;
@@ -104,12 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
       drag = null;
       returnFocus?.focus();
     };
+    // 画像を読み込んでから編集画面を開く。既存画像の編集なら保存済みの位置・拡大率を復元する。
     const open = async (src, existing = false) => {
       const id = ++requestId;
       returnFocus = existing ? document.querySelector('#open-image-editor') : fileInput;
       fileError.hidden = true;
       preview.src = src;
       try {
+        // 画像の読み込み完了を待つ。待っている間に別の画像を開いた・閉じた場合は古い処理を終了する。
         await preview.decode();
         if (id !== requestId) return;
         reset();
@@ -131,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     uploadForm.addEventListener('submit', event => event.preventDefault());
+    // 画像を選んだら、送信前に形式と20MB以下かを確認し、一時URLでプレビューを開く。
     fileInput.addEventListener('change', () => {
       const file = fileInput.files[0];
       if (!file) return;
@@ -150,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     imageEditor.addEventListener('click', event => { if (event.target === imageEditor) dismiss(); });
     imageEditor.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.preventDefault(); dismiss(); }
+      // Tabキーで操作しても編集画面の外へ移らないよう、最初と最後のボタンの間を循環させる。
       if (event.key === 'Tab') {
         const controls = [...imageEditor.querySelectorAll('button, input')].filter(el => !el.disabled);
         const first = controls[0], last = controls.at(-1);
@@ -159,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     [x, y, zoom].forEach(control => control.addEventListener('input', render));
     document.querySelector('#reset-image-position').addEventListener('click', reset);
+    // マウスや指で画像を動かすため、押した位置を記録する。枠の外に出ても動きを追跡する。
     stage.addEventListener('pointerdown', event => {
       if (busy || (event.pointerType === 'mouse' && event.button !== 0)) return;
       drag = { x: event.clientX, y: event.clientY };
@@ -167,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
     stage.addEventListener('pointermove', event => {
       if (!drag) return;
       const { side } = crop();
+      // 画面上の移動量を元画像のピクセル数へ換算し、位置スライダーの0〜100に収まる値へ変える。
       const scale = side / stage.clientWidth;
       const update = (control, delta, overflow) => {
         if (overflow > 0) control.value = Math.max(0, Math.min(100, Number(control.value) - delta * scale / overflow * 100));
@@ -177,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
       render();
     });
     ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(type => stage.addEventListener(type, () => { drag = null; }));
+    // 保存ボタンを押したら操作を止め、選んだ範囲をJPEGに変換してフォームへ入れる。
     save.addEventListener('click', async () => {
       if (busy) return;
       busy = true;
@@ -185,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
       error.hidden = true;
       try {
         const { side, left, top } = crop();
+        // canvasはブラウザ内で画像を描く領域。プレビューと同じ部分を512×512pxの白背景に描く。
         const canvas = document.createElement('canvas');
         canvas.width = canvas.height = 512;
         const context = canvas.getContext('2d');
@@ -193,10 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
         context.drawImage(preview, left, top, side, side, 0, 0, 512, 512);
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
         if (!blob) throw new Error('crop');
+        // 切り抜いたJPEGを新しいファイルとして作り、通常のファイル入力欄にセットする。
         const data = new DataTransfer();
         data.items.add(new File([blob], 'profile.jpg', { type: 'image/jpeg' }));
         fileInput.files = data.files;
-        // ネイティブ送信で既存のCSRFトークン、保存後のリダイレクトと通知を利用する。
+        // 通常のフォームとして送信し、本人の操作を確認するCSRFトークンと保存後の画面移動を使う。
         HTMLFormElement.prototype.submit.call(uploadForm);
       } catch {
         busy = false;
@@ -218,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (img.complete && img.naturalWidth === 0) fallback();
   });
 
+  // ここから好み診断の処理。質問画面以外には設問がないので、この時点で終了する。
+  // ...は見つかった要素の一覧を配列へ変える書き方。
   const questions = [...document.querySelectorAll('#diagnosis-form .question')];
   if (!questions.length) return;
   const form = document.querySelector('#diagnosis-form');
@@ -228,6 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let step = 0;
   let submitted = false;
 
+  // 質問ごとのラジオボタンの選択を、送信用の隠し入力（name=choice）に写す。
+  // 未回答の隠し入力はdisabledにし、空の選択肢IDがサーバーへ届かないようにする。
   const syncAnswer = question => {
     const selected = question.querySelector('input[type="radio"]:checked');
     const answer = question.querySelector('input[type="hidden"][name="choice"]');
@@ -235,6 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     answer.disabled = !selected;
     return !!selected;
   };
+  // 今の質問だけを表示し、何問目か・進捗・戻る/次へボタンの状態をそろえる。
   const render = (focus = false) => {
     questions.forEach((question, index) => {
       question.classList.toggle('active', index === step);
@@ -260,6 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
     step--;
     render(true);
   });
+  // 最後の質問までは送信を止めて次の質問へ進む。
+  // 最後は全問回答済みか確認し、1回だけ回答一覧を送る。preventDefaultは通常の送信を止める命令。
   form.addEventListener('submit', event => {
     if (submitted) { event.preventDefault(); return; }
     if (!syncAnswer(questions[step])) { event.preventDefault(); render(); return; }

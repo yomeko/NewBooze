@@ -4,13 +4,9 @@ import com.example.demo.model.Sake;
 import java.util.List;
 
 /**
- * S04（検索結果一覧画面）向けのページネーション結果DTO。
- *
- * 要件定義書 5.3／7.2の設計方針の通り、Spring Data JPAの標準インタフェースである
- * {@code Page<T>}（content, totalElements, totalPages, pageNumber等のプロパティを持つ）
- * を模した独自クラスとして設計している。
- * JPAのページ検索結果を画面用 Sake DTO の一覧に変換しつつ、
- * Thymeleaf が利用するページングプロパティを保つ。
+ * 検索結果の1ページ分の銘柄と、ページ移動に必要な情報をまとめたデータ。
+ * ページ分割（ページネーション）により、一度に表示する銘柄の数を抑える。
+ * pageNumberは0から数えるので、画面の1ページ目は0、2ページ目は1になる。
  *
  * @param content       このページに含まれる地酒一覧
  * @param pageNumber    現在のページ番号（0始まり）

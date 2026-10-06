@@ -5,6 +5,11 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * 飲酒投稿の入力値（お酒の名前と感想）を受け取る入れ物。
+ * {@code @NotBlank}で名前の空欄を、@Sizeで名前や感想の長すぎる入力を検出する。
+ * {@code @Getter}と@Setterは、値を読む・設定するメソッドをLombokが自動で作る指定。
+ */
 @Getter @Setter
 public class DrinkPostForm {
     @NotBlank(message = "お酒の名前を入力してください")

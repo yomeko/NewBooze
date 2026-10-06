@@ -6,12 +6,17 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 
+/**
+ * 日本酒に付いた特徴と、その特徴の強さを取り出すためのDB操作窓口。
+ * JpaRepositoryを継承すると、save（保存）やfindById（IDで検索）などをSpringが用意する。
+ * findBy...などのメソッドは名前から検索条件を組み立て、@Queryがある場合は指定した検索文を使う。
+ */
 public interface SakeTagRepository extends JpaRepository<SakeTag, SakeTagId> {
-    // RecommendService が、各地酒の特徴ベクトル（タグ別スコア一覧）を取得する際に使用
+    // 1銘柄の特徴名と点数を取得する。@EntityGraphで関連するtagも一緒に読む。
     @EntityGraph(attributePaths = "tag")
     List<SakeTag> findByIdSakeId(Long sakeId);
 
-    // 複数銘柄をまとめて取得したい場合（一覧表示時にN+1を避けるため）
+    // 複数銘柄の特徴をまとめて読む。銘柄ごとに何度もDBへ問い合わせる回数を減らす。
     @EntityGraph(attributePaths = "tag")
     List<SakeTag> findByIdSakeIdIn(List<Long> sakeIds);
 }

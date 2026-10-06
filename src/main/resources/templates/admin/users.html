@@ -1,9 +1,16 @@
+<!--
+  管理者がユーザー名を検索し、30人ずつ一覧を見る画面。
+  検索文字列はkeyword、ページ番号はpageとしてAdminControllerへ渡す。
+-->
 <!doctype html><html lang="ja" xmlns:th="http://www.thymeleaf.org"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>管理画面 - 一升の出会い</title><link rel="stylesheet" th:href="@{/css/style.css}">
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
 <main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}" aria-current="page">ユーザー一覧・検索</a></nav>
+<!-- 検索はGET送信なので、入力したkeywordがURLに付き、検索結果を再表示できる。 -->
 <h2>ユーザー一覧・検索</h2><form th:action="@{/admin/users}" method="get"><div class="form-group"><label for="keyword">ユーザー名</label><input id="keyword" name="keyword" th:value="${keyword}" placeholder="ユーザー名で検索" type="search"></div><button class="button primary">検索</button> <a th:href="@{/admin/users}">すべて表示</a></form>
+<!-- ユーザーを行ごとに表示する。adminの真偽で、管理者か一般ユーザーかの文字を切り替える。 -->
 <p th:text="|${users.totalElements} 件|"></p><table><thead><tr><th>ID</th><th>ユーザー名</th><th>権限</th></tr></thead><tbody><tr th:each="user : ${users}"><td th:text="${user.id}"></td><td th:text="${user.name}"></td><td th:text="${user.admin ? '管理者' : '一般ユーザー'}"></td></tr></tbody></table><p th:if="${users.empty}">該当するユーザーがいません。</p>
+<!-- 前後のページがある場合だけリンクを出し、検索文字列を維持したままページ番号を変える。 -->
 <nav><a th:if="${users.hasPrevious()}" th:href="@{/admin/users(keyword=${keyword},page=${users.number - 1})}">前へ</a><a th:if="${users.hasNext()}" th:href="@{/admin/users(keyword=${keyword},page=${users.number + 1})}">次へ</a></nav></main><script th:src="@{/js/main.js}"></script></body></html>

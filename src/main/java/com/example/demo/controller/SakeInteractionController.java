@@ -7,6 +7,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * 日本酒の詳細画面から届く、お気に入りとレビューの保存・削除を受け付ける。
+ * 保存はSakeInteractionServiceへ任せ、終わったら同じ日本酒の詳細画面へ戻す。
+ * /mypage以下なのでログインが必要で、操作対象の本人はprincipalから確認する。
+ */
 @Controller
 @RequestMapping("/mypage/sake/{id}")
 public class SakeInteractionController {
@@ -16,6 +21,9 @@ public class SakeInteractionController {
         this.interactions = interactions;
     }
 
+    /**
+     * selected=trueでお気に入りに登録し、falseで解除する。操作結果は次の画面に表示する。
+     */
     @PostMapping("/favorite")
     public String favorite(@PathVariable long id, @RequestParam boolean selected,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
@@ -24,6 +32,10 @@ public class SakeInteractionController {
         return "redirect:/sake/" + id;
     }
 
+    /**
+     * 星・コメント・公開設定を保存する。
+     * 入力に問題があれば、説明文と入力した値を次の画面へ渡して修正できるようにする。
+     */
     @PostMapping("/review")
     public String review(@PathVariable long id, @RequestParam int rating,
             @RequestParam(defaultValue = "") String comment,
@@ -39,6 +51,9 @@ public class SakeInteractionController {
         return "redirect:/sake/" + id + "#review";
     }
 
+    /**
+     * 本人のこの銘柄への評価とコメントを削除し、詳細画面のレビュー欄へ戻す。
+     */
     @PostMapping("/review/delete")
     public String delete(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirect) {

@@ -8,9 +8,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * ログイン時、Spring Securityがフォームの"username"パラメータ(=email)を
- * 受け取ってこのクラスを呼び出す。パスワード照合自体はSpring Security側で
- * PasswordEncoderを使って自動的に行われるため、ここでは実装不要。
+ * ログインフォームのusername（メールアドレスまたは管理者ID）でユーザーを探す。
+ * 見つかったユーザーをCustomUserDetailsに包んで返す。
+ * パスワードの照合は、この後にSpring SecurityがPasswordEncoderを使って行う。
  */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -21,6 +21,9 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 入力されたログインIDに対応するユーザーを取得する。存在しなければログイン失敗にする。
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)

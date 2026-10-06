@@ -17,6 +17,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * アプリとDBを使い、銘柄の検索・詳細・レビュー・お気に入りの一連の動作を確認するテスト。
+ * MockMvcでブラウザの操作を再現し、HTML・公開範囲・ページ移動・保存結果を確かめる。
+ * {@code @Transactional}が、このテスト内で行ったDBの変更を終了時に取り消す。
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
@@ -52,6 +57,7 @@ class SakeDetailTests {
         return new CustomUserDetails(users.saveAndFlush(user));
     }
 
+    // 商品写真が未登録でもJSONの紹介情報が表示され、空の項目は省かれることを確認する。
     @Test void rendersJsonWithoutProductPhotosAndHidesMissingSections() throws Exception {
         jdbc.update("UPDATE sake SET image_url = NULL WHERE id = 1");
         mvc.perform(get("/sake/1")).andExpect(status().isOk())
@@ -70,6 +76,7 @@ class SakeDetailTests {
         mvc.perform(get("/sake/9223372036854775807")).andExpect(status().isNotFound());
     }
 
+    // 写真・購入先・お気に入りが同じ商品操作欄に配置されることを確認する。
     @Test void purchaseAndFavoriteStayInsideProductSidebar() throws Exception {
         for (var request : java.util.List.of(get("/sake/1"), get("/sake/1").with(user(account())))) {
             String html = mvc.perform(request).andExpect(status().isOk())
@@ -87,6 +94,7 @@ class SakeDetailTests {
         }
     }
 
+    // レビューの保存と更新、入力したHTMLの文字表示、非公開設定を確認する。
     @Test void reviewPersistsUpdatesEscapesTextAndIsPrivate() throws Exception {
         var owner = account();
         var other = account();
@@ -108,6 +116,7 @@ class SakeDetailTests {
         assertThat(interactions.review(owner.getUserId(), 1)).isEmpty();
     }
 
+    // 星とコメントの入力チェック、およびログインとCSRFトークンが必要なことを確認する。
     @Test void validatesReviewsAndRequiresAuthenticationAndCsrf() throws Exception {
         var owner = account();
         mvc.perform(post("/mypage/sake/1/review").with(user(owner)).with(csrf())
@@ -122,6 +131,7 @@ class SakeDetailTests {
             .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/login"));
     }
 
+    // 公開レビューの表示と並び替え、非公開へ変更した後の非表示を確認する。
     @Test void publicReviewsAreVisibleSortedAndCanBecomePrivate() throws Exception {
         var high = account();
         var low = account();
@@ -143,6 +153,7 @@ class SakeDetailTests {
         mvc.perform(get("/sake/1")).andExpect(content().string(not(containsString("非公開に変更"))));
     }
 
+    // 公開レビューの投稿者画像と表示位置が使われ、公開状態に応じて画像を返すことを確認する。
     @Test void reviewAvatarUsesAuthorsImageAndCropAndRespectsPublication() throws Exception {
         var owner = account();
         var other = account();
@@ -165,6 +176,7 @@ class SakeDetailTests {
         mvc.perform(get(imageUrl)).andExpect(status().isNotFound());
     }
 
+    // レビューのページ番号と未知の並び順を、使える範囲へ補正することを確認する。
     @Test void reviewPaginationAndSortFallbackAreBounded() throws Exception {
         // Isolate public-review fixtures; transaction rollback restores preexisting data.
         jdbc.update("UPDATE sake_reviews SET published = 0 WHERE sake_id = 2");
@@ -188,6 +200,7 @@ class SakeDetailTests {
             .andExpect(status().isOk()).andExpect(content().string(containsString("reviewPage=0")));
     }
 
+    // 検索のページ分割前に並び順を決め、非公開評価を平均へ含めないことを確認する。
     @Test void catalogSortsAllResultsBeforePaginationAndExcludesPrivateRatings() throws Exception {
         jdbc.update("UPDATE sake_reviews SET published = 0");
         var one = account();
@@ -213,6 +226,7 @@ class SakeDetailTests {
             .andExpect(status().isOk());
     }
 
+    // 詳細画面からお気に入りを登録・解除できることを確認する。
     @Test void favoritesCanBeAddedAndRemovedFromDetail() throws Exception {
         var owner = account();
         mvc.perform(post("/mypage/sake/1/favorite").with(user(owner)).with(csrf()).param("selected", "true"))
