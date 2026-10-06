@@ -105,4 +105,58 @@ class AdminTests {
         }
     }
 
+
+    @Test void detailFormatPersistsAndDisplaysAllIntroductionSections() throws Exception {
+        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var tagId = jdbc.queryForObject("SELECT MIN(id) FROM tags", Long.class);
+        String typeId = types.findAll().getFirst().getId().toString();
+        mvc.perform(get("/admin/sake/new").with(admin)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("どんな味わい？")))
+                .andExpect(content().string(containsString("合う料理")));
+        mvc.perform(post("/admin/sake/new").with(admin).with(csrf())
+                .param("name", "商品詳細フォーマットテスト").param("sakeTypeId", typeId)
+                .param("brewery", "紹介テスト酒造").param("region", "新潟")
+                .param("introduction", "お米の甘みと華やかな香りを楽しむ一本。")
+                .param("taste", "やさしい甘み\nすっきりした後味")
+                .param("aroma", "華やかな香り").param("recommendedFor", "香りを楽しみたい人")
+                .param("drinking", "少し冷やして").param("food", "白身魚のお刺身")
+                .param("officialUrl", "https://brewery.example/product")
+                .param("purchaseUrl", "https://shop.example/product").param("purchaseLabel", "公式ショップ")
+                .param("tagIds", tagId.toString()))
+                .andExpect(redirectedUrl("/admin/sake/new"));
+        Long id = jdbc.queryForObject("SELECT id FROM sake WHERE name = ?", Long.class, "商品詳細フォーマットテスト");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sake_page_details WHERE sake_id = ?", Integer.class, id)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sake_tags WHERE sake_id = ?", Integer.class, id)).isEqualTo(1);
+        mvc.perform(get("/sake/" + id)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("紹介テスト酒造")))
+                .andExpect(content().string(containsString("お米の甘みと華やかな香りを楽しむ一本。")))
+                .andExpect(content().string(containsString("やさしい甘み")))
+                .andExpect(content().string(containsString("すっきりした後味")))
+                .andExpect(content().string(containsString("華やかな香り")))
+                .andExpect(content().string(containsString("香りを楽しみたい人")))
+                .andExpect(content().string(containsString("少し冷やして")))
+                .andExpect(content().string(containsString("白身魚のお刺身")))
+                .andExpect(content().string(containsString("href=\"https://shop.example/product\"")))
+                .andExpect(content().string(containsString("href=\"https://brewery.example/product\"")));
+        mvc.perform(get("/search").param("keyword", "紹介テスト酒造"))
+                .andExpect(content().string(containsString("商品詳細フォーマットテスト")));
+    }
+
+    @Test void invalidDetailInputsPreserveFormAndDoNotSave() throws Exception {
+        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        long count = sake.count();
+        mvc.perform(post("/admin/sake/new").with(admin).with(csrf())
+                .param("name", "不正URLテスト").param("sakeTypeId", types.findAll().getFirst().getId().toString())
+                .param("officialUrl", "javascript:alert(1)").param("purchaseUrl", "http://example.com")
+                .param("taste", "入力した味わい").param("tagIds", "9223372036854775807"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("有効なURLを入力してください")))
+                .andExpect(content().string(containsString("一覧にあるタグを選択してください")))
+                .andExpect(content().string(containsString("入力した味わい")));
+        mvc.perform(post("/admin/sake/new").with(admin).with(csrf())
+                .param("name", "長い紹介文テスト").param("sakeTypeId", types.findAll().getFirst().getId().toString())
+                .param("introduction", "あ".repeat(161)))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("紹介文は160文字以内")));
+        assertThat(sake.count()).isEqualTo(count);
+    }
 }

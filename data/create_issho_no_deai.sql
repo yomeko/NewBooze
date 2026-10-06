@@ -80,6 +80,12 @@ CREATE TABLE `sake` (
     FOREIGN KEY (`sake_type_id`) REFERENCES `sake_types` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS sake_page_details (
+  sake_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  detail_json LONGTEXT NOT NULL,
+  CONSTRAINT fk_sake_page_details FOREIGN KEY (sake_id) REFERENCES sake(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `diagnosis_choices` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `question_id` BIGINT UNSIGNED NOT NULL,

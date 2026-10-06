@@ -24,4 +24,27 @@ public class AdminSakeForm {
     @Min(0) private Integer price;
     @Size(max = 10000) private String description;
     private org.springframework.web.multipart.MultipartFile image;
+    @Size(max = 100) private String brewery;
+    @Size(max = 160, message = "紹介文は160文字以内で入力してください") private String introduction;
+    @Size(max = 2000) private String taste;
+    @Size(max = 2000) private String aroma;
+    @Size(max = 2000) private String recommendedFor;
+    @Size(max = 2000) private String drinking;
+    @Size(max = 2000) private String food;
+    @Size(max = 1000) private String officialUrl;
+    @Size(max = 1000) private String purchaseUrl;
+    @Size(max = 100) private String purchaseLabel;
+    @Size(max = 30) private java.util.List<Long> tagIds = new java.util.ArrayList<>();
+
+    public com.example.demo.model.SakePage page(long id) {
+        var links = purchaseUrl == null || purchaseUrl.isBlank() ? java.util.List.<com.example.demo.model.SakePage.PurchaseLink>of()
+                : java.util.List.of(new com.example.demo.model.SakePage.PurchaseLink(purchaseLabel, purchaseUrl, true));
+        return new com.example.demo.model.SakePage(id, name, introduction, brewery,
+                lines(taste), lines(aroma), null, lines(drinking), lines(food), lines(recommendedFor),
+                officialUrl, null, links);
+    }
+
+    private java.util.List<String> lines(String text) {
+        return text == null ? java.util.List.of() : text.lines().map(String::strip).filter(v -> !v.isEmpty()).toList();
+    }
 }
