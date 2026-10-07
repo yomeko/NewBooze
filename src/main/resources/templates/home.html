@@ -51,41 +51,51 @@
   </section>
 
 
-  <!-- home.jsが記事を1件ずつ切り替える。JavaScriptが無効でも記事本文はすべて読める。 -->
+  <!-- 中央の記事と左右の次・前の記事を見せる。JavaScriptが無効でも記事本文はすべて読める。 -->
   <section class="section topics" aria-labelledby="topics-title" aria-roledescription="カルーセル">
     <div class="section-heading">
       <p class="eyebrow">SAKE TOPICS</p>
       <h2 id="topics-title">日本酒のある暮らし</h2>
       <p class="lead">飲む前も、飲んだあとも。知っておきたい小さなヒント。</p>
     </div>
-    <div class="topic-slides" id="topic-slides">
-      <article class="topic-slide" aria-label="1 / 3" aria-roledescription="スライド">
-        <p class="eyebrow">01 / AFTER ENJOYING</p>
-        <h3>飲み終わった空き瓶、どう捨てる？</h3>
-        <p>中身を空にして軽くすすぎ、キャップを外して分別しましょう。回収日や色別の分け方は、お住まいの自治体の案内で確認できます。</p>
-        <p>一升瓶などのリターナブル瓶は販売店で回収している場合があります。購入したお店に確認してみましょう。</p>
-        <p class="muted">割れた瓶・キャップの扱いも自治体によって異なります。</p>
-      </article>
-      <article class="topic-slide" aria-label="2 / 3" aria-roledescription="スライド">
-        <p class="eyebrow">02 / FIND YOUR FAVORITE</p>
-        <h3>おちょこ・とっくりは、どこで買える？</h3>
-        <p>食器専門店や百貨店の食器売場、生活雑貨店が探す候補です。酒蔵の売店や陶器市では、造り手ならではの酒器に出会えることも。</p>
-        <p>実店舗では手に持った重さや口当たりを確かめて。オンラインでは容量・素材・お手入れ方法を確認して選びましょう。</p>
-        <p class="muted">取り扱い・在庫は店舗ごとに異なるため、来店前に確認すると安心です。</p>
-      </article>
-      <article class="topic-slide" aria-label="3 / 3" aria-roledescription="スライド">
-        <p class="eyebrow">03 / YOUR FIRST SAKE CUP</p>
-        <h3>はじめての酒器選び</h3>
-        <p>小さなおちょこは少しずつ楽しみたいときに。透明なグラスなら、お酒の色合いも楽しめます。</p>
-        <p>とっくりは使う人数に合う容量を選びましょう。温めて使う場合は、電子レンジや湯せんに対応しているか、製品の表示を確認してください。</p>
-      </article>
+    <div class="topic-carousel">
+      <div class="topic-slides" id="topic-slides">
+        <article class="topic-slide" aria-label="1 / 3" aria-roledescription="スライド">
+          <p class="eyebrow">01 / AFTER ENJOYING</p>
+          <h3>飲み終わった空き瓶、どう捨てる？</h3>
+          <p>中身を空にして軽くすすぎ、キャップを外して分別しましょう。回収日や色別の分け方は、お住まいの自治体の案内で確認できます。</p>
+          <p>一升瓶などのリターナブル瓶は販売店で回収している場合があります。購入したお店に確認してみましょう。</p>
+          <p class="muted">割れた瓶・キャップの扱いも自治体によって異なります。</p>
+        </article>
+        <article class="topic-slide" aria-label="2 / 3" aria-roledescription="スライド">
+          <p class="eyebrow">02 / FIND YOUR FAVORITE</p>
+          <h3>おちょこ・とっくりは、どこで買える？</h3>
+          <p>食器専門店や百貨店の食器売場、生活雑貨店が探す候補です。酒蔵の売店や陶器市では、造り手ならではの酒器に出会えることも。</p>
+          <p>実店舗では手に持った重さや口当たりを確かめて。オンラインでは容量・素材・お手入れ方法を確認して選びましょう。</p>
+          <p class="muted">取り扱い・在庫は店舗ごとに異なるため、来店前に確認すると安心です。</p>
+        </article>
+        <article class="topic-slide" aria-label="3 / 3" aria-roledescription="スライド">
+          <p class="eyebrow">03 / YOUR FIRST SAKE CUP</p>
+          <h3>はじめての酒器選び</h3>
+          <p>小さなおちょこは少しずつ楽しみたいときに。透明なグラスなら、お酒の色合いも楽しめます。</p>
+          <p>とっくりは使う人数に合う容量を選びましょう。温めて使う場合は、電子レンジや湯せんに対応しているか、製品の表示を確認してください。</p>
+        </article>
+      </div>
+      <button class="topic-arrow topic-arrow-previous" type="button" data-topic="previous" aria-controls="topic-slides" aria-label="前のトピック" hidden>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M22 5 8 16l14 11-5-11Z"/></svg>
+      </button>
+      <button class="topic-arrow topic-arrow-next" type="button" data-topic="next" aria-controls="topic-slides" aria-label="次のトピック" hidden>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="m10 5 14 11-14 11 5-11Z"/></svg>
+      </button>
     </div>
-    <!-- JavaScriptが準備できてから操作ボタンを表示する。初期状態では自動切り替えを開始しない。 -->
+    <!-- ドットで記事を選ぶ。再生アイコンで自動切り替えを開始できる。 -->
     <div class="topic-controls" hidden>
-      <button type="button" data-topic="previous" aria-controls="topic-slides" aria-label="前のトピック">・・・</button>
-      <span class="topic-position" aria-live="polite" aria-atomic="true">1 / 3</span>
-      <button type="button" data-topic="next" aria-controls="topic-slides" aria-label="次のトピック">・・・</button>
-      <button type="button" data-topic="pause">start</button>
+      <div class="topic-dots" role="group" aria-label="表示するトピック"></div>
+      <span class="topic-position visually-hidden" aria-live="polite" aria-atomic="true">1 / 3</span>
+      <button class="topic-pause" type="button" data-topic="pause" aria-label="自動切り替えを開始" aria-controls="topic-slides" aria-pressed="false">
+        <svg class="topic-play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 11 7-11 7Z"/></svg>
+        <svg class="topic-pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zm6 0h4v14h-4z"/></svg>
+      </button>
     </div>
   </section>
 
