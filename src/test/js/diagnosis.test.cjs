@@ -21,13 +21,33 @@ function setup() {
   });
   const controls = Object.fromEntries(['#diagnosis-form', '#quiz-back', '#quiz-next', '#quiz-position', '#quiz-progress'].map(id => [id, element()]));
   const windowHandlers = {};
+  const documentHandlers = {};
+  const confirmations = [];
+  let confirmResult = false;
   vm.runInNewContext(fs.readFileSync('src/main/resources/static/js/main.js', 'utf8'), {
-    document: { addEventListener(type, fn) { fn(); },
+    URL,
+    document: { addEventListener(type, fn) { if (type === 'DOMContentLoaded') fn(); else documentHandlers[type] = fn; },
       querySelector(selector) { return controls[selector] || null; },
       querySelectorAll(selector) { return selector.includes('.question') ? questions : []; },
-    }, window: { addEventListener(type, fn) { windowHandlers[type] = fn; } },
+    }, window: { addEventListener(type, fn) { windowHandlers[type] = fn; },
+      location: new URL('https://example.com/diagnosis'),
+      confirm(message) { confirmations.push(message); return confirmResult; },
+    },
   });
-  return { questions, controls, windowHandlers,
+  return { questions, controls, windowHandlers, documentHandlers, confirmations,
+    allowLeaving() { confirmResult = true; },
+    navigate(href = '/search', options = {}) {
+      let prevented = false;
+      const link = { href, target: options.linkTarget || '', hasAttribute() { return false; }, getAttribute() { return href; } };
+      documentHandlers.click({ button: 0, target: { closest() { return link; } },
+        preventDefault() { prevented = true; }, ...options });
+      return !prevented;
+    },
+    unload() {
+      const event = { prevented: false, preventDefault() { this.prevented = true; } };
+      windowHandlers.beforeunload(event);
+      return event;
+    },
     choose(index, option = 0) {
       questions[index].radios.forEach((r, i) => { r.checked = i === option; });
       questions[index].radios[option].handlers.change();
@@ -54,6 +74,36 @@ test('choosing an answer stays on the question; back preserves and can replace a
   assert.equal(quiz.questions[0].answer.value, '2');
   assert.equal(quiz.next(), false);
   assert.equal(quiz.questions[0].answer.value, '2');
+});
+
+test('leaving asks for confirmation; cancelling keeps the current question and answer', () => {
+  const quiz = setup();
+  quiz.choose(0);
+  quiz.next();
+  assert.equal(quiz.navigate(), false);
+  assert.match(quiz.confirmations[0], /また最初からになります/);
+  assert.equal(quiz.position, '全4問中 2問目');
+  assert.equal(quiz.questions[0].answer.value, '1');
+  assert.equal(quiz.unload().prevented, true);
+  quiz.allowLeaving();
+  assert.equal(quiz.navigate(), true);
+  assert.equal(quiz.unload().prevented, false);
+  quiz.windowHandlers.pageshow();
+  assert.equal(quiz.unload().prevented, true);
+});
+
+test('search and logout require confirmation, but quiz actions and new tabs do not', () => {
+  const quiz = setup();
+  let prevented = false;
+  quiz.documentHandlers.submit({ target: {}, preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  quiz.documentHandlers.submit({ target: quiz.controls['#diagnosis-form'], preventDefault() { assert.fail('quiz submission intercepted'); } });
+  assert.equal(quiz.navigate('#help'), true);
+  assert.equal(quiz.navigate('/search', { ctrlKey: true }), true);
+  assert.equal(quiz.navigate('/search', { linkTarget: '_blank' }), true);
+  assert.equal(quiz.confirmations.length, 1);
+  for (let index = 0; index < 4; index++) { quiz.choose(index); quiz.next(); }
+  assert.equal(quiz.unload().prevented, false);
 });
 
 // 全4問を答えた最後の操作だけで送信し、続けて押しても二重送信しないことを確認する。

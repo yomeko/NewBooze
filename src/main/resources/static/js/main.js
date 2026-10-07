@@ -249,6 +249,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const progress = document.querySelector('#quiz-progress');
   let step = 0;
   let submitted = false;
+  let leaving = false;
+  const leaveMessage = '診断中に他のページへ移動すると、また最初からになります。移動してもよろしいですか？';
+  const confirmLeave = event => {
+    if (submitted || leaving) return;
+    if (window.confirm(leaveMessage)) leaving = true;
+    else event.preventDefault();
+  };
+  // リンク・検索・ログアウトで質問画面を離れる前に確認する。
+  document.addEventListener('click', event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest('a[href]');
+    if (!link || link.hasAttribute('download') || (link.target && link.target !== '_self')) return;
+    const href = link.getAttribute('href');
+    if (href.startsWith('#')) return;
+    const destination = new URL(link.href, window.location.href);
+    if (!['http:', 'https:'].includes(destination.protocol)) return;
+    if (destination.hash && destination.origin === window.location.origin &&
+        destination.pathname === window.location.pathname && destination.search === window.location.search) return;
+    confirmLeave(event);
+  });
+  document.addEventListener('submit', event => {
+    if (event.defaultPrevented || event.target === form ||
+        (event.target.target && event.target.target !== '_self')) return;
+    confirmLeave(event);
+  });
+  // ブラウザの戻る・再読み込み・タブを閉じる操作には標準の離脱確認を使う。
+  window.addEventListener('beforeunload', event => {
+    if (submitted || leaving) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
 
   // 質問ごとのラジオボタンの選択を、送信用の隠し入力（name=choice）に写す。
   // 未回答の隠し入力はdisabledにし、空の選択肢IDがサーバーへ届かないようにする。
@@ -308,6 +339,6 @@ document.addEventListener('DOMContentLoaded', () => {
     next.textContent = '結果を準備中…';
   });
   // 戻る操作や履歴からの復帰でも回答を保持する。
-  window.addEventListener('pageshow', () => { submitted = false; render(); });
+  window.addEventListener('pageshow', () => { submitted = false; leaving = false; render(); });
   render();
 });
