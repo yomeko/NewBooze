@@ -664,6 +664,25 @@ nav > a:not(.button):hover { border-bottom-color: var(--red); }
 .sake-card {
   padding: 28px;
   line-height: 1.75;
+  position: relative;
+}
+
+/* 詳細リンクのクリック領域とフォーカス枠をカード全体へ広げる。 */
+.sake-card-detail-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.sake-card:has(.sake-card-detail-link:hover) {
+  border-color: var(--gold);
+  box-shadow: 0 10px 28px #49330d24;
+}
+.sake-card-detail-link:focus-visible { outline: none; }
+.sake-card-detail-link:focus-visible::after {
+  outline: 3px solid var(--red);
+  outline-offset: 4px;
 }
 
 .sake-card h2, .sake-card h3 { margin: 10px 0; }

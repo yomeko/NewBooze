@@ -104,7 +104,8 @@
         <p class="muted" th:text="${sake.region}"></p>
         <p th:text="${sake.description}"></p>
         <!-- th:href の (id=${sake.id}) 記法：URLの{id}プレースホルダーに値を埋め込む -->
-        <a th:href="@{/sake/{id}(id=${sake.id})}">詳しく見る →</a>
+        <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}"
+           th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>
       </article>
     </div>
   </section>

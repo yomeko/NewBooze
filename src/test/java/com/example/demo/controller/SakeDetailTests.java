@@ -26,6 +26,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class SakeDetailTests {
+    @Test void unifiedTasteDropdownFiltersProductsAndKeepsSelection() throws Exception {
+        String html = mvc.perform(get("/search").param("taste", "辛口"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("八海山 特別本醸造")))
+            .andExpect(content().string(not(containsString("獺祭 純米大吟醸45"))))
+            .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(html).contains("<select id=\"search-taste\" name=\"taste\">",
+                "value=\"フルーティー\"", "value=\"甘口\"")
+            .doesNotContain("id=\"search-keyword\"")
+            .containsPattern("<option[^>]*value=\"辛口\"[^>]*selected=\"selected\"");
+        for (String taste : java.util.List.of("甘口", "フルーティー")) {
+            mvc.perform(get("/search").param("taste", taste))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("獺祭 純米大吟醸45")))
+                .andExpect(content().string(not(containsString("八海山 特別本醸造"))));
+        }
+    }
+
     // 入力表記の違い、詳細ページのリンク、未登録タグの検索結果をまとめて確認する。
     @Test void hashtagsSearchSharedDiagnosisTags() throws Exception {
         for (String keyword : java.util.List.of("#辛口", "＃辛口", "辛口")) {

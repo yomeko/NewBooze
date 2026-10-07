@@ -46,6 +46,13 @@ public class SakeSearchController {
                           @RequestParam(defaultValue = "recommended") String sort,
                           @RequestParam(defaultValue = "0") int page,
                           Model model) {
+        var tastes = catalogService.tastes();
+        // 以前のタグ検索リンクも、統合したプルダウンの選択状態へ引き継ぐ。
+        String keywordTag = keyword.trim().replaceFirst("^[#＃]", "").trim();
+        if (taste.isBlank() && tastes.contains(keywordTag)) {
+            taste = keywordTag;
+            keyword = "";
+        }
         Integer minPrice = switch (priceRange) {
             case "1500-2999" -> 1500;
             case "3000-4999" -> 3000;
@@ -62,6 +69,7 @@ public class SakeSearchController {
         model.addAttribute("result", catalogService.search(
                 keyword, name, type, minPrice, maxPrice, taste, sort, page));
         model.addAttribute("types", catalogService.types());
+        model.addAttribute("tastes", tastes);
         // 画面再表示時に検索条件を保持するため、入力値をそのまま画面へ戻す
         model.addAttribute("keyword", keyword);
         model.addAttribute("name", name);

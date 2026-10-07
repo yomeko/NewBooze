@@ -51,7 +51,8 @@
       <p class="recommendation-reason" th:if="${!#lists.isEmpty(item.matchingTags)}" th:text="|おすすめの理由：あなたの「${#strings.listJoin(item.matchingTags, '・')}」の傾向と共通する特徴があります。|"></p>
       <p class="recommendation-reason" th:if="${#lists.isEmpty(item.matchingTags)}">好みと直接重なる登録タグはありません。新しい味わいの候補としてご覧ください。</p>
       <p class="card-description" th:text="${item.sake.description}"></p>
-      <a th:href="@{/sake/{id}(id=${item.sake.id})}">詳しく見る →</a>
+      <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${item.sake.id})}"
+         th:attr="aria-label=|${item.sake.name}の詳細を見る|">詳しく見る →</a>
     </article>
   </div>
   <p class="empty" th:if="${#lists.isEmpty(recommendations)}">おすすめの銘柄は現在準備中です。</p>

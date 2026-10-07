@@ -31,19 +31,13 @@
       <input id="search-name" name="name" type="search" th:value="${name}"
              placeholder="銘柄名の一部を入力">
     </div>
-    <div class="search-field">
-      <label for="search-keyword">味の特徴・風味</label>
-      <!-- 半角・全角の#付き入力と、タグ名だけの入力が使えることを例示する。 -->
-      <input id="search-keyword" name="keyword" th:value="${keyword}"
-             placeholder="例：#辛口、＃甘口、フルーティー">
-    </div>
     <!-- th:selectedで、検索後も利用者が選んだ条件を選択状態にする。 -->
     <div class="search-field">
-      <label for="search-taste">辛口・甘口</label>
+      <label for="search-taste">味の特徴・風味</label>
       <select id="search-taste" name="taste">
-        <option value="">すべて</option>
-        <option value="辛口" th:selected="${selectedTaste == '辛口'}">辛口</option>
-        <option value="甘口" th:selected="${selectedTaste == '甘口'}">甘口</option>
+        <option value="">すべての味・風味</option>
+        <option th:each="value : ${tastes}" th:value="${value}"
+                th:selected="${value == selectedTaste}" th:text="${value}"></option>
       </select>
     </div>
     <div class="search-field">
@@ -95,7 +89,8 @@
       <!-- リテラル置換構文(|...|)の中に、numbers.formatIntegerでカンマ区切りの価格表示を組み込む -->
       <p class="muted" th:text="|${sake.region} ・ ${sake.abv}% ・ ${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></p>
       <p th:text="${sake.description}"></p>
-      <a th:href="@{/sake/{id}(id=${sake.id})}">詳しく見る →</a>
+      <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}"
+         th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>
     </article>
   </div>
 

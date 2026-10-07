@@ -141,6 +141,11 @@ public class SakeCatalogService {
         return sakeRepository.findDistinctTypeNames();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> tastes() {
+        return sakeTagRepository.findDistinctPositiveTagNames();
+    }
+
     /**
      * 登録銘柄の産地名を、空欄と重複を除いて取得する。
      */
