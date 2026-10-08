@@ -20,6 +20,10 @@ CREATE TABLE `users` (
   `password_hash` VARCHAR(255) NOT NULL,
   `admin` TINYINT(1) NOT NULL DEFAULT 0,
   `temporary_password` TINYINT(1) NOT NULL DEFAULT 0,
+  `email_verified` TINYINT(1) NOT NULL DEFAULT 1,
+  `email_verification_hash` VARCHAR(64) NULL UNIQUE,
+  `email_verification_expires_at` DATETIME NULL,
+  `email_verification_sent_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_email` (`email`)
