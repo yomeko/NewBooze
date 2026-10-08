@@ -42,7 +42,7 @@ public class SecurityConfig {
                     "/brewery-map", "/contact", "/categories", "/tags",
                     "/about", "/privacy", "/external-transmission",
                     "/diagnosis/**",
-                    "/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/resend",
+                    "/login", "/signup", "/forgot-password",
                     "/css/**", "/js/**", "/images/**"
                 ).permitAll()
                 // お気に入り(S06)・マイページ(S08)はログイン必須
@@ -54,7 +54,7 @@ public class SecurityConfig {
                 .loginProcessingUrl("/login")  // フォームのPOST先。Spring Securityが自動で処理する
                 // ログイン成功後の移動先をここで決める。
                 // 仮パスワードなら変更案内のあるマイページ、管理者なら管理画面、一般ユーザーならホーム。
-                // 新規登録後はメール認証を完了してから通常のログインを行う。
+                // 新規登録後の診断への移動は、AuthControllerの登録処理が担当する。
                 .successHandler((request, response, authentication) -> {
                     CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
                     response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : (user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) ? "/admin" : "/"));

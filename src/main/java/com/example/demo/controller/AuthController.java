@@ -1,11 +1,19 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.SignupForm;
+import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.service.EmailVerificationService;
-import org.springframework.mail.MailException;
-import org.springframework.dao.DataIntegrityViolationException;
+import com.example.demo.security.CustomUserDetails;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,18 +23,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 /**
  * ログイン画面の表示と、アカウントの新規登録を担当する。
- * 登録したユーザーへ認証メールを送り、確認が済むまでログインを制限する。
+ * 登録したユーザーはそのままログイン状態になり、好み診断へ進む。
  * 通常のログイン時のパスワード確認は、Spring Security（ログインを管理する仕組み）が行う。
  */
 @Controller
 public class AuthController {
 
-    private final UserRepository userRepository;
-    private final EmailVerificationService verification;
+    // 登録後のログイン情報をセッションへ保存し、次のページでも本人として扱えるようにする。
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-    public AuthController(UserRepository userRepository, EmailVerificationService verification) {
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
-        this.verification = verification;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -50,32 +61,52 @@ public class AuthController {
     /**
      * 入力とメールアドレスの重複を確認し、ユーザーを保存する。
      * {@code @Valid}が入力ルールを確認し、bindingResultに問題の内容が入る。
-     * 保存後は認証メールの確認案内へ移動する。
+     * 保存後は自動ログインさせ、redirectでブラウザを好み診断のURLへ移動させる。
      */
     @PostMapping("/signup")
     public String signup(@Valid @ModelAttribute("signupForm") SignupForm form,
-                          BindingResult bindingResult) {
+                          BindingResult bindingResult,
+                          HttpServletRequest request,
+                          HttpServletResponse response) {
 
         if (bindingResult.hasErrors()) {
             return "auth/signup"; // 入力エラー時は同じ画面に戻す
         }
 
         // メールアドレスの重複チェック(usersテーブルのUNIQUE制約と二重にチェック)
-        if (userRepository.findByEmail(form.getEmail().trim()).isPresent()) {
+        if (userRepository.findByEmail(form.getEmail()).isPresent()) {
             bindingResult.rejectValue("email", "duplicate", "このメールアドレスは既に登録されています");
             return "auth/signup";
         }
 
-        try {
-            verification.register(form);
-        } catch (MailException exception) {
-            bindingResult.reject("mail", "認証メールを送信できませんでした。時間をおいて再度登録してください。");
-            return "auth/signup";
-        } catch (DataIntegrityViolationException exception) {
-            bindingResult.rejectValue("email", "duplicate", "このメールアドレスは既に登録されています");
-            return "auth/signup";
-        }
-        return "redirect:/verify-email";
+        User user = new User();
+        user.setName(form.getName());
+        user.setEmail(form.getEmail());
+        // 平文パスワードは保存せず、必ずハッシュ化してから保存する
+        user.setPasswordHash(passwordEncoder.encode(form.getPassword()));
+        User saved = userRepository.save(user);
+
+        autoLogin(saved, request, response);
+
+        return "redirect:/diagnosis";
     }
 
+    /**
+     * 登録が成功したユーザーをログイン状態にする。
+     * 登録処理で保存したUserを使って認証情報を作り、今回の処理とHTTPセッションに保存する。
+     * HTTPセッションは、次のページに移動してもログイン状態を覚えておくための仕組み。
+     */
+    private void autoLogin(User user, HttpServletRequest request, HttpServletResponse response) {
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+        Authentication authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        // ここでHTTPセッションに保存しないと、次のリクエスト（リダイレクト先の/diagnosis表示等）で
+        // 認証情報が失われ、未ログイン扱いに戻ってしまう。
+        securityContextRepository.saveContext(context, request, response);
+    }
 }

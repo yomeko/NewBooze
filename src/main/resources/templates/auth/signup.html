@@ -24,7 +24,6 @@
 
         <!-- novalidateでブラウザの自動チェックを省き、Javaの入力チェック結果を各入力欄の下へ表示する。 -->
         <form th:action="@{/signup}" th:object="${signupForm}" method="post" novalidate>
-            <p class="field-error" th:if="${#fields.hasGlobalErrors()}" th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
             <div class="form-group">
                 <label for="name">表示名</label>
                 <input id="name" type="text" th:field="*{name}" autocomplete="nickname" placeholder="例：地酒太郎">
@@ -40,7 +39,7 @@
                 <input id="password" type="password" th:field="*{password}" autocomplete="new-password" placeholder="8文字以上">
                 <span class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
             </div>
-            <button type="submit" class="button primary">認証メールを送信</button>
+            <button type="submit" class="button primary">登録する</button>
         </form>
 
         <div class="auth-divider"></div>

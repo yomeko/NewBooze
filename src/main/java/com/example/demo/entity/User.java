@@ -57,19 +57,6 @@ public class User {
         this.temporaryPassword = temporaryPassword;
     }
 
-    // 既存ユーザーは有効のまま移行し、新規登録サービスがfalseに設定する。
-    @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = true;
-
-    @Column(name = "email_verification_hash", length = 64, unique = true)
-    private String emailVerificationHash;
-
-    @Column(name = "email_verification_expires_at")
-    private LocalDateTime emailVerificationExpiresAt;
-
-    @Column(name = "email_verification_sent_at")
-    private LocalDateTime emailVerificationSentAt;
-
     // DB側で DEFAULT CURRENT_TIMESTAMP が設定されているため、
     // アプリ側からは insertable/updatable = false にして値を渡さないようにする。
     @Column(name = "created_at", insertable = false, updatable = false)

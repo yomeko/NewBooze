@@ -59,7 +59,7 @@ public class CustomUserDetails implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return user.isEmailVerified(); }
+    public boolean isEnabled() { return true; }
 
     /**
      * DBの本人のユーザーIDを返す。ControllerはこのIDで保存先を特定する。
