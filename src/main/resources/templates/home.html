@@ -35,9 +35,7 @@
   <!-- 中央の記事と左右の次・前の記事を見せる。JavaScriptが無効でも記事本文はすべて読める。 -->
   <section class="section topics" aria-labelledby="topics-title" aria-roledescription="カルーセル">
     <div class="section-heading">
-      <p class="eyebrow">SAKE TOPICS</p>
-      <h2 id="topics-title">日本酒のある暮らし</h2>
-      <p class="lead">飲む前も、飲んだあとも。知っておきたい小さなヒント。</p>
+      <h1>TOPICS</h1>
     </div>
     <div class="topic-carousel">
       <div class="topic-slides" id="topic-slides">
@@ -133,8 +131,8 @@
       <ul>
         <li th:each="ref : ${majorReferences}">
           <strong th:text="${ref.name}"></strong>：<span th:text="${ref.reason}"></span>
-          <a th:href="${ref.productUrl}" target="_blank" rel="noopener noreferrer">公式商品情報 ↗</a> ／
-          <a th:href="${ref.retailerUrl}" target="_blank" rel="noopener noreferrer">公式の購入先案内 ↗</a>
+          <a th:href="${ref.productUrl}" target="_blank" rel="noopener noreferrer">公式商品情報 →</a> ／
+          <a th:href="${ref.retailerUrl}" target="_blank" rel="noopener noreferrer">公式の購入先案内 →</a>
           <span class="muted" th:text="|（確認日 ${ref.checkedOn}）|"></span>
         </li>
       </ul>
