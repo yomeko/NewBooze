@@ -1,0 +1,23 @@
+[
+  {
+    "name": "獺祭 純米大吟醸45",
+    "reason": "公式商品情報があり、公式サイトで各地域の取扱店と全国発送の直販店を案内しているため。",
+    "productUrl": "https://dassai.com/product/main/45.html",
+    "retailerUrl": "https://dassai.com/dealer/",
+    "checkedOn": "2026-10-09"
+  },
+  {
+    "name": "八海山 特別本醸造",
+    "reason": "公式に八海山を代表する酒として紹介され、国内の購入先が公式サイトで案内されているため。",
+    "productUrl": "https://www.hakkaisan.co.jp/sake/honjyozo/",
+    "retailerUrl": "https://www.hakkaisan.com/pr/japan-sake/",
+    "checkedOn": "2026-10-09"
+  },
+  {
+    "name": "出羽桜 桜花吟醸",
+    "reason": "公式に通年の定番酒として紹介され、公式サイトに取扱店舗の案内があるため。",
+    "productUrl": "https://www.dewazakura.co.jp/item/cat03/oka.html",
+    "retailerUrl": "https://www.dewazakura.co.jp/shop/",
+    "checkedOn": "2026-10-09"
+  }
+]

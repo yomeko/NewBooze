@@ -1,6 +1,6 @@
 # 既存DBを残して作り直す
 
-`create_issho_no_deai.sql` は、新しい `issho_no_deai` DBに全18テーブルと初期データを作成します。既存の `newbooze` DBは削除・変更しません。
+`create_issho_no_deai.sql` は、新しい `issho_no_deai` DBに全19テーブルと初期データを作成します。既存の `newbooze` DBは削除・変更しません。
 
 XAMPP付属のMySQLクライアントでこのファイルを読み込んでください。`--force` は指定しないでください。同名DBがすでにある場合は停止するため、別の未使用DB名に `CREATE DATABASE` と `USE` の両方を変更してから実行します。
 

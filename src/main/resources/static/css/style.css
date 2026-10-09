@@ -1186,3 +1186,27 @@ body.site-menu-open { overflow: hidden; }
   .quiz-controls { gap: 12px; }
   .quiz-controls .button { flex: 1; padding-left: 12px; padding-right: 12px; }
 }
+
+/* 購入から開封後まで、目次と次の手順を通常のリンクだけでたどれる。 */
+.guide-entry { background: #ece3d3; }
+.beginner-guide { max-width: 980px; margin: auto; padding: 48px 6% 72px; }
+.beginner-guide h1 { font-size: clamp(26px, 4vw, 42px); line-height: 1.5; }
+.beginner-guide p { line-height: 1.9; }
+.beginner-guide a:not(.button) { color: var(--red); text-underline-offset: .18em; }
+.guide-index { display: block; position: static; width: auto; margin: 28px 0; padding: 0; border: 0; border-block: 1px solid var(--gold); background: transparent; }
+.guide-index ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 28px; padding: 24px 24px 24px 48px; }
+.guide-index a { display: inline-block; padding: 8px 0; }
+.guide-step { padding: 36px 0; border-bottom: 1px solid #d8d0c1; scroll-margin-top: 24px; }
+.guide-step h2 { font-size: clamp(22px, 3vw, 28px); }
+.guide-next { display: inline-block; padding: 12px 0; }
+.guide-source { font-size: 14px; }
+.home-page .discovery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 960px; margin: auto; }
+.discovery-reason { border-top: 1px solid var(--gold); padding-top: 14px; }
+.discovery-unavailable { padding: 28px; align-self: center; }
+.discovery-criteria { margin-top: 28px; line-height: 1.9; }
+.discovery-criteria summary { cursor: pointer; padding: 12px 0; }
+.discovery-criteria li { margin-bottom: 16px; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .guide-index ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .home-page .discovery-grid { grid-template-columns: minmax(0, 1fr); }
+}

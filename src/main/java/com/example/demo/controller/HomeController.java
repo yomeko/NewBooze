@@ -1,33 +1,40 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.SakeCatalogService;
+import com.example.demo.service.SakeDiscoveryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * ホーム画面と、ランキングなどの案内画面を担当する。
- * ModelはHTMLへ渡すデータの入れ物。例えばfeaturedという名前で注目銘柄を渡すと、
- * home.htmlの${featured}からその銘柄一覧を使える。
+ * ホーム、初心者ガイド、ランキングなどの案内画面を担当する。
+ * ModelはHTMLへ渡すデータの入れ物。discoveryに抽選銘柄と比較銘柄を入れると、
+ * home.htmlの${discovery}からその情報を使える。
  */
 @Controller
 public class HomeController {
 
-    private final SakeCatalogService catalogService;
+    private final SakeDiscoveryService discoveryService;
 
     // コンストラクタインジェクション。@Autowiredを付けなくても、
     // コンストラクタが1つだけの場合はSpringが自動でDIしてくれる。
-    public HomeController(SakeCatalogService catalogService) {
-        this.catalogService = catalogService;
+    public HomeController(SakeDiscoveryService discoveryService) {
+        this.discoveryService = discoveryService;
     }
 
     /**
-     * ランダムに選んだ最大4件の注目銘柄を、home.htmlへ渡す。
+     * ランダムな1銘柄と、それに似たメジャー銘柄をhome.htmlへ渡す。
      */
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("featured", catalogService.featured());
+        model.addAttribute("discovery", discoveryService.discover().orElse(null));
+        model.addAttribute("majorReferences", discoveryService.majorReferences());
+        model.addAttribute("nextDraw", java.util.UUID.randomUUID().toString());
         return "home"; // templates/home.html を返す
+    }
+
+    @GetMapping("/guide")
+    public String guide() {
+        return "guide";
     }
 
     /**

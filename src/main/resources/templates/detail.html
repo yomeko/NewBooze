@@ -80,6 +80,7 @@
   </div>
 
   <p class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><a th:href="${page.officialUrl}" target="_blank" rel="noopener noreferrer">もっと詳しく：酒造の公式サイト ↗<span class="visually-hidden">（新しいタブで開く）</span></a></p>
+  <p class="sake-note">はじめて購入する方へ：<a th:href="@{/guide#buy}">購入場所・選び方</a> ／ <a th:href="@{/guide#store}">持ち帰ったあとの保存</a> ／ <a th:href="@{/guide#open}">開封・開封後の扱い</a></p>
 
   </div>
   </div>

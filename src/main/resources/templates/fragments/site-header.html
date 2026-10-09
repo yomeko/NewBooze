@@ -41,6 +41,7 @@
     <a th:href="@{/}" th:attr="aria-current=${currentPage == 'home'} ? 'page' : null">TOP</a>
     <a th:href="@{/search}" th:attr="aria-current=${currentPage == 'search'} ? 'page' : null">日本酒をさがす</a>
     <a th:href="@{/diagnosis}" th:attr="aria-current=${currentPage == 'diagnosis'} ? 'page' : null">日本酒診断</a>
+    <a th:href="@{/guide}" th:attr="aria-current=${currentPage == 'guide'} ? 'page' : null">初心者ガイド</a>
     <a th:href="@{/ranking}" th:attr="aria-current=${currentPage == 'ranking'} ? 'page' : null">ランキング</a>
     <a th:href="@{/pairings}" th:attr="aria-current=${currentPage == 'pairings'} ? 'page' : null">おつまみ・酒器</a>
     <a th:href="@{/goods}" th:attr="aria-current=${currentPage == 'goods'} ? 'page' : null">関連商品</a>
@@ -61,6 +62,7 @@
         <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post"><button type="submit" class="button">ログアウト</button></form>
       </div>
       <nav class="site-menu-links" aria-label="サイトメニュー">
+        <a th:href="@{/guide}"><span>購入から開封後までの初心者ガイド</span><span aria-hidden="true">›</span></a>
         <a th:href="@{/brewery-map}"><span>酒蔵のマップ</span><span aria-hidden="true">›</span></a>
         <a th:href="@{/contact}"><span>お問い合わせ</span><span aria-hidden="true">›</span></a>
         <a th:href="@{/categories}"><span>カテゴリ</span><span aria-hidden="true">›</span></a>

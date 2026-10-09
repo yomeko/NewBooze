@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
                 // 未ログインでも閲覧可能な画面(S01〜S05, ログイン/新規登録, 静的リソース)
                 .requestMatchers(
-                    "/", "/search", "/sake/**",
+                    "/", "/guide", "/search", "/sake/**",
                     "/brewery-map", "/contact", "/categories", "/tags",
                     "/about", "/privacy", "/external-transmission",
                     "/diagnosis/**",

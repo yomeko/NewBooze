@@ -81,14 +81,24 @@
   </section>
 
 
-  <!-- 注目の地酒カード一覧（HomeControllerがSakeCatalogService.featured()で渡したランダムな最大4件） -->
-  <section class="section">
+  <section class="section guide-entry" aria-labelledby="guide-title">
+    <p class="eyebrow">FIRST SAKE GUIDE</p>
+    <h2 id="guide-title">最初の一本を、買うところから</h2>
+    <p class="lead">購入場所 → 選び方 → 持ち帰り → 保存 → 開封 → 開封後。迷ったときに、順番に確認できます。</p>
+    <a class="button" th:href="@{/guide}">初心者ガイドを読む →</a>
+  </section>
+
+  <section class="section" id="discovery" aria-labelledby="discovery-title">
     <div class="section-heading">
       <p class="eyebrow">FEATURED SAKE</p>
-      <h2>注目の日本酒</h2>
+      <h2 id="discovery-title">今日出会う一本と、似ている定番</h2>
+      <p class="lead">ランダムな一本を、身近な比較候補と見比べてみましょう。</p>
     </div>
-    <div class="card-grid featured-grid">
-      <article class="sake-card" th:each="sake : ${featured}">
+    <p th:if="${discovery == null}" class="muted">日本酒の登録を準備しています。登録後に一本をご紹介します。</p>
+    <th:block th:if="${discovery != null}">
+    <div class="card-grid discovery-grid">
+      <article class="sake-card" th:with="sake=${discovery.sake}">
+        <p class="eyebrow">ランダムに選んだ一本</p>
         <p class="badge" th:text="${sake.type}"></p>
         <h3 th:text="${sake.name}"></h3>
       <div th:replace="~{fragments/sake-comparison :: comparison(sake=${sake})}"></div>
@@ -98,7 +108,37 @@
         <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}"
            th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>
       </article>
+      <article class="sake-card" th:if="${discovery.similar != null}" th:with="sake=${discovery.similar.sake}">
+        <p class="eyebrow">似ているメジャー銘柄</p>
+        <p class="badge" th:text="${sake.type}"></p>
+        <h3 th:text="${sake.name}"></h3>
+        <div th:replace="~{fragments/sake-comparison :: comparison(sake=${sake})}"></div>
+        <p class="muted" th:text="${sake.region}"></p>
+        <p th:text="${sake.description}"></p>
+        <p class="discovery-reason" th:text="|似ている理由：${#strings.listJoin(discovery.similar.matchingTags, '・')}のタグが共通しています。|"></p>
+        <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}" th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>
+      </article>
+      <div class="discovery-unavailable" th:if="${discovery.similar == null}">
+        <h3>似ているメジャー銘柄は準備中です</h3>
+        <p>比較できる共通の味わいタグが、まだ登録されていません。</p>
+        <a th:href="@{/search}">ほかの日本酒をさがす →</a>
+      </div>
     </div>
+    <p class="muted">登録された味わいタグの近さから選んでいます。実際の味の感じ方には個人差があります。</p>
+    <a class="button" th:href="@{/(draw=${nextDraw})} + '#discovery'">別の一本に出会う ↻</a>
+    </th:block>
+    <details class="discovery-criteria">
+      <summary>メジャー銘柄の選定基準と出典</summary>
+      <p>このサイトでは、公式の商品情報と購入先の案内を確認し、定番として比較しやすい銘柄を編集者が選んでいます。売上や知名度の順位を示すものではありません。在庫は販売店でご確認ください。</p>
+      <ul>
+        <li th:each="ref : ${majorReferences}">
+          <strong th:text="${ref.name}"></strong>：<span th:text="${ref.reason}"></span>
+          <a th:href="${ref.productUrl}" target="_blank" rel="noopener noreferrer">公式商品情報 ↗</a> ／
+          <a th:href="${ref.retailerUrl}" target="_blank" rel="noopener noreferrer">公式の購入先案内 ↗</a>
+          <span class="muted" th:text="|（確認日 ${ref.checkedOn}）|"></span>
+        </li>
+      </ul>
+    </details>
   </section>
 </main>
 
