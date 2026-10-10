@@ -17,10 +17,11 @@ public class SignupForm {
 
     @NotBlank(message = "メールアドレスを入力してください")
     @Email(message = "メールアドレスの形式が正しくありません")
+    @Size(max = 255, message = "メールアドレスは255文字以内で入力してください")
     private String email;
 
     @NotBlank(message = "パスワードを入力してください")
-    @Size(min = 8, message = "パスワードは8文字以上で入力してください")
+    @Size(min = 8, max = 72, message = "パスワードは8〜72文字で入力してください")
     private String password;
 
     // getで値を読み、setで入力値を設定する。フォームとJavaの値を結び付けるために使う。

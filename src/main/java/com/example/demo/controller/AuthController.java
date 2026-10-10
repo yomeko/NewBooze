@@ -7,6 +7,7 @@ import com.example.demo.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import java.nio.charset.StandardCharsets;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -72,6 +73,10 @@ public class AuthController {
         if (bindingResult.hasErrors()) {
             return "auth/signup"; // 入力エラー時は同じ画面に戻す
         }
+        if (form.getPassword().getBytes(StandardCharsets.UTF_8).length > 72) {
+            bindingResult.rejectValue("password", "tooLong", "パスワードが長すぎます。短くしてください");
+            return "auth/signup";
+        }
 
         // メールアドレスの重複チェック(usersテーブルのUNIQUE制約と二重にチェック)
         if (userRepository.findByEmail(form.getEmail()).isPresent()) {
@@ -97,6 +102,8 @@ public class AuthController {
      * HTTPセッションは、次のページに移動してもログイン状態を覚えておくための仕組み。
      */
     private void autoLogin(User user, HttpServletRequest request, HttpServletResponse response) {
+        // 匿名状態で発行済みのセッションIDを、登録後の認証には引き継がない。
+        if (request.getSession(false) != null) request.changeSessionId();
         CustomUserDetails userDetails = new CustomUserDetails(user);
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

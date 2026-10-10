@@ -35,7 +35,7 @@ public class ReviewProfileImageController {
         return images.findById(userId)
                 .map(image -> ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(image.getContentType()))
-                        .cacheControl(CacheControl.noCache())
+                        .cacheControl(CacheControl.noStore())
                         .body(image.getImageData()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

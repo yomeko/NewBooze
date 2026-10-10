@@ -3,6 +3,29 @@
 // HTMLの読み込みが終わってから動かす。querySelectorは指定したIDやクラスの要素を探す。
 // ページごとに存在する要素が違うので、見つかった機能だけを初期化する。
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form[data-confirm]').forEach(form => {
+    form.addEventListener('submit', event => {
+      if (!window.confirm(form.dataset.confirm)) event.preventDefault();
+    });
+  });
+  const productImageInput = document.querySelector('#image');
+  const productImagePreview = document.querySelector('#image-preview');
+  const productImagePlaceholder = document.querySelector('#image-placeholder');
+  if (productImageInput && productImagePreview && productImagePlaceholder) {
+    let previewUrl;
+    productImageInput.addEventListener('change', () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const file = productImageInput.files[0];
+      productImagePreview.hidden = !file;
+      productImagePlaceholder.hidden = !!file;
+      if (file) {
+        previewUrl = URL.createObjectURL(file);
+        productImagePreview.src = previewUrl;
+      } else {
+        productImagePreview.removeAttribute('src');
+      }
+    });
+  }
   // 通常ナビゲーションとは別に、共通のサイトメニューを開く。
   const toggle = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#site-menu');

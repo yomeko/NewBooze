@@ -4,6 +4,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.*;
 import com.example.demo.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -26,6 +27,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class AdminTests {
+    private static final String ADMIN_EMAIL = "admin-integration@example.test";
+    private static final String ADMIN_PASSWORD = "test-only-password-2026";
     @Autowired MockMvc mvc;
     @Autowired UserRepository users;
     @Autowired SakeRepository sake;
@@ -34,12 +37,21 @@ class AdminTests {
     @Autowired com.example.demo.service.SakeImageService images;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
+    @BeforeEach void createTestAdministrator() {
+        User admin = new User();
+        admin.setName("admin");
+        admin.setEmail(ADMIN_EMAIL);
+        admin.setPasswordHash(encoder.encode(ADMIN_PASSWORD));
+        admin.setAdmin(true);
+        users.save(admin);
+    }
+
     // 管理者だけが管理画面を開けて、通常ログイン後も管理画面へ進むことを確認する。
     @Test void adminLoginAndProtectedPages() throws Exception {
-        User admin = users.findByEmail("admin").orElseThrow();
+        User admin = users.findByEmail(ADMIN_EMAIL).orElseThrow();
         assertThat(admin.isAdmin()).isTrue();
-        assertThat(encoder.matches("admin", admin.getPasswordHash())).isTrue();
-        mvc.perform(post("/login").with(csrf()).param("username", "admin").param("password", "admin"))
+        assertThat(encoder.matches(ADMIN_PASSWORD, admin.getPasswordHash())).isTrue();
+        mvc.perform(post("/login").with(csrf()).param("username", ADMIN_EMAIL).param("password", ADMIN_PASSWORD))
                 .andExpect(authenticated().withRoles("USER", "ADMIN"))
                 .andExpect(redirectedUrl("/admin"));
         mvc.perform(get("/admin")).andExpect(status().is3xxRedirection());
@@ -51,7 +63,7 @@ class AdminTests {
 
     // 名前検索、登録の入力チェック、権限とCSRFの確認、保存後の検索表示まで確認する。
     @Test void searchUsersAndRegisterSake() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(users.findByEmail(ADMIN_EMAIL).orElseThrow()));
         mvc.perform(get("/admin/users").with(admin).param("keyword", "admin"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("admin</td>")));
         mvc.perform(get("/admin/users").with(admin).param("keyword", "不存在ユーザー123"))
@@ -71,7 +83,7 @@ class AdminTests {
                 .andExpect(status().isOk()).andExpect(content().string(containsString("管理登録テスト")));
     }
     @Test void registersAndServesProductImageAndRejectsInvalidFiles() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(users.findByEmail(ADMIN_EMAIL).orElseThrow()));
         var output = new java.io.ByteArrayOutputStream();
         javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
                 java.awt.image.BufferedImage.TYPE_INT_RGB), "png", output);
@@ -107,7 +119,7 @@ class AdminTests {
 
 
     @Test void detailFormatPersistsAndDisplaysAllIntroductionSections() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(users.findByEmail(ADMIN_EMAIL).orElseThrow()));
         var tagId = jdbc.queryForObject("SELECT MIN(id) FROM tags", Long.class);
         String typeId = types.findAll().getFirst().getId().toString();
         mvc.perform(get("/admin/sake/new").with(admin)).andExpect(status().isOk())
@@ -143,7 +155,7 @@ class AdminTests {
     }
 
     @Test void invalidDetailInputsPreserveFormAndDoNotSave() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(users.findByEmail(ADMIN_EMAIL).orElseThrow()));
         long count = sake.count();
         mvc.perform(post("/admin/sake/new").with(admin).with(csrf())
                 .param("name", "不正URLテスト").param("sakeTypeId", types.findAll().getFirst().getId().toString())

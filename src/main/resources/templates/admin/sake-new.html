@@ -32,16 +32,4 @@
 <div class="form-group"><label for="price">参考価格（円・720mlあたり）</label><input id="price" type="number" th:field="*{price}" min="0"><p class="field-help">720mlの税込価格。不明な場合は空欄にできます。</p><p class="error" th:errors="*{price}"></p></div>
 </div></section>
 <div class="admin-save-actions"><p>空欄の紹介項目は商品詳細ページに表示されません。</p><button class="button primary" type="submit">日本酒を登録する</button></div>
-</form></main><script th:src="@{/js/main.js}"></script><script>
-const imageInput = document.getElementById('image');
-const imagePreview = document.getElementById('image-preview');
-let previewUrl;
-imageInput.addEventListener('change', () => {
-  if (previewUrl) URL.revokeObjectURL(previewUrl);
-  const file = imageInput.files[0];
-  imagePreview.hidden = !file;
-  document.getElementById('image-placeholder').hidden = !!file;
-  if (file) { previewUrl = URL.createObjectURL(file); imagePreview.src = previewUrl; }
-  else { imagePreview.removeAttribute('src'); }
-});
-</script></body></html>
+</form></main><script th:src="@{/js/main.js}"></script></body></html>

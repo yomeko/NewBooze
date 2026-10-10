@@ -5,6 +5,7 @@ import com.example.demo.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,9 +17,11 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -27,7 +30,11 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("ログイン情報を確認してください"));
+        // 旧版で作成済みの固定初期パスワードも、コード更新だけで利用を拒否する。
+        if (user.isAdmin() && passwordEncoder.matches("admin", user.getPasswordHash())) {
+            throw new UsernameNotFoundException("ログイン情報を確認してください");
+        }
         return new CustomUserDetails(user);
     }
 }

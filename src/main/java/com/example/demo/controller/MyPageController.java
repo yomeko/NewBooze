@@ -37,6 +37,7 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.util.Iterator;
 import java.util.Set;
+import java.nio.charset.StandardCharsets;
 
 /**
  * ログイン中の本人の情報を表示・変更するマイページの処理。
@@ -115,7 +116,7 @@ public class MyPageController {
 
     /**
      * ログイン中の本人の画像を、保存済みの画像形式で返す。
-     * 未登録なら404（見つからない）を返す。noCacheで使い回す前に画像の更新確認を求める。
+     * 未登録なら404（見つからない）を返す。個人画像はブラウザや共有キャッシュに保存させない。
      */
     @GetMapping("/profile-image")
     @ResponseBody
@@ -123,14 +124,14 @@ public class MyPageController {
         return profileImages.findById(principal.getUserId())
                 .map(image -> ResponseEntity.ok()
                         .contentType(MediaType.parseMediaType(image.getContentType()))
-                        .cacheControl(CacheControl.noCache())
+                        .cacheControl(CacheControl.noStore())
                         .body(image.getImageData()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
      * 画像の有無・サイズ・形式を確認して保存する。
-     * 900KBを超える画像は圧縮し、小さい画像も実際に画像として読めるか確認する。
+     * 小さい画像も再生成して付加情報を除去し、サイズや寸法が上限を超える画像は圧縮する。
      * 保存後は位置と拡大率を中央・等倍に戻し、設定画面へ移動する。
      */
     @PostMapping("/profile-image")
@@ -144,14 +145,13 @@ public class MyPageController {
 
         byte[] uploadedBytes = file.getBytes();
         StoredImage storedImage;
-        if (uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE) {
-            storedImage = compressProfileImage(uploadedBytes);
+        try {
+            storedImage = prepareProfileImage(uploadedBytes);
             if (storedImage == null) return imageError(redirect, "画像を圧縮できませんでした。別の画像を選択してください");
-        } else {
-            // 拡張子やContent-Typeだけでなく、実際に画像として読み込めることも確認する。
-            if (ImageIO.read(new ByteArrayInputStream(uploadedBytes)) == null)
-                return imageError(redirect, "正しい画像ファイルを選択してください");
-            storedImage = new StoredImage(uploadedBytes, contentType);
+        } catch (IllegalArgumentException exception) {
+            return imageError(redirect, exception.getMessage());
+        } catch (IOException exception) {
+            return imageError(redirect, "正しい画像ファイルを選択してください");
         }
 
         User user = current(principal);
@@ -163,8 +163,7 @@ public class MyPageController {
         image.setPositionY(50);
         image.setZoom(100);
         profileImages.save(image);
-        redirect.addFlashAttribute("success", uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE
-                ? "プロフィール画像を保存可能なサイズに圧縮して変更しました" : "プロフィール画像を変更しました");
+        redirect.addFlashAttribute("success", "プロフィール画像を変更しました");
         return "redirect:/mypage/account#settings";
     }
 
@@ -234,12 +233,17 @@ public class MyPageController {
      */
     @PostMapping("/profile")
     public String updateProfile(@RequestParam String name, @RequestParam String email,
+            @RequestParam(required = false) String currentPassword,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         User user = current(principal);
         name = name.trim(); email = email.trim();
         if (name.isEmpty() || name.length() > 50) return error(redirect, "表示名は1〜50文字で入力してください");
         if (email.isEmpty() || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") || email.length() > 255)
             return error(redirect, "正しいメールアドレスを入力してください");
+        // 再設定メールの送信先を変える操作は、盗まれたセッションだけでは実行させない。
+        if (!email.equals(user.getEmail()) && (currentPassword == null
+                || !passwordEncoder.matches(currentPassword, user.getPasswordHash())))
+            return error(redirect, "メールアドレスの変更には正しい現在のパスワードが必要です");
         if (users.existsByEmailAndIdNot(email, user.getId())) return error(redirect, "このメールアドレスは既に登録されています");
         user.setName(name); user.setEmail(email); users.save(user);
         refreshPrincipal(user);
@@ -257,6 +261,8 @@ public class MyPageController {
         User user = current(principal);
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) return error(redirect, "現在のパスワードが違います");
         if (newPassword.length() < 8 || newPassword.length() > 72) return error(redirect, "新しいパスワードは8〜72文字で入力してください");
+        if (newPassword.getBytes(StandardCharsets.UTF_8).length > 72)
+            return error(redirect, "パスワードが長すぎます。短くしてください");
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setTemporaryPassword(false);
         users.save(user);
@@ -301,11 +307,9 @@ public class MyPageController {
     /**
      * 画像の長辺を1600px以下にし、保存可能なサイズのJPEGを作る。
      * まず画質を下げて試し、それでも大きければ縦横を80%に縮めて再試行する。
-     * 最大6段階で試し、900KB以下にできない場合や画像を読めない場合はnullを返す。
+     * 最大6段階で試し、900KB以下にできない場合はnullを返す。
      */
-    private StoredImage compressProfileImage(byte[] source) throws IOException {
-        BufferedImage original = ImageIO.read(new ByteArrayInputStream(source));
-        if (original == null) return null;
+    private StoredImage compressProfileImage(BufferedImage original) throws IOException {
 
         double initialScale = Math.min(1.0,
                 (double) MAX_IMAGE_DIMENSION / Math.max(original.getWidth(), original.getHeight()));
@@ -363,6 +367,33 @@ public class MyPageController {
 
     // 保存する画像のバイト列と、画像形式名を一緒に返すためのデータ。
     private record StoredImage(byte[] data, String contentType) {}
+
+    /** 小さい写真も再生成してEXIFの位置情報やコメントを除去し、形式を実データから決める。 */
+    private StoredImage prepareProfileImage(byte[] source) throws IOException {
+        try (var input = ImageIO.createImageInputStream(new ByteArrayInputStream(source))) {
+            var readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) throw new IllegalArgumentException("正しい画像ファイルを選択してください");
+            var reader = readers.next();
+            try {
+                reader.setInput(input);
+                String format = reader.getFormatName().toLowerCase(java.util.Locale.ROOT);
+                if (!Set.of("jpeg", "png", "gif").contains(format))
+                    throw new IllegalArgumentException("JPEG・PNG・GIF形式の画像を選択してください");
+                if ((long) reader.getWidth(0) * reader.getHeight(0) > 20_000_000)
+                    throw new IllegalArgumentException("画像は2000万画素以下にしてください");
+                BufferedImage image = reader.read(0);
+                try (var output = new ByteArrayOutputStream()) {
+                    if (!ImageIO.write(image, format, output)) throw new IOException("画像を保存できません");
+                    if (output.size() <= MAX_PROFILE_IMAGE_SIZE
+                            && Math.max(image.getWidth(), image.getHeight()) <= MAX_IMAGE_DIMENSION)
+                        return new StoredImage(output.toByteArray(), "image/" + format);
+                }
+                return compressProfileImage(image);
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
     /**
      * DBの変更後のユーザー情報で、現在のログイン情報を作り直す。
      */

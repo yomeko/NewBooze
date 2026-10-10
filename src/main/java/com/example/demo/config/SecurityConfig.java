@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import com.example.demo.security.CustomUserDetails;
 
 /**
@@ -33,6 +34,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .headers(headers -> headers
+                .referrerPolicy(policy -> policy.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                .contentSecurityPolicy(policy -> policy.policyDirectives(
+                    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+                    + "img-src 'self' data: blob: https:; connect-src 'self'; "
+                    + "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"))
+            )
             .authorizeHttpRequests(auth -> auth
                 // 管理者専用のURLを先に確認する。hasRole("ADMIN")はROLE_ADMINという権限を要求する。
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")

@@ -23,14 +23,14 @@
   </section>
   <!-- プロフィールの変更先。入力欄のnameが、Java側の@RequestParamの名前に対応する。 -->
   <section class="mypage-card" id="profile-settings">
-      <form th:action="@{/mypage/profile}" method="post"><h2>プロフィール</h2><div class="form-group"><label for="name">表示名・ニックネーム</label><input id="name" name="name" th:value="${user.name}" maxlength="50" required></div><div class="form-group"><label for="email">メールアドレス</label><input id="email" name="email" type="email" th:value="${user.email}" required></div><button class="button">変更を保存</button></form>
+      <form th:action="@{/mypage/profile}" method="post"><h2>プロフィール</h2><div class="form-group"><label for="name">表示名・ニックネーム</label><input id="name" name="name" th:value="${user.name}" maxlength="50" required></div><div class="form-group"><label for="email">メールアドレス</label><input id="email" name="email" type="email" th:value="${user.email}" required></div><div class="form-group"><label for="profileCurrentPassword">現在のパスワード（メールアドレスを変更する場合）</label><input id="profileCurrentPassword" name="currentPassword" type="password" autocomplete="current-password"></div><button class="button">変更を保存</button></form>
   </section>
   <!-- 現在のパスワードと新しいパスワードを送り、本人確認と入力チェックはJava側でも行う。 -->
   <section class="mypage-card" id="password-settings">
       <form th:action="@{/mypage/password}" method="post"><h2>パスワード</h2><div class="form-group"><label for="currentPassword">現在のパスワード</label><input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required></div><div class="form-group"><label for="newPassword">新しいパスワード</label><input id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div><button class="button">パスワードを変更</button></form>
   </section>
   <!-- 削除ボタンで確認ダイアログを出し、同意した場合だけ現在のパスワードを付けて送信する。 -->
-  <section class="mypage-card danger-zone" id="delete-account"><div><p class="eyebrow">DANGER ZONE</p><h2>アカウント削除</h2><p class="muted">お気に入りや診断結果を含むすべてのデータが削除され、元に戻せません。</p></div><form th:action="@{/mypage/account/delete}" method="post" onsubmit="return confirm('アカウントを本当に削除しますか？');"><label for="deletePassword">確認のため現在のパスワードを入力</label><input id="deletePassword" name="currentPassword" type="password" autocomplete="current-password" required><button class="button danger-button">アカウントを削除</button></form></section>
+  <section class="mypage-card danger-zone" id="delete-account"><div><p class="eyebrow">DANGER ZONE</p><h2>アカウント削除</h2><p class="muted">お気に入りや診断結果を含むすべてのデータが削除され、元に戻せません。</p></div><form th:action="@{/mypage/account/delete}" method="post" data-confirm="アカウントを本当に削除しますか？"><label for="deletePassword">確認のため現在のパスワードを入力</label><input id="deletePassword" name="currentPassword" type="password" autocomplete="current-password" required><button class="button danger-button">アカウントを削除</button></form></section>
 </main>
 <!-- main.jsが開閉する画像編集画面。初期状態はhiddenで隠し、aria属性で対話画面であることを伝える。 -->
 <div class="image-editor" id="image-editor" hidden role="dialog" aria-modal="true" aria-labelledby="image-editor-title">
