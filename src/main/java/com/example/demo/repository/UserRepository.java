@@ -17,6 +17,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // S07のログイン処理（email + password_hash照合）で使用
     Optional<User> findByEmail(String email);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select u from User u where u.email = :email")
+    Optional<User> findForVerificationByEmail(@org.springframework.data.repository.query.Param("email") String email);
+
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("update User u set u.emailVerified = true, u.verificationTokenHash = null, u.verificationExpiresAt = null where u.emailVerified = false and u.verificationTokenHash = :hash and u.verificationExpiresAt > :now")
+    int verifyEmail(@org.springframework.data.repository.query.Param("hash") String hash,
+            @org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
+
     boolean existsByEmail(String email);
     // プロフィール変更時、自分以外に同じメールアドレスのユーザーがいるか確認する。
     boolean existsByEmailAndIdNot(String email, Long id);

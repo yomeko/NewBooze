@@ -82,6 +82,10 @@ erDiagram
 | `email` | VARCHAR(255) | ○ | — | — |
 | `password_hash` | VARCHAR(255) | ○ | — | — |
 | `temporary_password` | TINYINT(1) | ○ | 0 | — |
+| `email_verified` | TINYINT(1) | ○ | 1（新規登録処理は0） | — |
+| `verification_token_hash` | VARCHAR(64) | — | NULL | SHA-256 |
+| `verification_expires_at` | DATETIME | — | NULL | 有効期限 |
+| `verification_sent_at` | DATETIME | — | NULL | 最終送信日時 |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 | `admin` | TINYINT(1) | ○ | 0 | — |
 

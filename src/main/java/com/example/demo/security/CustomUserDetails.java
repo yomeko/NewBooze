@@ -48,7 +48,7 @@ public class CustomUserDetails implements UserDetails {
         return user.getEmail();
     }
 
-    // 現在は有効期限・ロック・停止を管理していないため、各状態を常に有効として返す。
+    // アカウントの有効期限・ロックは未使用。メール未認証のユーザーは無効として扱う。
     @Override
     public boolean isAccountNonExpired() { return true; }
 
@@ -59,7 +59,7 @@ public class CustomUserDetails implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return user.isEmailVerified(); }
 
     /**
      * DBの本人のユーザーIDを返す。ControllerはこのIDで保存先を特定する。

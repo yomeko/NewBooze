@@ -28,6 +28,7 @@ class AdminAccountTests {
         verify(users).save(captor.capture());
         User admin = captor.getValue();
         assertThat(admin.isAdmin()).isTrue();
+        assertThat(new CustomUserDetails(admin).isEnabled()).isTrue();
         assertThat(admin.getEmail()).isEqualTo("admin");
         assertThat(admin.getPasswordHash()).isNotEqualTo("admin");
         assertThat(encoder.matches("admin", admin.getPasswordHash())).isTrue();

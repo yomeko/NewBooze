@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>メールアドレスの確認 - 一升の出会い</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('none')}"></header>
+<main class="page auth-page"><div class="auth-card">
+    <h1>メールアドレスの確認</h1>
+    <p class="auth-sub">確認メールのリンクを開くと登録が完了します。有効期限は24時間です。迷惑メールフォルダもご確認ください。</p>
+    <p class="auth-alert success" th:if="${param.sent}">未認証の登録がある場合は確認メールを送信します。再送は60秒以上あけてください。</p>
+    <p class="auth-alert" th:if="${param.invalid}">リンクが無効、使用済み、または期限切れです。確認メールを再送してください。</p>
+    <p class="auth-alert" th:if="${param.invalidEmail}">メールアドレスを入力してください。</p>
+    <p class="auth-alert" th:if="${param.mailError}">メールを送信できませんでした。時間をおいて再度お試しください。</p>
+    <form th:action="@{/resend-verification}" method="post">
+        <div class="form-group"><label for="email">登録したメールアドレス</label>
+        <input id="email" type="email" name="email" required maxlength="255" autocomplete="email"></div>
+        <button class="button primary" type="submit">確認メールを再送する</button>
+    </form>
+    <p class="auth-footer-link"><a th:href="@{/login}">ログインへ</a></p>
+</div></main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+</body></html>

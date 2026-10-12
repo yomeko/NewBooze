@@ -24,10 +24,9 @@
 
         <!-- Spring Securityがログイン失敗時に /login?error を付けてリダイレクトしてくる -->
         <p class="auth-alert" th:if="${param.error}">
-            メールアドレス・管理者IDまたはパスワードが正しくありません
+            ログインできませんでした。入力内容とメール認証が完了しているかをご確認ください。
         </p>
-        <!-- 新規登録完了後に /login?registered を付けて遷移させたい場合に使う想定の表示
-             （現状AuthControllerは自動ログインするため未使用） -->
+        <!-- メール認証が完了した場合の案内 -->
         <p class="auth-alert success" th:if="${param.registered}">
             登録が完了しました。ログインしてください
         </p>
@@ -56,6 +55,7 @@
 
         <p class="auth-footer-link forgot-password-link"><a th:href="@{/forgot-password}">パスワードを忘れた方</a></p>
 
+        <p class="auth-footer-link"><a th:href="@{/resend-verification}">確認メールを再送する</a></p>
         <div class="auth-divider"></div>
         <p class="auth-footer-link">アカウントをお持ちでない方は <a th:href="@{/signup}">新規登録</a></p>
     </div>

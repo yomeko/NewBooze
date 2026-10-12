@@ -24,6 +24,7 @@ public class AdminAccountInitializer {
                 user.setEmail("admin");
                 user.setPasswordHash(encoder.encode("admin"));
                 user.setAdmin(true);
+                user.setEmailVerified(true);
                 users.save(user);
             }
         };

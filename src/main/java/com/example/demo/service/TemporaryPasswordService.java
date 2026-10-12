@@ -40,7 +40,7 @@ public class TemporaryPasswordService {
      */
     @Transactional
     public void issueFor(String email) {
-        users.findByEmail(email.trim()).ifPresent(this::issueAndSend);
+        users.findByEmail(email.trim()).filter(User::isEmailVerified).ifPresent(this::issueAndSend);
     }
 
     /**

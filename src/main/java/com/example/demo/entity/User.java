@@ -41,6 +41,19 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** 新規ユーザーは未認証。既存会員はDB移行時に認証済みとして引き継ぐ。 */
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified;
+
+    @Column(name = "verification_token_hash", length = 64)
+    private String verificationTokenHash;
+
+    @Column(name = "verification_expires_at")
+    private LocalDateTime verificationExpiresAt;
+
+    @Column(name = "verification_sent_at")
+    private LocalDateTime verificationSentAt;
+
     // trueなら管理者。CustomUserDetailsで管理画面に入る権限へ変換する。
     @Column(nullable = false)
     private boolean admin;

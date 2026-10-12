@@ -1,112 +1,71 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.SignupForm;
-import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.security.CustomUserDetails;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.example.demo.service.EmailVerificationService;
 import jakarta.validation.Valid;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * ログイン画面の表示と、アカウントの新規登録を担当する。
- * 登録したユーザーはそのままログイン状態になり、好み診断へ進む。
- * 通常のログイン時のパスワード確認は、Spring Security（ログインを管理する仕組み）が行う。
- */
+/** 登録時は仮登録し、メールのリンクで認証後にログインできるようにする。 */
 @Controller
 public class AuthController {
+    private final UserRepository users;
+    private final EmailVerificationService verification;
 
-    // 登録後のログイン情報をセッションへ保存し、次のページでも本人として扱えるようにする。
-    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
-
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-
-    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+    public AuthController(UserRepository users, EmailVerificationService verification) {
+        this.users = users;
+        this.verification = verification;
     }
 
-    /**
-     * ログイン画面を表示する。returnする文字列はtemplates以下のHTML名。
-     * フォームから届くPOST /loginのパスワード確認はSecurityConfigの設定に従って処理される。
-     */
     @GetMapping("/login")
-    public String loginForm() {
-        return "auth/login";
-    }
+    public String loginForm() { return "auth/login"; }
 
-    /**
-     * 空のSignupFormを用意して新規登録画面へ渡す。
-     */
     @GetMapping("/signup")
     public String signupForm(Model model) {
         model.addAttribute("signupForm", new SignupForm());
         return "auth/signup";
     }
 
-    /**
-     * 入力とメールアドレスの重複を確認し、ユーザーを保存する。
-     * {@code @Valid}が入力ルールを確認し、bindingResultに問題の内容が入る。
-     * 保存後は自動ログインさせ、redirectでブラウザを好み診断のURLへ移動させる。
-     */
     @PostMapping("/signup")
-    public String signup(@Valid @ModelAttribute("signupForm") SignupForm form,
-                          BindingResult bindingResult,
-                          HttpServletRequest request,
-                          HttpServletResponse response) {
-
-        if (bindingResult.hasErrors()) {
-            return "auth/signup"; // 入力エラー時は同じ画面に戻す
-        }
-
-        // メールアドレスの重複チェック(usersテーブルのUNIQUE制約と二重にチェック)
-        if (userRepository.findByEmail(form.getEmail()).isPresent()) {
-            bindingResult.rejectValue("email", "duplicate", "このメールアドレスは既に登録されています");
+    public String signup(@Valid @ModelAttribute("signupForm") SignupForm form, BindingResult errors) {
+        if (errors.hasErrors()) return "auth/signup";
+        if (users.existsByEmail(form.getEmail().trim())) {
+            errors.rejectValue("email", "duplicate", "このメールアドレスは既に登録されています。未認証の場合は確認メールを再送してください。");
             return "auth/signup";
         }
-
-        User user = new User();
-        user.setName(form.getName());
-        user.setEmail(form.getEmail());
-        // 平文パスワードは保存せず、必ずハッシュ化してから保存する
-        user.setPasswordHash(passwordEncoder.encode(form.getPassword()));
-        User saved = userRepository.save(user);
-
-        autoLogin(saved, request, response);
-
-        return "redirect:/diagnosis";
+        try {
+            verification.register(form);
+        } catch (MailException e) {
+            errors.reject("mail", "確認メールを送信できませんでした。時間をおいて再度お試しください。");
+            return "auth/signup";
+        } catch (DataIntegrityViolationException e) {
+            errors.rejectValue("email", "duplicate", "登録できませんでした。メールアドレスをご確認ください。");
+            return "auth/signup";
+        }
+        return "redirect:/resend-verification?sent";
     }
 
-    /**
-     * 登録が成功したユーザーをログイン状態にする。
-     * 登録処理で保存したUserを使って認証情報を作り、今回の処理とHTTPセッションに保存する。
-     * HTTPセッションは、次のページに移動してもログイン状態を覚えておくための仕組み。
-     */
-    private void autoLogin(User user, HttpServletRequest request, HttpServletResponse response) {
-        CustomUserDetails userDetails = new CustomUserDetails(user);
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+    @GetMapping("/verify-email")
+    public String verify(@RequestParam(required = false) String token) {
+        return verification.verify(token) ? "redirect:/login?registered" : "redirect:/resend-verification?invalid";
+    }
 
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
+    @GetMapping("/resend-verification")
+    public String resendForm() { return "auth/verification"; }
 
-        // ここでHTTPセッションに保存しないと、次のリクエスト（リダイレクト先の/diagnosis表示等）で
-        // 認証情報が失われ、未ログイン扱いに戻ってしまう。
-        securityContextRepository.saveContext(context, request, response);
+    @PostMapping("/resend-verification")
+    public String resend(@RequestParam(defaultValue = "") String email) {
+        if (email.length() > 255 || email.isBlank()) return "redirect:/resend-verification?invalidEmail";
+        try {
+            verification.resend(email);
+        } catch (MailException e) {
+            return "redirect:/resend-verification?mailError";
+        }
+        return "redirect:/resend-verification?sent";
     }
 }

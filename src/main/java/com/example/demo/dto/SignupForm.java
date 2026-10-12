@@ -17,6 +17,7 @@ public class SignupForm {
 
     @NotBlank(message = "メールアドレスを入力してください")
     @Email(message = "メールアドレスの形式が正しくありません")
+    @Size(max = 255, message = "メールアドレスは255文字以内で入力してください")
     private String email;
 
     @NotBlank(message = "パスワードを入力してください")
