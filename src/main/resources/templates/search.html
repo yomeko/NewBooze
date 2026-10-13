@@ -16,7 +16,7 @@
 <header th:replace="~{fragments/site-header :: siteHeader('search')}"></header>
 
 <main class="section page">
-  <p class="eyebrow">SAKE SEARCH</p>
+  
   <h1>日本酒をさがす</h1>
   <p class="lead">銘柄名や味の特徴・風味から、気になる日本酒を探せます。</p>
 
@@ -49,7 +49,7 @@
       </select>
     </div>
     <div class="search-field">
-      <label for="search-price">価格帯（公式サイトの販売値）</label>
+      <label for="search-price">価格帯<br>（公式サイトの販売値）</label>
       <select id="search-price" name="priceRange">
         <option value="">すべての価格</option>
         <option value="under-1500" th:selected="${selectedPriceRange == 'under-1500'}">1,500円未満</option>
