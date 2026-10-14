@@ -329,6 +329,8 @@ erDiagram
 | `tag_id` | BIGINT(20) UNSIGNED | ○ | — | PK, FK → tags.id |
 | `score` | TINYINT(3) UNSIGNED | ○ | 3 | — |
 
+管理画面の新規登録では、N個のタグを選択順にN、N−1、…、1としてscoreへ保存します。3個なら3、2、1です。DBの初期値3、既存レコード、スキーマは変更しません。
+
 一意制約・索引・値制約：
 
 - `KEY idx_sake_tags_tag (tag_id)`
