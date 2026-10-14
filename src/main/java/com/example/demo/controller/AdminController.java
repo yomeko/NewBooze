@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.dto.AdminSakeForm;
 import com.example.demo.entity.Sake;
+import com.example.demo.entity.Tag;
 import com.example.demo.repository.*;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -88,7 +89,8 @@ public class AdminController {
         validateUrl(form.getPurchaseUrl(), "purchaseUrl", errors);
         var selectedIds = form.getTagIds() == null ? java.util.List.<Long>of()
                 : form.getTagIds().stream().filter(java.util.Objects::nonNull).distinct().toList();
-        var selectedTags = tags.findAllById(selectedIds);
+        var selectedTags = tags.findAllById(selectedIds).stream().collect(java.util.stream.Collectors.toMap(
+                Tag::getId, java.util.function.Function.identity()));
         if (selectedTags.size() != selectedIds.size()) errors.rejectValue("tagIds", "invalid", "一覧にあるタグを選択してください");
         if (errors.hasErrors()) {
             options(model);
@@ -124,11 +126,12 @@ public class AdminController {
             }
             sake.saveAndFlush(item);
             pages.save(form.page(item.getId()));
-            for (var tag : selectedTags) {
+            // DBの取得順には依存せず、選択順にタグ数、タグ数-1、…、1の重みを付ける。
+            for (int index = 0; index < selectedIds.size(); index++) {
                 var link = new com.example.demo.entity.SakeTag();
                 link.setSake(item);
-                link.setTag(tag);
-                link.setScore((byte) 3);
+                link.setTag(selectedTags.get(selectedIds.get(index)));
+                link.setScore((byte) (selectedIds.size() - index));
                 sakeTags.save(link);
             }
             sakeTags.flush();

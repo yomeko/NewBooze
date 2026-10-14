@@ -34,7 +34,9 @@ public class AdminSakeForm {
     @Size(max = 1000) private String officialUrl;
     @Size(max = 1000) private String purchaseUrl;
     @Size(max = 100) private String purchaseLabel;
-    @Size(max = 30) private java.util.List<Long> tagIds = new java.util.ArrayList<>();
+    // クリックした順を保持する。最大30件なので、重みはDBのTINYINT／JavaのByteに収まる。
+    @Size(max = 30, message = "タグは30個以内で選択してください")
+    private java.util.List<Long> tagIds = new java.util.ArrayList<>();
 
     public com.example.demo.model.SakePage page(long id) {
         var links = purchaseUrl == null || purchaseUrl.isBlank() ? java.util.List.<com.example.demo.model.SakePage.PurchaseLink>of()

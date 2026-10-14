@@ -127,6 +127,8 @@ class AdminTests {
         Long id = jdbc.queryForObject("SELECT id FROM sake WHERE name = ?", Long.class, "商品詳細フォーマットテスト");
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sake_page_details WHERE sake_id = ?", Integer.class, id)).isEqualTo(1);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM sake_tags WHERE sake_id = ?", Integer.class, id)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT score FROM sake_tags WHERE sake_id = ? AND tag_id = ?",
+                Integer.class, id, tagId)).isEqualTo(1);
         mvc.perform(get("/sake/" + id)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("紹介テスト酒造")))
                 .andExpect(content().string(containsString("お米の甘みと華やかな香りを楽しむ一本。")))

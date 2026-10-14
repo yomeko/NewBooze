@@ -42,7 +42,7 @@ public class SakeTag {
     @JoinColumn(name = "tag_id")
     private Tag tag;
     
-    /** 当該地酒における当該タグの強さ（1〜5想定）。デフォルト3。DB側がTINYINTのためByte型にマッピング */
+    /** 当該地酒におけるタグの重み。管理画面では選択順にタグ数〜1、初期値は3。DBのTINYINTに合わせてByteを使う。 */
     @Column(nullable = false)
     private Byte score = 3;
 }

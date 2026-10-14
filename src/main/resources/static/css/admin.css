@@ -39,6 +39,11 @@
 .admin-tag-options { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .admin-tag-options label { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; }
 .admin-tag-options input { width: auto; }
+.admin-tag-options label:has(input:checked) { border-color: var(--red); background: #fff3f0; }
+.admin-tag-options label:has(input:focus-visible) { outline: 3px solid var(--gold); outline-offset: 3px; }
+.admin-tag-score { font-size: 12px; font-weight: 700; color: var(--red); white-space: nowrap; }
+.admin-tag-score[hidden] { display: none; }
+.admin-page .admin-tag-summary { margin-top: 16px; overflow-wrap: anywhere; }
 .admin-save-actions { text-align: right; padding: 16px 0; }
 .admin-save-actions p { color: #706b5e; font-size: 13px; }
 .admin-catalog-fields { margin-top: 24px; }

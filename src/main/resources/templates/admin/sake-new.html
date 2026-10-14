@@ -15,7 +15,13 @@
 <div class="form-group"><label for="brewery">酒蔵名</label><input id="brewery" type="text" th:field="*{brewery}" maxlength="100" placeholder="例：○○酒造"><p class="error" th:errors="*{brewery}"></p></div>
 <div class="form-group"><label for="name">銘柄名（必須）</label><input id="name" type="text" th:field="*{name}" required maxlength="100"><p class="error" th:errors="*{name}"></p></div>
 <div class="form-group"><label for="introduction">紹介文</label><textarea id="introduction" th:field="*{introduction}" rows="3" maxlength="160"></textarea><p class="field-help">商品詳細の冒頭に表示します。160文字以内。</p><p class="error" th:errors="*{introduction}"></p></div>
-</section><div class="admin-detail-grid"><section class="admin-detail-panel"><h3>味わいのタグ</h3><p class="field-help">商品詳細と日本酒検索に使うタグを選んでください。複数選択できます。</p><div class="admin-tag-options"><label th:each="tag : ${tags}"><input type="checkbox" th:field="*{tagIds}" th:value="${tag.id}"><span th:text="${tag.name}"></span></label></div><p class="error" th:errors="*{tagIds}"></p></section><section class="admin-detail-panel"><h3>どんな味わい？</h3><div class="form-group"><label for="taste">味わい</label><textarea id="taste" th:field="*{taste}" rows="3" maxlength="2000" placeholder="お米のやさしい甘み&#10;すっきりした後味"></textarea><p class="field-help">1行に1項目ずつ入力してください。</p><p class="error" th:errors="*{taste}"></p></div>
+</section><div class="admin-detail-grid"><section class="admin-detail-panel" id="tag-weights"><h3>味わいのタグ</h3>
+<p class="field-help" id="tag-weight-help">特徴が強い順にタグを選んでください。3個なら選んだ順に「3・2・1」、4個なら「4・3・2・1」の重みが付きます。選び直すと最後に追加されます。</p>
+<div id="tag-order-inputs"><input th:each="tagId : *{tagIds}" type="hidden" name="tagIds" th:value="${tagId}"></div>
+<div class="admin-tag-options" role="group" aria-label="味わいのタグ" aria-describedby="tag-weight-help"><label th:each="tag : ${tags}"><input type="checkbox" data-tag-choice disabled th:value="${tag.id}" th:checked="${sakeForm.tagIds != null and #lists.contains(sakeForm.tagIds, tag.id)}"><span data-tag-name th:text="${tag.name}"></span><span class="admin-tag-score" data-tag-score hidden></span></label></div>
+<p id="tag-weight-summary" class="field-help admin-tag-summary" role="status" aria-live="polite" aria-atomic="true">タグは未選択です。</p>
+<noscript><p class="error">タグの選択と重み付けにはJavaScriptを有効にしてください。</p></noscript>
+<p class="error" th:errors="*{tagIds}"></p></section><section class="admin-detail-panel"><h3>どんな味わい？</h3><div class="form-group"><label for="taste">味わい</label><textarea id="taste" th:field="*{taste}" rows="3" maxlength="2000" placeholder="お米のやさしい甘み&#10;すっきりした後味"></textarea><p class="field-help">1行に1項目ずつ入力してください。</p><p class="error" th:errors="*{taste}"></p></div>
 <div class="form-group"><label for="aroma">香り</label><textarea id="aroma" th:field="*{aroma}" rows="3" maxlength="2000" placeholder="華やか&#10;フルーティー"></textarea><p class="field-help">1行に1項目ずつ入力してください。</p><p class="error" th:errors="*{aroma}"></p></div>
 </section><section class="admin-detail-panel"><h3>こんな人におすすめ</h3><div class="form-group"><label for="recommendedFor">こんな人におすすめ</label><textarea id="recommendedFor" th:field="*{recommendedFor}" rows="3" maxlength="2000" placeholder="日本酒の香りと甘みを楽しみたい人"></textarea><p class="field-help">1行に1項目ずつ入力してください。</p><p class="error" th:errors="*{recommendedFor}"></p></div>
 </section><section class="admin-detail-panel"><h3>おすすめの飲み方</h3><div class="form-group"><label for="drinking">おすすめの飲み方</label><textarea id="drinking" th:field="*{drinking}" rows="3" maxlength="2000" placeholder="10〜12℃を目安に、少し冷やして"></textarea><p class="field-help">1行に1項目ずつ入力してください。</p><p class="error" th:errors="*{drinking}"></p></div>
@@ -32,7 +38,7 @@
 <div class="form-group"><label for="price">参考価格（円・720mlあたり）</label><input id="price" type="number" th:field="*{price}" min="0"><p class="field-help">720mlの税込価格。不明な場合は空欄にできます。</p><p class="error" th:errors="*{price}"></p></div>
 </div></section>
 <div class="admin-save-actions"><p>空欄の紹介項目は商品詳細ページに表示されません。</p><button class="button primary" type="submit">日本酒を登録する</button></div>
-</form></main><script th:src="@{/js/main.js}"></script><script>
+</form></main><script th:src="@{/js/main.js}"></script><script th:src="@{/js/admin-sake-tags.js}"></script><script>
 const imageInput = document.getElementById('image');
 const imagePreview = document.getElementById('image-preview');
 let previewUrl;
