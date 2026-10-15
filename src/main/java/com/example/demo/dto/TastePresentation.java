@@ -17,6 +17,38 @@ public final class TastePresentation {
     // 比較カード用の項目名・説明・5段階の強さ。level=nullは特徴が未登録の意味。
     public record Indicator(String label, String description, Integer level) {}
 
+    public record Quadrant(String name, String description, int x, int y) {}
+
+    /** 回答タグからの相対位置。日本酒度・酸度の実測値には換算しない。 */
+    public static Quadrant quadrant(Map<String, Integer> scores) {
+        int sweet = Math.max(0, scores.getOrDefault("甘口", 0));
+        int dry = Math.max(0, scores.getOrDefault("辛口", 0));
+        int light = Math.max(0, scores.getOrDefault("軽快", 0));
+        int rich = Math.max(0, scores.getOrDefault("濃醇", 0));
+        String body = rich == light ? "濃淡は中間" : rich > light ? "濃醇" : "淡麗";
+        String taste = sweet == dry ? "甘辛は中間" : sweet > dry ? "甘口" : "辛口";
+        String name = rich == light || sweet == dry ? body + "・" + taste : body + taste;
+        return new Quadrant(name, "甘さと飲みごたえの回答から見た、今の好みの目安です。",
+                axis(dry, sweet), axis(light, rich));
+    }
+
+    private static int axis(int positive, int negative) {
+        return positive + negative == 0 ? 50 : 50 + (int) Math.round(40.0 * (positive - negative) / (positive + negative));
+    }
+
+    public static String termDescription(String name) {
+        return switch (name) {
+            case "甘口" -> "甘みを感じやすい味わい。糖分だけでなく、酸味などとのバランスでも印象が変わります。";
+            case "辛口" -> "甘みを控えめに感じる味わい。唐辛子のような辛さという意味ではありません。";
+            case "軽快", "淡麗" -> "さらりとした、軽やかな飲み心地を表します。";
+            case "濃醇" -> "コクや味のふくらみがある、飲みごたえのある味わいです。";
+            case "旨口" -> "うまみを感じる味わい。甘口・辛口とは別の特徴です。";
+            case "酸味" -> "爽やかさや味の輪郭をつくる酸の味。酸味の強さだけで濃淡は決まりません。";
+            case "フルーティー" -> "果物を思わせる香り。果汁入りという意味ではなく、甘口とも限りません。";
+            default -> "日本酒の香りや味わいを表す特徴です。";
+        };
+    }
+
     /**
      * 正の点数の特徴を強い順に並べ、一番高い点数を100%として棒の長さを計算する。
      * 例えば最大が10点なら5点は50%。最大点が同じ特徴はすべて「強い傾向」にする。

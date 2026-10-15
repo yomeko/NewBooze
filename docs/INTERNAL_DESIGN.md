@@ -102,7 +102,7 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | ガイド guide.html | 6段階の目次・本文・次の段階・出典 |
 | 検索 search.html | 複合検索、並べ替え、6件のページング |
 | 商品 detail.html | 紹介、タグ、購入先、公開レビュー、本人の評価とお気に入り |
-| 診断 diagnosis.html | 初期4問、戻る・次へ、回答保持、離脱確認 |
+| 診断 diagnosis.html | 共通4問＋回答別2問、戻る・次へ、分岐変更時の不要回答破棄、離脱確認 |
 | 結果 diagnosis-result.html | 傾向、回答説明、最大5件のおすすめと共通タグ |
 | 認証 auth配下 | ログイン、会員登録、仮パスワード発行 |
 | マイページ mypage.html | 嗜好スコア、お気に入り、プロフィール概要 |
@@ -161,7 +161,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GETとPOST | /forgot-password | 仮パスワード案内と発行 |
 | POST | /logout | セッションからログアウト |
 
-商品が存在しなければ404。診断の回答が空なら/diagnosisへ戻る。結果表示はPOST /diagnosis/resultであり、旧案のPOST /diagnosis/answerとGET /diagnosis/resultは存在しない。
+商品が存在しなければ404。診断の回答が空・重複・未回答・別経路の混入なら保存せず説明付き質問画面を表示する。結果表示はPOST /diagnosis/resultであり、旧案のPOST /diagnosis/answerとGET /diagnosis/resultは存在しない。
 
 ### 6.2 本人の操作
 
@@ -196,7 +196,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 
 ### 7.1 診断のデータフロー
 
-DiagnosisServiceはchoice_tags.weightをタグ別に加算する。会員の回答をdiagnosis_sessionsとdiagnosis_answersへ保存し、user_preferencesの該当タグを更新する。recommendは今回の集計とcatalog.allのsake_tags.scoreを比較し、コサイン類似度の降順で5件を返す。TastePresentationが正の共通タグをおすすめ理由に使う。全0のベクトルは類似度0となる。
+DiagnosisService.questionsは設問の表示順と分岐元選択肢IDを返す。main.jsは先行回答で経路を組み立て、不要な分岐の選択を消して送信対象から外す。validAnswersでサーバー側でも有効経路の各問1回答を検証する。DiagnosisServiceはchoice_tags.weightをタグ別に加算する。会員の回答をdiagnosis_sessionsとdiagnosis_answersへ保存し、user_preferencesの該当タグを更新する。recommendは今回の集計とcatalog.allのsake_tags.scoreを比較し、コサイン類似度の降順で5件を返す。TastePresentationが正の共通タグをおすすめ理由に使う。全0のベクトルは類似度0となる。TastePresentation.quadrantは甘口と辛口、軽快と濃醇の得点比を各軸10〜90%に変換する。香り・うまみ・酸味は推薦には使うが4象限の軸には混ぜない。設計根拠・計算式・追加SQLはDIAGNOSIS_DESIGN.mdを参照する。
 
 ### 7.2 ホームの抽選とメジャー候補
 

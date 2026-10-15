@@ -289,6 +289,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const next = document.querySelector('#quiz-next');
   const position = document.querySelector('#quiz-position');
   const progress = document.querySelector('#quiz-progress');
+  let route = questions;
+  const total = Number(form.dataset?.questionCount) || questions.length;
+  const updateRoute = () => {
+    const selected = new Set();
+    route = questions.filter(question => {
+      const condition = question.dataset?.conditionChoice;
+      const active = !condition || selected.has(condition);
+      if (!active) {
+        question.querySelectorAll('input[type="radio"]').forEach(radio => { radio.checked = false; });
+        const answer = question.querySelector('input[type="hidden"][name="choice"]');
+        answer.value = '';
+        answer.disabled = true;
+      } else {
+        const radio = question.querySelector('input[type="radio"]:checked');
+        if (radio) selected.add(radio.value);
+      }
+      return active;
+    });
+  };
   let step = 0;
   let submitted = false;
   let leaving = false;
@@ -334,16 +353,18 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   // 今の質問だけを表示し、何問目か・進捗・戻る/次へボタンの状態をそろえる。
   const render = (focus = false) => {
-    questions.forEach((question, index) => {
-      question.classList.toggle('active', index === step);
-      question.hidden = index !== step;
+    updateRoute();
+    questions.forEach(question => {
+      question.classList.toggle('active', question === route[step]);
+      question.hidden = question !== route[step];
     });
-    position.textContent = `全${questions.length}問中 ${step + 1}問目`;
+    position.textContent = `全${total}問中 ${step + 1}問目`;
+    progress.max = total;
     progress.value = step + 1;
     back.disabled = step === 0 || submitted;
-    next.disabled = submitted || !syncAnswer(questions[step]);
-    next.textContent = step === questions.length - 1 ? '診断結果を見る' : '次へ →';
-    if (focus) questions[step].querySelector('legend').focus({ preventScroll: true });
+    next.disabled = submitted || !syncAnswer(route[step]);
+    next.textContent = step === route.length - 1 ? '診断結果を見る' : '次へ →';
+    if (focus) route[step].querySelector('legend').focus({ preventScroll: true });
   };
   questions.forEach(question => {
     question.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -362,14 +383,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // 最後は全問回答済みか確認し、1回だけ回答一覧を送る。preventDefaultは通常の送信を止める命令。
   form.addEventListener('submit', event => {
     if (submitted) { event.preventDefault(); return; }
-    if (!syncAnswer(questions[step])) { event.preventDefault(); render(); return; }
-    if (step < questions.length - 1) {
+    if (!syncAnswer(route[step])) { event.preventDefault(); render(); return; }
+    if (step < route.length - 1) {
       event.preventDefault();
       step++;
       render(true);
       return;
     }
-    const incomplete = questions.findIndex(question => !syncAnswer(question));
+    updateRoute();
+    const incomplete = route.findIndex(question => !syncAnswer(question));
     if (incomplete !== -1) {
       event.preventDefault();
       step = incomplete;

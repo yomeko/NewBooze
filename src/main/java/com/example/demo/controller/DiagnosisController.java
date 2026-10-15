@@ -30,7 +30,10 @@ public class DiagnosisController {
      */
     @GetMapping("/diagnosis")
     public String diagnosis(Model model) {
-        model.addAttribute("questions", diagnosisService.questions());
+        var questions = diagnosisService.questions();
+        model.addAttribute("questions", questions);
+        model.addAttribute("questionCount", questions.stream().filter(q -> q.conditionChoiceId() == null).count()
+                + (questions.stream().anyMatch(q -> q.conditionChoiceId() != null) ? 2 : 0));
         return "diagnosis";
     }
 
@@ -45,12 +48,17 @@ public class DiagnosisController {
                           @AuthenticationPrincipal CustomUserDetails principal,
                           Model model) {
 
+        if (!diagnosisService.validAnswers(choices)) {
+            model.addAttribute("diagnosisError", "回答を確認できませんでした。最初から診断してください。");
+            return diagnosis(model);
+        }
         Long loginUserId = principal != null ? principal.getUserId() : null;
         Map<String, Integer> preferences = diagnosisService.aggregateAndPersist(choices, loginUserId);
 
         if (preferences.isEmpty()) return "redirect:/diagnosis";
 
         model.addAttribute("preferences", preferences);
+        model.addAttribute("quadrant", com.example.demo.dto.TastePresentation.quadrant(preferences));
         model.addAttribute("tendencies", com.example.demo.dto.TastePresentation.tendencies(preferences));
         model.addAttribute("answers", diagnosisService.answerSummaries(choices));
         model.addAttribute("recommendations", diagnosisService.recommend(preferences));

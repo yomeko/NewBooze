@@ -1,3 +1,4 @@
+-- 分岐診断を使う場合は、作成後にdiagnosis_branching.sqlを同じDBへ実行する。
 -- 一升の出会い：既存DBを残して、新しいDBを作成する。
 -- 同名DBが存在する場合はエラーで停止する。mysql --force は使用しない。
 -- 既存DBに対するDROP/ALTER/UPDATEは行わない。

@@ -26,27 +26,60 @@ class DiagnosisTests {
     // 診断画面に質問の進捗と戻る・次への操作が出ることを確認する。
     @Test void quizRendersProgressAndExplicitNavigation() throws Exception {
         mvc.perform(get("/diagnosis")).andExpect(status().isOk())
-                .andExpect(content().string(containsString("全4問中 1問目")))
+                .andExpect(content().string(containsString("全6問中 1問目")))
                 .andExpect(content().string(containsString("id=\"quiz-back\"")))
                 .andExpect(content().string(containsString("id=\"quiz-next\"")));
     }
 
     // 各質問の最小IDの選択肢を送り、加点結果・回答説明・おすすめ理由・比較カードを確認する。
     @Test void resultRendersWeightedTendenciesAnswerLinksAndComparableCards() throws Exception {
-        String[] choices = diagnosis.questions().stream()
-                .map(question -> question.choices().stream().min(java.util.Comparator.comparing(com.example.demo.dto.DiagnosisChoiceView::id)).orElseThrow().id().toString()).toArray(String[]::new);
+        java.util.List<Long> selected = new java.util.ArrayList<>();
+        diagnosis.questions().forEach(q -> {
+            if (q.conditionChoiceId() == null || selected.contains(q.conditionChoiceId()))
+                selected.add(q.choices().getFirst().id());
+        });
+        String[] choices = selected.stream().map(String::valueOf).toArray(String[]::new);
         mvc.perform(post("/diagnosis/result").with(csrf()).param("choice", choices))
                 .andExpect(status().isOk())
                 .andExpect(view().name("diagnosis-result"))
-                .andExpect(content().string(containsString("回答からのスコア：8")))
+                .andExpect(content().string(containsString("味わい4象限")))
                 .andExpect(content().string(containsString("果物のように華やかな香り")))
                 .andExpect(content().string(containsString("おすすめの理由：")))
                 .andExpect(content().string(containsString("class=\"taste-indicators\"")))
                 .andExpect(content().string(containsString("class=\"sake-card-image\"")));
     }
 
+    @Test void allNineBranchCombinationsHaveSixValidAnswers() {
+        var bank = diagnosis.questions();
+        var core = bank.stream().filter(q -> q.conditionChoiceId() == null).toList();
+        org.junit.jupiter.api.Assertions.assertEquals(10, bank.size());
+        for (var first : core.getFirst().choices()) {
+            for (var sweet : core.getLast().choices()) {
+                java.util.List<Long> selected = new java.util.ArrayList<>(java.util.List.of(
+                        first.id(), core.get(1).choices().getFirst().id(), core.get(2).choices().getFirst().id(), sweet.id()));
+                bank.stream().filter(q -> q.conditionChoiceId() != null && selected.contains(q.conditionChoiceId()))
+                        .forEach(q -> selected.add(q.choices().getLast().id()));
+                org.junit.jupiter.api.Assertions.assertEquals(6, selected.size());
+                org.junit.jupiter.api.Assertions.assertTrue(diagnosis.validAnswers(selected));
+                var incomplete = new java.util.ArrayList<>(selected);
+                incomplete.removeLast();
+                org.junit.jupiter.api.Assertions.assertFalse(diagnosis.validAnswers(incomplete));
+                var duplicate = new java.util.ArrayList<>(selected);
+                duplicate.add(selected.getFirst());
+                org.junit.jupiter.api.Assertions.assertFalse(diagnosis.validAnswers(duplicate));
+            }
+        }
+    }
+
+    @Test void rejectsAnswersFromEveryBranch() throws Exception {
+        String[] all = diagnosis.questions().stream().map(q -> q.choices().getFirst().id().toString()).toArray(String[]::new);
+        mvc.perform(post("/diagnosis/result").with(csrf()).param("choice", all))
+                .andExpect(view().name("diagnosis"));
+    }
+
     // 回答を送らなかった場合は、結果を出さず質問画面へ戻ることを確認する。
     @Test void emptyAnswersReturnToQuiz() throws Exception {
-        mvc.perform(post("/diagnosis/result").with(csrf())).andExpect(redirectedUrl("/diagnosis"));
+        mvc.perform(post("/diagnosis/result").with(csrf())).andExpect(view().name("diagnosis"))
+                .andExpect(content().string(containsString("回答を確認できませんでした")));
     }
 }

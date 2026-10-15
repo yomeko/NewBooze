@@ -65,19 +65,42 @@ public class DiagnosisService {
      */
     @Transactional(readOnly = true)
     public List<DiagnosisQuestionView> questions() {
-        return questionRepository.findAllByOrderBySortOrderAsc().stream()
-                .map(this::toView)
-                .toList();
+        List<DiagnosisQuestion> bank = questionRepository.findAllByOrderBySortOrderAsc();
+        Map<String, Long> choiceByText = new LinkedHashMap<>();
+        bank.forEach(q -> choiceRepository.findByQuestionId(q.getId()).forEach(c ->
+                choiceByText.put(c.getChoiceText(), c.getId())));
+        return bank.stream().sorted(Comparator.comparingInt(q ->
+                        BRANCHES.containsKey(q.getQuestionText()) ? q.getSortOrder() : q.getSortOrder() * 10))
+                .map(q -> {
+                    String parent = BRANCHES.get(q.getQuestionText());
+                    Long condition = parent == null ? null : choiceByText.get(parent);
+                    if (parent != null && condition == null) throw new IllegalStateException("分岐元の回答がありません");
+                    List<DiagnosisChoiceView> choices = choiceRepository.findByQuestionId(q.getId()).stream()
+                            .sorted(Comparator.comparing(DiagnosisChoice::getId))
+                            .map(c -> new DiagnosisChoiceView(c.getId(), c.getChoiceText())).toList();
+                    return new DiagnosisQuestionView(q.getId(), q.getQuestionText(), choices, condition);
+                }).toList();
     }
 
-    /**
-     * 1つの質問に属する選択肢を読み、質問文と選択肢一覧をまとめて返す。
-     */
-    private DiagnosisQuestionView toView(DiagnosisQuestion question) {
-        List<DiagnosisChoiceView> choices = choiceRepository.findByQuestionId(question.getId()).stream()
-                .map(choice -> new DiagnosisChoiceView(choice.getId(), choice.getChoiceText()))
-                .toList();
-        return new DiagnosisQuestionView(question.getId(), question.getQuestionText(), choices);
+    // IDに依存せず、追加SQLと対応する設問・分岐元を定義する。
+    private static final Map<String, String> BRANCHES = Map.of(
+            "果物の香りなら、どちらが好み？", "果物のように華やかな香り",
+            "うまみのある料理なら、どちらが好み？", "米のうまみをしっかり感じたい",
+            "すっきりした飲み物なら、どちらが好み？", "すっきりシャープに飲みたい",
+            "甘みのある飲み物なら、どちらが好み？", "やさしい甘みが好き",
+            "甘さ控えめの飲み物なら、どちらが好み？", "甘すぎないバランス派",
+            "甘くない飲み物の後味なら、どちらが好み？", "キレのある辛口派");
+
+    /** サーバーでも経路を検証し、未回答・重複・別ルートの回答を保存しない。 */
+    @Transactional(readOnly = true)
+    public boolean validAnswers(List<Long> selected) {
+        if (selected == null || selected.isEmpty() || selected.contains(null)
+                || selected.stream().distinct().count() != selected.size()) return false;
+        List<DiagnosisQuestionView> bank = questions();
+        List<DiagnosisQuestionView> route = bank.stream().filter(q -> q.conditionChoiceId() == null
+                || selected.contains(q.conditionChoiceId())).toList();
+        return route.size() == selected.size() && route.stream().allMatch(q ->
+                q.choices().stream().filter(c -> selected.contains(c.id())).count() == 1);
     }
 
     /**

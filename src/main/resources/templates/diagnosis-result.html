@@ -20,12 +20,40 @@
   <h1>あなたに合いそうな日本酒</h1>
 
   <p class="lead">選んだ回答から見つかった、今のあなたの味わい傾向です。</p>
+  <section class="quadrant-result" aria-labelledby="quadrant-title">
+    <h2 id="quadrant-title" th:text="|あなたの好みは「${quadrant.name}」寄り|">あなたの好みの位置</h2>
+    <p th:text="${quadrant.description}"></p>
+    <p class="quadrant-axis">↑ 濃醇（コク・飲みごたえ）</p>
+    <div class="quadrant-map" role="img" th:attr="aria-label=|味わい4象限。あなたの好み：${quadrant.name}。甘辛や濃淡が同点の場合は境界線に表示。|">
+      <div class="quadrant-cell rich-sweet"><strong>濃醇甘口</strong><span>芳醇＆リッチ</span></div>
+      <div class="quadrant-cell rich-dry"><strong>濃醇辛口</strong><span>コク＆キレ</span></div>
+      <div class="quadrant-cell light-sweet"><strong>淡麗甘口</strong><span>やわらか＆軽やか</span></div>
+      <div class="quadrant-cell light-dry"><strong>淡麗辛口</strong><span>スッキリ＆シャープ</span></div>
+      <span class="quadrant-marker" th:style="|left:${quadrant.x}%;top:${quadrant.y}%|" aria-hidden="true">★</span>
+    </div>
+    <div class="quadrant-horizontal"><span>← 甘口</span><span>辛口 →</span></div>
+    <p class="quadrant-axis">↓ 淡麗（軽やか）</p>
+    <p class="muted">回答から推定した好みの位置です。日本酒度・酸度の測定値ではありません。同点のときは境界線に表示します。</p>
+    <div class="taste-glossary"><span>用語をタップして確認：</span>
+      <th:block th:each="term : ${ {'甘口', '辛口', '淡麗', '濃醇', '旨口', '酸味', 'フルーティー'} }">
+        <button type="button" class="term-help" th:attr="popovertarget=|glossary-${term}|" th:text="|${term} ?|"></button>
+        <div popover class="term-popover" th:id="|glossary-${term}|">
+          <h3 th:text="${term}"></h3><p th:text="${T(com.example.demo.dto.TastePresentation).termDescription(term)}"></p>
+          <button type="button" th:attr="popovertarget=|glossary-${term}|" popovertargetaction="hide">閉じる</button>
+        </div>
+      </th:block>
+    </div>
+  </section>
   <section class="taste-result" aria-labelledby="taste-title">
     <h2 id="taste-title">あなたの強い傾向</h2>
     <!-- 特徴の点数を繰り返し表示する。strongestクラスで最も高い特徴を強調し、relativeStrengthで棒の幅を決める。 -->
     <div class="tendency-list">
       <div class="tendency" th:each="tag : ${tendencies}" th:classappend="${tag.strongest} ? ' strongest'">
-        <div class="tendency-heading"><strong th:text="${tag.name}"></strong><span th:text="${tag.strongest} ? '強い傾向' : 'ほかの傾向'"></span></div>
+        <div class="tendency-heading"><button type="button" class="term-help" th:attr="popovertarget=|term-${tag.name}|" th:text="|${tag.name} ?|"></button>
+          <div popover class="term-popover" th:id="|term-${tag.name}|"><h3 th:text="${tag.name}"></h3>
+            <p th:text="${T(com.example.demo.dto.TastePresentation).termDescription(tag.name)}"></p>
+            <button type="button" th:attr="popovertarget=|term-${tag.name}|" popovertargetaction="hide">閉じる</button>
+          </div><span th:text="${tag.strongest} ? '強い傾向' : 'ほかの傾向'"></span></div>
         <div class="tendency-bar" aria-hidden="true"><span th:style="|width: ${tag.relativeStrength}%|"></span></div>
         <small th:text="|回答からのスコア：${tag.score}|"></small>
       </div>
@@ -33,7 +61,7 @@
     <p class="muted">棒の長さは、今回の回答で最も強かった傾向を基準にしています。辛口・甘口は回答ごとに加算されるため、両方が現れることもあります。</p>
     <!-- detailsとsummaryはブラウザ標準の開閉表示。回答と加点された特徴のつながりを確認できる。 -->
     <details class="answer-summary"><summary>回答と味わい傾向のつながりを見る</summary>
-      <ol><li th:each="answer : ${answers}"><p th:text="${answer.question}"></p><strong th:text="${answer.answer}"></strong><p class="muted" th:text="|この回答が示す特徴：${#strings.listJoin(answer.tags, '・')}|"></p></li></ol>
+      <ol><li th:each="answer : ${answers}"><p th:text="${answer.question}"></p><strong th:text="${answer.answer}"></strong><p class="muted" th:text="${#lists.isEmpty(answer.tags)} ? 'この回答では特徴の点数を加えていません。' : |この回答が示す特徴：${#strings.listJoin(answer.tags, '・')}|"></p></li></ol>
     </details>
   </section>
   <div class="section-heading recommendation-heading">

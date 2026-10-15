@@ -417,7 +417,7 @@ erDiagram
 
 ## 7. 作成SQLと運用
 
-新規DB作成用SQLは [create_issho_no_deai.sql](../data/create_issho_no_deai.sql)、手順は [RESET_DATABASE.md](../data/RESET_DATABASE.md) を参照してください。作成SQLには全19テーブルと日本酒10件、診断4問・選択肢12件、酒種・タグの初期データが含まれます。ユーザーや投稿・レビューの初期データはありません。酒蔵マスタは空です。
+新規DB作成用SQLは [create_issho_no_deai.sql](../data/create_issho_no_deai.sql)、手順は [RESET_DATABASE.md](../data/RESET_DATABASE.md) を参照してください。作成SQLには全19テーブルと日本酒10件、診断4問・選択肢12件、酒種・タグの初期データが含まれます。分岐診断を使用する場合は、その後にdata/diagnosis_branching.sqlで設問6問と選択肢18件を追加する（合計10問・30選択肢、1回の回答は6問）。既存行を保持し、DDLの変更はない。ユーザーや投稿・レビューの初期データはありません。酒蔵マスタは空です。
 
 `CREATE DATABASE` は同名DBがある場合に失敗します。既存DBの削除・変更はせず、未使用DB名で実行します。旧DB向けの差分SQLは型や照合順序が異なるため、本書の新規作成SQLと混在させないでください。アプリは `ddl-auto=validate` を使用し、起動時にエンティティとDB定義の整合性を検証します。
 

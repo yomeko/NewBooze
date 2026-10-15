@@ -6,12 +6,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 // 画面要素と操作の代役を作り、対象のJavaScriptを実行してテスト用の操作口を返す。
-function setup() {
+function setup(branching = false) {
   const element = () => ({ disabled: false, handlers: {}, addEventListener(type, fn) { this.handlers[type] = fn; }, focus() {}, classList: { toggle() {} } });
-  const questions = Array.from({ length: 4 }, (_, index) => {
+  const questions = Array.from({ length: branching ? 10 : 4 }, (_, index) => {
     const answer = { disabled: true, value: '' };
     const radios = [0, 1].map(option => Object.assign(element(), { value: `${index * 2 + option + 1}`, checked: false }));
-    return Object.assign(element(), { answer, radios,
+    return Object.assign(element(), { answer, radios, dataset: branching && index >= 4 ? { conditionChoice: String([1, 2, 1, 7, 8, 7][index - 4]) } : {},
       querySelector(selector) {
         if (selector.includes(':checked')) return radios.find(r => r.checked);
         if (selector.includes('hidden')) return answer;
@@ -20,6 +20,12 @@ function setup() {
     });
   });
   const controls = Object.fromEntries(['#diagnosis-form', '#quiz-back', '#quiz-next', '#quiz-position', '#quiz-progress'].map(id => [id, element()]));
+  if (branching) {
+    const order = [0, 4, 5, 1, 2, 3, 7, 8];
+    // 2つの分岐候補を持つ、実画面と同じ順序の質問バンク。
+    questions.splice(0, questions.length, ...order.map(i => questions[i]));
+    controls['#diagnosis-form'].dataset = { questionCount: '6' };
+  }
   const windowHandlers = {};
   const documentHandlers = {};
   const confirmations = [];
@@ -120,4 +126,28 @@ test('all four answers submit only on the explicit final action and prevent dupl
   assert.deepEqual(quiz.questions.map(q => q.answer.value), ['1', '3', '5', '7']);
   quiz.windowHandlers.pageshow();
   assert.equal(quiz.controls['#quiz-next'].disabled, false);
+});
+
+
+test('branches show only matching follow-ups and switching a parent clears the abandoned answer', () => {
+  const quiz = setup(true);
+  assert.equal(quiz.position, '全6問中 1問目');
+  quiz.choose(0);
+  quiz.next();
+  assert.equal(quiz.questions[1].hidden, false);
+  quiz.choose(1);
+  quiz.back();
+  quiz.choose(0, 1);
+  assert.equal(quiz.questions[1].answer.disabled, true);
+  assert.equal(quiz.questions[1].radios[0].checked, false);
+  quiz.next();
+  assert.equal(quiz.questions[2].hidden, false);
+  quiz.choose(2); quiz.next();
+  quiz.choose(3); quiz.next();
+  quiz.choose(4); quiz.next();
+  quiz.choose(5); quiz.next();
+  assert.equal(quiz.position, '全6問中 6問目');
+  quiz.choose(6);
+  assert.equal(quiz.next(), true);
+  assert.equal(quiz.questions.filter(q => !q.answer.disabled).length, 6);
 });
