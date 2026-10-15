@@ -7,27 +7,69 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#site-menu');
   if (toggle && menu) {
-    toggle.addEventListener('click', () => {
-      // dialogを開き、読み上げ用の開閉状態と、背景のスクロールを止めるCSSのクラスも更新する。
-      menu.showModal();
-      toggle.setAttribute('aria-expanded', 'true');
-      document.body.classList.add('site-menu-open');
-    });
-    menu.querySelector('.site-menu-close').addEventListener('click', () => menu.close());
-    menu.addEventListener('click', event => {
-      if (event.target === menu) {
-        // メニューの長方形の範囲とクリック位置を比較し、外側の背景をクリックしたときだけ閉じる。
-        const bounds = menu.getBoundingClientRect();
-        if (event.clientX < bounds.left || event.clientX > bounds.right ||
-            event.clientY < bounds.top || event.clientY > bounds.bottom) menu.close();
+    let closeTimer;
+    let openedByHover = false;
+    const cancelClose = () => window.clearTimeout(closeTimer);
+    const positionMenu = () => {
+      const bounds = toggle.getBoundingClientRect();
+      menu.style.top = `${bounds.bottom}px`;
+      menu.style.right = `${Math.max(12, window.innerWidth - bounds.right)}px`;
+      menu.style.maxHeight = `calc(100dvh - ${bounds.bottom}px - 12px)`;
+    };
+    const openMenu = (hover = false) => {
+      cancelClose();
+      positionMenu();
+      if (!menu.open) {
+        const previousFocus = document.activeElement;
+        menu.show();
+        // ホバーだけではキーボードのフォーカスを移さない。
+        if (hover && previousFocus instanceof HTMLElement) {
+          previousFocus.focus({ preventScroll: true });
+          if (menu.contains(document.activeElement)) document.activeElement.blur();
+        }
       }
-    });
-    // Escキーで閉じた場合にも状態とフォーカスを戻す。
-    menu.addEventListener('close', () => {
+      cancelClose();
+      openedByHover = hover;
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+    const closeMenu = (restoreFocus = false) => {
+      cancelClose();
+      menu.close();
       toggle.setAttribute('aria-expanded', 'false');
-      document.body.classList.remove('site-menu-open');
-      toggle.focus();
+      if (restoreFocus) toggle.focus({ preventScroll: true });
+    };
+    const scheduleClose = () => {
+      cancelClose();
+      closeTimer = window.setTimeout(() => {
+        if (!menu.contains(document.activeElement)) closeMenu();
+      }, 180);
+    };
+    toggle.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse') openMenu(true);
     });
+    toggle.addEventListener('pointerleave', scheduleClose);
+    menu.addEventListener('pointerenter', cancelClose);
+    menu.addEventListener('pointerleave', scheduleClose);
+    toggle.addEventListener('click', () => {
+      if (menu.open && !openedByHover) closeMenu(true);
+      else openMenu();
+    });
+    toggle.addEventListener('keydown', event => {
+      if (event.key === 'ArrowDown') { event.preventDefault(); openMenu(); }
+    });
+    menu.querySelector('.site-menu-close').addEventListener('click', () => closeMenu(true));
+    document.addEventListener('pointerdown', event => {
+      if (menu.open && !menu.contains(event.target) && !toggle.contains(event.target)) closeMenu();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && menu.open) { event.preventDefault(); closeMenu(true); }
+    });
+    [toggle, menu].forEach(element => element.addEventListener('focusout', event => {
+      if (!menu.contains(event.relatedTarget) && !toggle.contains(event.relatedTarget)) scheduleClose();
+    }));
+    menu.addEventListener('close', () => toggle.setAttribute('aria-expanded', 'false'));
+    window.addEventListener('resize', () => { if (menu.open) positionMenu(); });
+    window.addEventListener('scroll', () => { if (menu.open) positionMenu(); }, { passive: true });
   }
 
   const header = document.querySelector('.site-header');
