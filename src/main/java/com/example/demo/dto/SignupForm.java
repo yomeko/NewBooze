@@ -1,12 +1,13 @@
 package com.example.demo.dto;
 
+import com.example.demo.validation.Utf8ByteLength;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
  * 新規登録フォームの表示名、メールアドレス、パスワードを受け取る入れ物。
- * AuthControllerの@Validが、各項目の@NotBlank・@Email・@Sizeに従って入力を確認する。
+ * AuthControllerの@Validが、必須・形式・文字数とUTF-8のバイト数を確認する。
  * 確認結果はHTMLのth:errorsで表示され、正しい入力ならUserに移して保存する。
  */
 public class SignupForm {
@@ -21,6 +22,7 @@ public class SignupForm {
 
     @NotBlank(message = "パスワードを入力してください")
     @Size(min = 8, message = "パスワードは8文字以上で入力してください")
+    @Utf8ByteLength(max = 72, message = "パスワードはUTF-8で72バイト以内にしてください（半角英数字は72文字、日本語の多くは24文字が目安です）")
     private String password;
 
     // getで値を読み、setで入力値を設定する。フォームとJavaの値を結び付けるために使う。

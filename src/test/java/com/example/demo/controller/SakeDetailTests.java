@@ -34,7 +34,7 @@ class SakeDetailTests {
             .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
         assertThat(html).contains("<select id=\"search-taste\" name=\"taste\">",
                 "value=\"フルーティー\"", "value=\"甘口\"")
-            .doesNotContain("id=\"search-keyword\"")
+            .contains("id=\"search-keyword\"", "name=\"keyword\"")
             .containsPattern("<option[^>]*value=\"辛口\"[^>]*selected=\"selected\"");
         for (String taste : java.util.List.of("甘口", "フルーティー")) {
             mvc.perform(get("/search").param("taste", taste))
@@ -80,7 +80,10 @@ class SakeDetailTests {
         jdbc.update("UPDATE sake SET image_url = NULL WHERE id = 1");
         mvc.perform(get("/sake/1")).andExpect(status().isOk())
             .andExpect(content().string(containsString("株式会社 獺祭")))
-            .andExpect(content().string(not(containsString("2,475円（税込）"))))
+            .andExpect(content().string(containsString("基本情報")))
+            .andExpect(content().string(containsString("アルコール度数")))
+            .andExpect(content().string(containsString("720ml")))
+            .andExpect(content().string(containsString("2,475円（税込）")))
             .andExpect(content().string(not(containsString("価格・購入先"))))
             .andExpect(content().string(containsString("href=\"https://www.dassaistore.com/product-detail/47\"")))
             .andExpect(content().string(not(containsString("href=\"#purchase\""))))
@@ -89,9 +92,36 @@ class SakeDetailTests {
             .andExpect(content().string(containsString("class=\"sake-home-link\"")))
             .andExpect(content().string(not(containsString("合う料理"))));
         mvc.perform(get("/sake/2")).andExpect(status().isOk())
+            .andExpect(content().string(containsString("容量：未確認")))
+            .andExpect(content().string(containsString("対象容量：未確認")))
             .andExpect(content().string(not(containsString("どんな味わい？"))))
             .andExpect(content().string(not(containsString("価格・購入先"))));
         mvc.perform(get("/sake/9223372036854775807")).andExpect(status().isNotFound());
+    }
+
+    @Test void basicInformationHandlesPartiallyKnownPricesWithoutGuessingVolume() throws Exception {
+        var page = new com.example.demo.model.SakePage(2, "新政 No.6", "", "", null, null,
+                java.util.List.of(new com.example.demo.model.SakePage.Price("", 2500),
+                        new com.example.demo.model.SakePage.Price("720ml", null)),
+                null, null, null, null, null, null);
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (?, ?)",
+                2, new tools.jackson.databind.ObjectMapper().writeValueAsString(page));
+        mvc.perform(get("/sake/2")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("対象容量：未確認")))
+                .andExpect(content().string(containsString("2,500円（税込）")))
+                .andExpect(content().string(containsString("720ml")))
+                .andExpect(content().string(containsString("価格：未確認")));
+    }
+
+    @Test void basicInformationDoesNotTurnMissingAbvOrPriceIntoZero() throws Exception {
+        jdbc.update("UPDATE sake SET abv = NULL, price = NULL WHERE id = 2");
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        mvc.perform(get("/sake/2")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("未確認")))
+                .andExpect(content().string(containsString("価格：未確認")))
+                .andExpect(content().string(not(containsString("0.0%"))))
+                .andExpect(content().string(not(containsString("参考価格：0円"))));
     }
 
     // 写真・購入先・お気に入りが同じ商品操作欄に配置されることを確認する。

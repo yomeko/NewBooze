@@ -33,6 +33,14 @@ class HomeGuideTests {
         response.andExpect(content().string(containsString("日本酒造組合中央会の保存ガイド")));
     }
 
+    @Test void privacyIsReadableBeforeSignupAndDescribesReviewVisibility() throws Exception {
+        mvc.perform(get("/privacy")).andExpect(status().isOk()).andExpect(view().name("privacy"))
+                .andExpect(content().string(containsString("登録前でもこのページを確認できます")))
+                .andExpect(content().string(containsString("ログインしていない人を含む他の利用者")))
+                .andExpect(content().string(containsString("メールアドレスは公開レビューに表示しません")))
+                .andExpect(content().string(containsString("href=\"/signup\"")));
+    }
+
     @Test void homeRendersPairAndSelectionEvidence() throws Exception {
         Sake selected = sake(30, "発見した一本");
         var reference = new SakeDiscoveryService.MajorReference("比較の定番", "公式情報と取扱店を確認",

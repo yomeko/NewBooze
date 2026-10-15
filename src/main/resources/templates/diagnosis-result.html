@@ -19,7 +19,12 @@
   <p class="eyebrow">YOUR RESULT</p>
   <h1>あなたに合いそうな日本酒</h1>
 
-  <p class="lead">選んだ回答から見つかった、今のあなたの味わい傾向です。</p>
+  <p class="lead">今回選んだ回答から見つかった、あなたの味わい傾向です。</p>
+  <div class="auth-alert success" th:if="${saved}">
+    <p>今回の回答と好みの点数を保存しました。</p>
+    <p>保存済みの好みは、今回出た特徴の点数だけを更新し、今回出なかった過去の特徴は残します。そのため、<a th:href="@{/mypage#taste}">マイページの保存された傾向</a>には、この結果にない特徴も表示されます。</p>
+  </div>
+  <p class="muted" th:unless="${saved}">ログインしていないため、今回の回答や好みの点数は保存されていません。</p>
   <section class="quadrant-result" aria-labelledby="quadrant-title">
     <h2 id="quadrant-title" th:text="|あなたの好みは「${quadrant.name}」寄り|">あなたの好みの位置</h2>
     <p th:text="${quadrant.description}"></p>
@@ -45,7 +50,7 @@
     </div>
   </section>
   <section class="taste-result" aria-labelledby="taste-title">
-    <h2 id="taste-title">あなたの強い傾向</h2>
+    <h2 id="taste-title">今回の回答で強く出た傾向</h2>
     <!-- 特徴の点数を繰り返し表示する。strongestクラスで最も高い特徴を強調し、relativeStrengthで棒の幅を決める。 -->
     <div class="tendency-list">
       <div class="tendency" th:each="tag : ${tendencies}" th:classappend="${tag.strongest} ? ' strongest'">
@@ -66,7 +71,7 @@
   </section>
   <div class="section-heading recommendation-heading">
     <h2>好みから選んだおすすめ</h2>
-    <p class="muted">回答の傾向と、銘柄に登録された味わいの特徴を比べて選びました。香り・甘さ・飲み口を同じ指標で比較できます。</p>
+    <p class="muted">今回の回答の傾向と、銘柄に登録された味わいの特徴を比べて選びました。香り・甘さ・飲み口を同じ指標で比較できます。</p>
   </div>
   <div class="card-grid recommendations">
     <!-- 類似度の高い順に届いた銘柄を表示する。state.countは1から始まる表示用の順番。 -->

@@ -10,6 +10,7 @@ import com.example.demo.repository.UserProfileImageRepository;
 import com.example.demo.repository.FavoriteRepository;
 import com.example.demo.repository.SakeRepository;
 import com.example.demo.security.CustomUserDetails;
+import com.example.demo.validation.Utf8InputLength;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -256,7 +257,8 @@ public class MyPageController {
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         User user = current(principal);
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) return error(redirect, "現在のパスワードが違います");
-        if (newPassword.length() < 8 || newPassword.length() > 72) return error(redirect, "新しいパスワードは8〜72文字で入力してください");
+        if (newPassword.length() < 8 || !Utf8InputLength.isAtMost(newPassword, 72))
+            return error(redirect, "新しいパスワードは8文字以上、UTF-8で72バイト以内にしてください（半角英数字は72文字、日本語の多くは24文字が目安です）");
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setTemporaryPassword(false);
         users.save(user);

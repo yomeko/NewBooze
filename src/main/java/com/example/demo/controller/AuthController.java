@@ -70,7 +70,8 @@ public class AuthController {
                           HttpServletResponse response) {
 
         if (bindingResult.hasErrors()) {
-            return "auth/signup"; // 入力エラー時は同じ画面に戻す
+            // BCryptの72バイト上限も保存・ハッシュ化より先に確認し、理由を登録画面へ返す。
+            return "auth/signup";
         }
 
         // メールアドレスの重複チェック(usersテーブルのUNIQUE制約と二重にチェック)

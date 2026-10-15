@@ -195,6 +195,8 @@ h1, h2, h3 {
 }
 .search-field label { font-weight: 700; }
 .search-form .button { min-height: 48px; }
+.search-actions { display: grid; gap: 8px; text-align: center; }
+.search-actions a { color: var(--red); font-size: 14px; text-underline-offset: 4px; }
 .search-form input, .search-form select {
   min-width: 0; /* グリッド内でinput/selectがはみ出さないようにするための指定 */
   border: 1px solid var(--line);
@@ -206,6 +208,7 @@ h1, h2, h3 {
 
 /* ---- S04ページネーション ---- */
 .pagination {
+  flex-wrap: wrap;
   margin: 42px 0;
   justify-content: center;
   align-items: center;
@@ -505,7 +508,7 @@ footer {
 @media (max-width: 700px) {
   .site-header { padding: 0 5%; }
   .menu-toggle { display: block; } /* ハンバーガーボタンを表示 */
-  nav {
+  .site-header .main-nav {
     /* 通常は横並びのナビゲーションを、スマホ幅ではドロップダウン的に表示する */
     display: none;
     position: absolute;
@@ -517,7 +520,7 @@ footer {
     box-shadow: 0 4px 12px #0002;
   }
   /* main.jsがtoggleクリック時に付け外しする.openクラスで表示を切り替える */
-  nav.open { display: flex; flex-direction: column; }
+  .site-header .main-nav.open { display: flex; flex-direction: column; }
   .hero, .section { padding-left: 5%; padding-right: 5%; }
   .search-form { grid-template-columns: 1fr; } /* 検索フォームを縦一列に */
   .search-form .search-field:first-child { grid-column: auto; }
@@ -783,8 +786,8 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
   .site-header { min-height: 68px; }
   .logo { font-size: 22px; }
   .menu-toggle { min-width: 44px; min-height: 44px; cursor: pointer; }
-  nav { top: 62px; width: min(300px, 90vw); gap: 8px; border: 1px solid var(--line); }
-  nav a, nav .link-button { width: 100%; padding: 11px 8px; text-align: left; }
+  .site-header .main-nav { top: 62px; width: min(300px, 90vw); gap: 8px; border: 1px solid var(--line); }
+  .site-header .main-nav a, .site-header .main-nav .link-button { width: 100%; padding: 11px 8px; text-align: left; }
   .section { padding-top: 42px; padding-bottom: 60px; }
   .hero { padding-top: 64px; padding-bottom: 60px; }
   .hero h1 { font-size: clamp(32.6px, calc(12vw - 5px), 51px); }

@@ -19,6 +19,8 @@
   
   <h1>日本酒診断</h1>
   <p class="lead" th:text="|専門知識は必要ありません。回答に合わせて質問が分かれます。全${questionCount}問に答えて、今のあなたに合いそうな日本酒を見つけましょう。|"></p>
+  <p class="muted" sec:authorize="isAuthenticated()">結果とおすすめは今回の回答から作ります。保存済みの好みは、今回出た特徴の点数だけを更新し、今回出なかった過去の特徴は残します。マイページでは、これまでに保存された傾向を確認できます。</p>
+  <p class="muted" sec:authorize="isAnonymous()">ログインせず診断できます。回答や好みの点数は保存されません。</p>
 
   <p class="error" role="alert" th:if="${diagnosisError}" th:text="${diagnosisError}"></p>
   <form method="post" th:action="@{/diagnosis/result}" id="diagnosis-form" th:data-question-count="${questionCount}">

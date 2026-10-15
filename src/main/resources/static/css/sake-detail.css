@@ -37,6 +37,10 @@ html:has(.sake-detail-page) { scroll-padding-top: 16px; }
 .sake-purchase { margin-top: 24px; }
 .sake-price-list { list-style: none; padding: 0; }
 .sake-price-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 10px 0; }
+.sake-specification-list { margin: 0; }
+.sake-specification-list > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.sake-specification-list dt { font-weight: 700; }
+.sake-specification-list dd { margin: 0; }
 .sake-note { font-size: .85rem; color: #625b50; }
 .sake-official { margin: 24px 0 32px; }
 .sake-detail a:not(.button):not(.back) { color: var(--red); text-underline-offset: 4px; }

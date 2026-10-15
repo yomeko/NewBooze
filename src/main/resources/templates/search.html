@@ -25,7 +25,12 @@
     /search?name=...&keyword=...&type=...&taste=...&priceRange=...&sort=...&page=... の形でURLに現れる
     （SakeSearchController.search()の@RequestParamで受け取る）。
   -->
-  <form class="search-form" method="get" th:action="@{/search}">
+  <form class="search-form" method="get" th:action="@{/search}" aria-label="検索条件">
+    <div class="search-field">
+      <label for="search-keyword">キーワード</label>
+      <input id="search-keyword" name="keyword" type="search" th:value="${keyword}"
+             placeholder="銘柄・酒蔵・地域から探す">
+    </div>
     <div class="search-field">
       <label for="search-name">銘柄名</label>
       <input id="search-name" name="name" type="search" th:value="${name}"
@@ -49,7 +54,7 @@
       </select>
     </div>
     <div class="search-field">
-      <label for="search-price">価格帯<br>（公式サイトの販売値）</label>
+      <label for="search-price">価格帯<br>（参考価格）</label>
       <select id="search-price" name="priceRange">
         <option value="">すべての価格</option>
         <option value="under-1500" th:selected="${selectedPriceRange == 'under-1500'}">1,500円未満</option>
@@ -70,7 +75,10 @@
         <option value="newest" th:selected="${selectedSort == 'newest'}">新着順</option>
       </select>
     </div>
-    <button class="button primary">検索</button>
+    <div class="search-actions">
+      <button class="button primary">検索</button>
+      <a th:href="@{/search}">すべての条件を解除</a>
+    </div>
   </form>
 
   <!-- 検索結果件数の表示 -->
@@ -102,13 +110,14 @@
     現在の検索条件を維持したまま、pageだけを変えたリンクを組み立てる。
     result.totalPagesが1以下（＝ページ分割不要）の場合は表示自体をスキップする。
   -->
-  <nav class="pagination" th:if="${result.totalPages > 1}">
+  <nav class="pagination" aria-label="検索結果のページ" th:if="${result.totalPages > 1}">
     <a th:if="${result.hasPrevious}"
        th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${result.pageNumber - 1})}">← 前へ</a>
 
     <!-- #numbers.sequence(0, N-1) で 0〜(総ページ数-1) の連番を生成し、ページ番号リンクを並べる -->
     <span th:each="number : ${#numbers.sequence(0, result.totalPages - 1)}">
       <a th:classappend="${number == result.pageNumber} ? ' current'"
+         th:attr="aria-current=${number == result.pageNumber} ? 'page' : null"
          th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${number})}"
          th:text="${number + 1}"></a>
     </span>

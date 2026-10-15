@@ -54,6 +54,29 @@
     </div>
   </div>
 
+  <section class="sake-panel sake-specifications" aria-labelledby="sake-specifications-title">
+    <h2 id="sake-specifications-title">基本情報</h2>
+    <dl class="sake-specification-list">
+      <div><dt>酒の種類</dt><dd th:text="${#strings.isEmpty(sake.type) ? '未登録' : sake.type}"></dd></div>
+      <div><dt>産地</dt><dd th:text="${#strings.isEmpty(sake.region) ? '未登録' : sake.region}"></dd></div>
+      <div><dt>アルコール度数</dt><dd><span th:if="${sake.abv > 0}" th:text="|${#numbers.formatDecimal(sake.abv, 1, 1)}%|"></span><span th:unless="${sake.abv > 0}">未確認</span></dd></div>
+    </dl>
+    <h3>容量・価格</h3>
+    <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">
+      <li th:each="price : ${page.prices}">
+        <span th:text="${#strings.isEmpty(price.volume) ? '対象容量：未確認' : price.volume}"></span>
+        <strong th:if="${price.yen != null}" th:text="|${#numbers.formatInteger(price.yen, 1, 'COMMA')}円（税込）|"></strong>
+        <span th:unless="${price.yen != null}">価格：未確認</span>
+      </li>
+    </ul>
+    <p th:if="${#lists.isEmpty(page.prices)}">
+      <span>容量：未確認 ／ </span>
+      <span th:if="${sake.price > 0}" th:text="|参考価格：${#numbers.formatInteger(sake.price, 1, 'COMMA')}円（対象容量：未確認）|"></span>
+      <span th:unless="${sake.price > 0}">価格：未確認</span>
+    </p>
+    <p class="sake-note">度数は登録情報に基づく参考値です。価格は記載された容量のもので、販売店・時期・容量によって異なり、検索一覧の参考価格と異なる場合があります。購入前に公式サイトや商品ラベルで最新の価格・仕様を確認してください。</p>
+  </section>
+
   <!-- 紹介情報が登録された項目だけを表示する。th:eachは一覧の各項目を繰り返して描く。 -->
   <div class="sake-info-grid">
     <section class="sake-panel sake-tag-panel" aria-labelledby="sake-tags-title" th:if="${!#lists.isEmpty(sakeTags)}">

@@ -104,12 +104,10 @@ public class HomeController {
         return collectionPage(model, "about", "運営者情報", "運営者情報の掲載内容を準備しています。");
     }
 
-    /**
-     * プライバシーポリシーの準備中画面を表示する。
-     */
+    /** 登録前から、現在の機能で扱う情報と利用目的を確認できるようにする。 */
     @GetMapping("/privacy")
-    public String privacy(Model model) {
-        return collectionPage(model, "privacy", "プライバシーポリシー", "プライバシーポリシーの掲載内容を準備しています。");
+    public String privacy() {
+        return "privacy";
     }
 
     /**

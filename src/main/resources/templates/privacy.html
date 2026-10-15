@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>プライバシーポリシー | 一升の出会い</title>
+  <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('privacy')}"></header>
+<main class="beginner-guide">
+  <h1>プライバシーポリシー</h1>
+  <p class="lead">一升の出会いで扱う情報と、その利用目的を説明します。登録前でもこのページを確認できます。</p>
+  <p class="muted">現在の機能に基づく説明・更新日：2026年10月15日</p>
+
+  <section class="guide-step" aria-labelledby="privacy-account">
+    <h2 id="privacy-account">登録・ログインに使う情報</h2>
+    <p>表示名、メールアドレス、パスワードの照合用データ、登録日時を保存し、アカウントの作成、本人確認、ログイン、プロフィールの表示・変更に使います。パスワードは元の文字列をそのまま保存せず、照合用の値に変換して保存します。</p>
+    <p>パスワードの再発行を依頼すると、登録されたメールアドレス宛てに仮パスワードを送ります。このメールの配送には、メールアドレス、表示名、発行した仮パスワードを設定されたメールサーバーへ送信します。</p>
+  </section>
+
+  <section class="guide-step" aria-labelledby="privacy-diagnosis">
+    <h2 id="privacy-diagnosis">好み診断・お気に入り</h2>
+    <p>ログイン中の好み診断では、選んだ回答、診断日時、特徴ごとの点数をアカウントに結び付けて保存し、好みの傾向の表示に使います。結果とおすすめ銘柄は今回の回答から作ります。再診断では、今回出た特徴の点数を更新し、今回出なかった過去の特徴は残します。</p>
+    <p>ログインせずに診断した場合、回答や好みの点数はアカウントの記録として保存しません。お気に入りは、選んだ銘柄と登録日時を保存し、マイページや銘柄詳細での表示・解除に使います。</p>
+  </section>
+
+  <section class="guide-step" aria-labelledby="privacy-review">
+    <h2 id="privacy-review">レビュー・プロフィール画像の公開範囲</h2>
+    <p>レビューでは、銘柄、星の評価、コメント、公開設定、記録の日時を保存し、本人の評価の確認・変更・削除に使います。</p>
+    <p>「公開する」を選んだレビューは、表示名、プロフィール画像、星の評価、コメント、更新日時とともに、ログインしていない人を含む他の利用者へ表示されます。公開レビューの星は、銘柄の平均評価や件数にも使います。メールアドレスは公開レビューに表示しません。</p>
+    <p>任意で登録するプロフィール画像と、その表示位置・拡大率を保存し、マイページや公開レビューの投稿者表示に使います。アカウント設定で画像を変更・削除できます。</p>
+  </section>
+
+  <section class="guide-step" aria-labelledby="privacy-session">
+    <h2 id="privacy-session">ログイン状態の維持・外部への接続</h2>
+    <p>ログイン状態を維持し、本人の操作を確認するため、ブラウザのセッションCookieを使用します。</p>
+    <p>画面の文字を表示するため、Google Fonts（Google）へ接続してフォントを読み込みます。外部URLの商品画像を表示する場合は、その画像の配信元にも接続します。これらの接続では、IPアドレスやブラウザ情報などの通信に伴う情報が接続先へ送られます。</p>
+    <p>銘柄の公式サイトや購入先などの外部リンクを開くと、移動先のサイトに接続します。移動先での情報の取り扱いは、そのサイトの案内を確認してください。</p>
+  </section>
+
+  <section class="guide-step" aria-labelledby="privacy-controls">
+    <h2 id="privacy-controls">確認・変更・削除</h2>
+    <p>登録情報とプロフィール画像はアカウント設定から、お気に入りはマイページや銘柄詳細から、レビューの内容と公開設定は投稿した銘柄の詳細から確認・変更・削除できます。アカウント設定には、現在のパスワードを確認してアカウントを削除する操作もあります。</p>
+    <p>運営者の連絡先、情報の保存期間、委託先などの運用に関する詳細は確認中です。確認できた内容をこのページへ追記します。</p>
+  </section>
+
+  <div class="actions"><a class="button primary" th:href="@{/signup}">新規登録画面へ</a><a class="button" th:href="@{/}">ホームへ戻る</a></div>
+</main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
