@@ -1,0 +1,114 @@
+CREATE TABLE `users` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `temporary_password` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `admin` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_users_email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=174 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+INSERT INTO users VALUES ('1','you','ayumuminto489@gmail.com','$2a$10$Y32qssQFvfkKj0A/pAwUr.SqUHA130ZU/jP7oc7MOPeGygxhE6agK','0','2026-09-30 12:18:52','0');
+INSERT INTO users VALUES ('71','admin','admin','$2a$10$2Iv2w7QCDiFt1WkF6BDsruDy5/UAADy4KbESZNwaEpnyk4.r6EnSS','0','2026-10-04 12:09:11','1');
+INSERT INTO users VALUES ('73','[QA001] 初心者','qa100-001-mv7ns1or8cs1u4ot@example.com','$2a$10$mW7iiAuVguq2eBfz.dCWHuUHrhz2De9g1wfMtIPos9.Zzqpo4wV2S','0','2026-10-14 14:17:45','0');
+INSERT INTO users VALUES ('74','[QA002] 辛口好き','qa100-002-mv7nugl77arwt5dv@example.com','$2a$10$gFIz3KUvJGfrzwWyFfTrGekwDZauucon8YZwSTGjid96Y0MrSIVJO','0','2026-10-14 14:19:39','0');
+INSERT INTO users VALUES ('75','[QA003] 甘口好き','qa100-003-mv7nugl8k54gur0p@example.com','$2a$10$dtIRGksjVBAyb0vI3szaF.RPwUJGM.Spp8LvtKztDd2S2Aaddqu5m','0','2026-10-14 14:19:39','0');
+INSERT INTO users VALUES ('76','[QA005] Sake Fan','qa100-005-mv7nugqxnca2j3oq@example.com','$2a$10$E9pY/Wfplrkg8./wTQEQwu83DBXqhsWsiK.YayJ6NCkSNcFX92Lfi','0','2026-10-14 14:19:39','0');
+INSERT INTO users VALUES ('77','[QA004] 料理と楽しむ','qa100-004-mv7nugl91mnc7b8p@example.com','$2a$10$Q/bVBb3DCOWaKsE.8Nk7D.daaHsHnLHhRpNs2jyqOnNfB12iJNHH2','0','2026-10-14 14:19:39','0');
+INSERT INTO users VALUES ('78','[QA008] 甘口好き','qa100-008-mv7numhohh5tzps9@example.com','$2a$10$zqs/jPv/82kpcLAfxIfDte3NBxGJn/wCTyDIlgVWCJhxZTVox41M6','0','2026-10-14 14:19:46','0');
+INSERT INTO users VALUES ('79','[QA006] 初心者','qa100-006-mv7numhlt54j3qdp@example.com','$2a$10$BU2dFGCRo2JcWI1zD3B/s.qb0Ujrwn6SosoeY/tEvxWiVWPJsQnaK','0','2026-10-14 14:19:46','0');
+INSERT INTO users VALUES ('80','[QA007] 辛口好き','qa100-007-mv7numhnhojnbgbv@example.com','$2a$10$pDzyntL3za6/B6/8U9TZ0u.Cv/Y66gJz38DrupAzKq5jcGAiS0LCC','0','2026-10-14 14:19:46','0');
+INSERT INTO users VALUES ('81','[QA009] 料理と楽しむ','qa100-009-mv7numhw9dmr9yby@example.com','$2a$10$oAYwcMwILvpDUzpJGrXiVebDWxZyzF5ZIeuEoCuHLycEmwWjq0KYe','0','2026-10-14 14:19:46','0');
+INSERT INTO users VALUES ('82','[QA011] 初心者','qa100-011-mv7nurpebt9o50zu@example.com','$2a$10$PnKl9TwMXck/a1MhEWR8B.4dRuLY6OG37x5EQHIJuAat3LcMWndHG','0','2026-10-14 14:19:53','0');
+INSERT INTO users VALUES ('83','[QA010] Sake Fan','qa100-010-mv7nurj9rk9o3cv7@example.com','$2a$10$dX7PK9gaxswep/E5v.Wzze1E/sobHfsHYHeXgBzeIzw1RNrG5kcQ6','0','2026-10-14 14:19:53','0');
+INSERT INTO users VALUES ('84','[QA012] 辛口好き','qa100-012-mv7nuvlchpcf536o@example.com','$2a$10$pNXpXCreIDbyRO2L8D3Sxecuzt9ofOnHvOBU5zYTv6oGBYg2y3Bfq','0','2026-10-14 14:19:58','0');
+INSERT INTO users VALUES ('85','[QA013] 甘口好き','qa100-013-mv7nuvlebmbukgk0@example.com','$2a$10$4hFuWam.i3S.lOZ27soe3uGxPbDoua3Pj13xUY3lrHQitomu3gy4O','0','2026-10-14 14:19:58','0');
+INSERT INTO users VALUES ('86','[QA014] 料理と楽しむ','qa100-014-mv7nuvlfr8bxa8co@example.com','$2a$10$R4DapXlo3Z1XeJfHCUz80uY55EgXoQieMRuYqppwZ4/0AQMiqXqL6','0','2026-10-14 14:19:58','0');
+INSERT INTO users VALUES ('87','[QA015] Sake Fan','qa100-015-mv7nuvq0tvurc69j@example.com','$2a$10$y1om9s4SgQbt98tQV72fqOjm7aiypaRfhSNb/8L34JLEzgTae/udO','0','2026-10-14 14:19:58','0');
+INSERT INTO users VALUES ('88','[QA018] 甘口好き','qa100-018-mv7nv1c6fpkohbzq@example.com','$2a$10$QKBPTJyf.wFIM8jsWLYYouMjh42NtCPiKuxYQFq7WQd6j59xvZvo.','0','2026-10-14 14:20:05','0');
+INSERT INTO users VALUES ('89','[QA017] 辛口好き','qa100-017-mv7nv1ba9zmvzysr@example.com','$2a$10$/OSJCrN126MBWcTdlvJkA.tJmCZSqKYJis3gwsAPAOGSjYVHKXQz6','0','2026-10-14 14:20:05','0');
+INSERT INTO users VALUES ('90','[QA016] 初心者','qa100-016-mv7nv17oovbl97mu@example.com','$2a$10$mTOG1.jJKz9bNgDl9lpl/.e6HBozSsAuIoTnC8iv7SYlHer.EJBRC','0','2026-10-14 14:20:05','0');
+INSERT INTO users VALUES ('91','[QA019] 料理と楽しむ','qa100-019-mv7nv1c8ztw78j3p@example.com','$2a$10$JAwfB91c1hOnpDI5w6v.COV7WjJeY5YKlU/o57I89VlGHhUa088c2','0','2026-10-14 14:20:06','0');
+INSERT INTO users VALUES ('92','[QA020] Sake Fan','qa100-020-mv7nv7bzcpv37xez@example.com','$2a$10$fSrUsSipjza469GwN4QMc.rc3IlzU/pX5pM4B4psaL3fjNo31Lyqq','0','2026-10-14 14:20:13','0');
+INSERT INTO users VALUES ('93','[QA021] 初心者','qa100-021-mv7nv7gehbhbg2gc@example.com','$2a$10$XCAAgpUNCXimXDASUT9gre0WSCKvlcisMYa6pbzIsR0FVy3KhiHHu','0','2026-10-14 14:20:13','0');
+INSERT INTO users VALUES ('94','[QA022] 辛口好き','qa100-022-mv7nvb7bht3vxrh6@example.com','$2a$10$Nwmt0X2LK3/sklys.9vV1uVQetFEVJawsxU022eJuzfGw9SVRY0T.','0','2026-10-14 14:20:18','0');
+INSERT INTO users VALUES ('95','[QA023] 甘口好き','qa100-023-mv7nvb7cgph3jlj1@example.com','$2a$10$nR/XrljKY2.97kosl8WA1eue9qh3IZPSXrh1kQ.wQPDgvb2Yc3aiS','0','2026-10-14 14:20:18','0');
+INSERT INTO users VALUES ('96','[QA025] Sake Fan','qa100-025-mv7nvb7cuz1ed81n@example.com','$2a$10$crGKnv7bBU81vHZq0vmT7eMr73d/nK2ufPlAgqt0K.YMjV7ou.ney','0','2026-10-14 14:20:18','0');
+INSERT INTO users VALUES ('97','[QA024] 料理と楽しむ','qa100-024-mv7nvb7cm0f7lamb@example.com','$2a$10$G4YDT63vZFN014H7TAFeQOPt5ptlhRiQRmRTQF5eHb6MRMcUahRS.','0','2026-10-14 14:20:18','0');
+INSERT INTO users VALUES ('98','[QA029] 料理と楽しむ','qa100-029-mv7nvg32cgbuwn4a@example.com','$2a$10$PLhXqSQG4a4oPKpB7vgI2u4vJvHHzFposP5ON51/gAYZbH0yvejQO','0','2026-10-14 14:20:25','0');
+INSERT INTO users VALUES ('99','[QA026] 初心者','qa100-026-mv7nvg2gor37aagd@example.com','$2a$10$A2o9Fx94tg.dhO.GK8i9a./WqydgoPL6ocWnBrPQjPc6zxTsWrSo2','0','2026-10-14 14:20:25','0');
+INSERT INTO users VALUES ('100','[QA027] 辛口好き','qa100-027-mv7nvg30k4t53sy7@example.com','$2a$10$rXlYLwN1Du1ZZDeuDLH99e6OQcnndAXbjpHsc/6K/34DZcJVtIFea','0','2026-10-14 14:20:25','0');
+INSERT INTO users VALUES ('101','[QA028] 甘口好き','qa100-028-mv7nvg31zgq6et1n@example.com','$2a$10$9yzHAM7qrpNmQPm9s7ut1ezNGrDGrF6c.eWoGpdey53IHeoRCq1yu','0','2026-10-14 14:20:25','0');
+INSERT INTO users VALUES ('102','[QA030] Sake Fan','qa100-030-mv7nvl1i9166p1j1@example.com','$2a$10$.xau/rd4STLuXBaw/.WmrudwOhu8WRb6hsPiXfcoEDFCd9Sk2A8/G','0','2026-10-14 14:20:31','0');
+INSERT INTO users VALUES ('103','[QA031] 初心者','qa100-031-mv7nvl5zylopvl4s@example.com','$2a$10$5UT/PN6APWvheT9omxb1S.i23YhnwbTaDL8WxWHaaFuRY.R8I/Wpq','0','2026-10-14 14:20:31','0');
+INSERT INTO users VALUES ('104','[QA034] 料理と楽しむ','qa100-034-mv7nvp0thucaq8jv@example.com','$2a$10$K5onG5pjc/Sy/KfLVQecLetT6OkRJKbJxqPn2vOQ.MxZ6drEroZDK','0','2026-10-14 14:20:36','0');
+INSERT INTO users VALUES ('105','[QA033] 甘口好き','qa100-033-mv7nvoy2uhkl2nvb@example.com','$2a$10$emtleAiyiJamAv4LSn7Se.gjFzozHulirXBbe/vt/bTxN8QW0LSgq','0','2026-10-14 14:20:36','0');
+INSERT INTO users VALUES ('106','[QA035] Sake Fan','qa100-035-mv7nvp19uxg4n1hh@example.com','$2a$10$DlQjMTz2XDDd.RuseeO3IeZACTBdtWJ3eB9xkY2U2HhygW1prl/l.','0','2026-10-14 14:20:36','0');
+INSERT INTO users VALUES ('107','[QA032] 辛口好き','qa100-032-mv7nvoy16w9260f3@example.com','$2a$10$bTOpvL3Fg5iDRo8V6eZgK.rDqBBxUdlYdXAMcr7vhq3LdsZoq6IX.','0','2026-10-14 14:20:36','0');
+INSERT INTO users VALUES ('108','[QA038] 甘口好き','qa100-038-mv7nvu1luvuzguib@example.com','$2a$10$DN8VBLnf0Um0GqKmpI2dMOVbaF5CInhXwvkO2yNqXfeDLO9EQaguC','0','2026-10-14 14:20:43','0');
+INSERT INTO users VALUES ('109','[QA036] 初心者','qa100-036-mv7nvu0sp2sdthef@example.com','$2a$10$v6W/PlYfLmw6D1SrbL8hA.8ityrICUT3UE9Nmwf2.C2k4shqctD0a','0','2026-10-14 14:20:43','0');
+INSERT INTO users VALUES ('110','[QA037] 辛口好き','qa100-037-mv7nvu1ebuigps0d@example.com','$2a$10$JxHZ5mhsIa8OjmEd9L7vDeF63xS5EVZRZFlJyXVS54Kqq0B61Zwf2','0','2026-10-14 14:20:43','0');
+INSERT INTO users VALUES ('111','[QA039] 料理と楽しむ','qa100-039-mv7nvu4ax769mreq@example.com','$2a$10$wnVrhpRR1wzxaGINg7GhOuGzMRoRm92zwyj3yq/lfd.6EG.wV7Gtm','0','2026-10-14 14:20:43','0');
+INSERT INTO users VALUES ('112','[QA040] Sake Fan','qa100-040-mv7nvyso8z8glcsi@example.com','$2a$10$7CVsTdS0WTYvVHQh46sQEeI5x35y.Rz1UD1prXpSlq.V.XHvhxyfW','0','2026-10-14 14:20:49','0');
+INSERT INTO users VALUES ('113','[QA041] 初心者','qa100-041-mv7nvywm8ewp7ips@example.com','$2a$10$sRqzgvaLbTOcYocIiTUGwu5O1I8lLUWtc/.b8XqLZLPEZkNyndkFO','0','2026-10-14 14:20:49','0');
+INSERT INTO users VALUES ('114','[QA043] 甘口好き','qa100-043-mv7nw2mvx0f542r5@example.com','$2a$10$2Q1nNRLzNNbmB37.aiPzXuzObrmAadAs6lpDIwDeew0TUeS23iA26','0','2026-10-14 14:20:54','0');
+INSERT INTO users VALUES ('115','[QA042] 辛口好き','qa100-042-mv7nw2mud65ox218@example.com','$2a$10$ebH2zSrhVRWb76MSHSPsJeRDSjkjJOCGU56Bhx4qzLMmqY/gVgUQG','0','2026-10-14 14:20:54','0');
+INSERT INTO users VALUES ('116','[QA045] Sake Fan','qa100-045-mv7nw2nthd4rgr5s@example.com','$2a$10$5zx/wPNOJmw8YDLWb43nVO2Tq9ZEX80iICjjOJ8z83hi11lEy7FUS','0','2026-10-14 14:20:54','0');
+INSERT INTO users VALUES ('117','[QA044] 料理と楽しむ','qa100-044-mv7nw2mvd6xmnrqs@example.com','$2a$10$GNrxBfnbREgbLPvlA7MmwOA3pLQymbiJvX6DjRyeYWS9BqT/ESIXW','0','2026-10-14 14:20:54','0');
+INSERT INTO users VALUES ('118','[QA046] 初心者','qa100-046-mv7nw7wrhaoxgbx2@example.com','$2a$10$7NwiCCTR.yi8BzPAQQipz.0b37YlOUm48oiAv0DaMd9K.jbEhYGmm','0','2026-10-14 14:21:01','0');
+INSERT INTO users VALUES ('119','[QA049] 料理と楽しむ','qa100-049-mv7nw7x10e600r46@example.com','$2a$10$OLitWguCd9aTX4NFdtN.Ieig2fqAhlcyXedaVp69CP2MAx653IOWa','0','2026-10-14 14:21:01','0');
+INSERT INTO users VALUES ('120','[QA047] 辛口好き','qa100-047-mv7nw7wr9bs7lnty@example.com','$2a$10$jINK1zOnc3eLzXmo2B8qquj2uy4WYbElSilDO5vM/uwgwmMfdOKRG','0','2026-10-14 14:21:01','0');
+INSERT INTO users VALUES ('121','[QA048] 甘口好き','qa100-048-mv7nw7wvgsv8djo5@example.com','$2a$10$oHvFGkkjRREg0rG4kfh2CeRfNaMLRh9LWM1btuXXLviT3TxjCJLyK','0','2026-10-14 14:21:01','0');
+INSERT INTO users VALUES ('122','[QA050] Sake Fan','qa100-050-mv7nwcnalogvo39w@example.com','$2a$10$qpTR1alyTuAdO7Apbg1GBuriEPxWJwaS3952DMQnafp8dXoXlVwBq','0','2026-10-14 14:21:07','0');
+INSERT INTO users VALUES ('123','[QA051] 初心者','qa100-051-mv7nwcstzrmxd37x@example.com','$2a$10$AZjbWbvSxEOlxiVLDKVDBO1yJ0UAniz/QKci3wysmzyNgXUUVYCWu','0','2026-10-14 14:21:07','0');
+INSERT INTO users VALUES ('124','[QA055] Sake Fan','qa100-055-mv7nwghnzhsfxknf@example.com','$2a$10$sYRBhstpck5amLg9WXjLoORSOXKiGsDnQuawq0d9znzpg0MuRbOEy','0','2026-10-14 14:21:12','0');
+INSERT INTO users VALUES ('125','[QA053] 甘口好き','qa100-053-mv7nwghjvik055ko@example.com','$2a$10$Aa6g1oRMKaD.MHi0lKNq/uwgERyog1hGCRzwy68v1e/paps3OUp0e','0','2026-10-14 14:21:12','0');
+INSERT INTO users VALUES ('126','[QA052] 辛口好き','qa100-052-mv7nwghdskif5rw5@example.com','$2a$10$mNOQWnsuDQguIRiz.mciYeIbuUKWmQhzcx6T3Xge1uOuWcuW4vMyG','0','2026-10-14 14:21:12','0');
+INSERT INTO users VALUES ('127','[QA054] 料理と楽しむ','qa100-054-mv7nwghlykiol0sj@example.com','$2a$10$4CE9n4SsBZGS7zfLSS0GtuFwoysEiw90kvbWXPYoaLXmmdLTNE31a','0','2026-10-14 14:21:12','0');
+INSERT INTO users VALUES ('128','[QA057] 辛口好き','qa100-057-mv7nwlodxhfns4tr@example.com','$2a$10$iLZkgoYEhicRLD6wet0BJeqWsB08tKFdu602V1khjEQ6x.LTb/NGO','0','2026-10-14 14:21:18','0');
+INSERT INTO users VALUES ('129','[QA058] 甘口好き','qa100-058-mv7nwloftsj6jwoz@example.com','$2a$10$V62aUXJxFRRJuXuD9Kko6u6AqxcAMop93JD70XHwT7RsWhTvaWNLG','0','2026-10-14 14:21:19','0');
+INSERT INTO users VALUES ('130','[QA056] 初心者','qa100-056-mv7nwlo4sednli9l@example.com','$2a$10$RShK84rcvuSUwwscmQjiAOQoWNmOkC92xg/j.BeWZnNu4SupVoMwi','0','2026-10-14 14:21:19','0');
+INSERT INTO users VALUES ('131','[QA059] 料理と楽しむ','qa100-059-mv7nwlw491u58ja5@example.com','$2a$10$O3O6FKdrw3II/xVZvfNN8.pOeV/m0Q7yYxPETmqO3TPzQ22j2okSS','0','2026-10-14 14:21:19','0');
+INSERT INTO users VALUES ('132','[QA060] Sake Fan','qa100-060-mv7nwr0d30ukccpi@example.com','$2a$10$X6QKYoM6/R0aXjhuGL.77edn2MOtwhRCa.KCejjNBs1ry9i/cGqIu','0','2026-10-14 14:21:25','0');
+INSERT INTO users VALUES ('133','[QA061] 初心者','qa100-061-mv7nwr1yt611w5vn@example.com','$2a$10$9qL1IcCr/0NkA3TEOGbA2OX.I0FLul.i8BGZTqLkPZsmyZJG4jrPy','0','2026-10-14 14:21:25','0');
+INSERT INTO users VALUES ('134','[QA065] Sake Fan','qa100-065-mv7nwuqd1f4v4l2j@example.com','$2a$10$FFVzhTq4gJN4.nMQcfA8VOSvJ9W7zk23VPFuKuz5ytRA3bNqHPTXW','0','2026-10-14 14:21:30','0');
+INSERT INTO users VALUES ('135','[QA063] 甘口好き','qa100-063-mv7nwupw2dojbn8y@example.com','$2a$10$i3lfMB/eEayqhL000OlGAOMnphe4Pw3Cwum/RdL7D2kbOJr7gcVzi','0','2026-10-14 14:21:30','0');
+INSERT INTO users VALUES ('136','[QA062] 辛口好き','qa100-062-mv7nwupv4hvfjp4t@example.com','$2a$10$JUvJNnAPWV8lZU0fhN0e0eidriGRs05gwktw9bWBIzfjvjV2iSQry','0','2026-10-14 14:21:30','0');
+INSERT INTO users VALUES ('137','[QA064] 料理と楽しむ','qa100-064-mv7nwuq8w2bp5ibd@example.com','$2a$10$UIejQzcGbrU2EskmQ6cH9OYinPZL5LPUuZOppy7GPSssEKNcW8abm','0','2026-10-14 14:21:30','0');
+INSERT INTO users VALUES ('138','[QA066] 初心者','qa100-066-mv7nwzim4qfyzwuf@example.com','$2a$10$pEdTkulpq8iR.UImVE0NnOiilJicmhgKsVdzwccsFI0VyVQfjl3ly','0','2026-10-14 14:21:36','0');
+INSERT INTO users VALUES ('139','[QA067] 辛口好き','qa100-067-mv7nwzioexgirxy3@example.com','$2a$10$hOKfGofuYskbpo22vPZ84.POrPOethigMLxGEu9Q9nfPxvQ/juaba','0','2026-10-14 14:21:36','0');
+INSERT INTO users VALUES ('140','[QA069] 料理と楽しむ','qa100-069-mv7nwzo9js3q2038@example.com','$2a$10$aWjLtSAhyUviJ2WfvbFKpeKaXAqrG5f1tjpxsZqCdz01yBXy6sD9a','0','2026-10-14 14:21:37','0');
+INSERT INTO users VALUES ('141','[QA068] 甘口好き','qa100-068-mv7nwziooooehpkk@example.com','$2a$10$fFTyWvr8geWqV6LiVTvL9OYcsBA6WEcX6gT9/PH3frnvQE.FrCAPW','0','2026-10-14 14:21:37','0');
+INSERT INTO users VALUES ('142','[QA070] Sake Fan','qa100-070-mv7nx4d19cj1hye2@example.com','$2a$10$z8sX0wocI5cplPMrzlSwpOtBFTqlrxbAX5auxsEYO728nHmi4TMMO','0','2026-10-14 14:21:43','0');
+INSERT INTO users VALUES ('143','[QA071] 初心者','qa100-071-mv7nx4ivck8w4jhr@example.com','$2a$10$bGiQbbMBupk/eGeP4.jt4u28Ql6nGJOtCt60sk68jGvimFHWRA5Qy','0','2026-10-14 14:21:43','0');
+INSERT INTO users VALUES ('144','[QA073] 甘口好き','qa100-073-mv7nx880mt7weyp8@example.com','$2a$10$EqT4PnZBSPd6lBZeMkPqee7oXJF.sEvGQ5Rs4GAsaod7w.sOF74lu','0','2026-10-14 14:21:48','0');
+INSERT INTO users VALUES ('145','[QA074] 料理と楽しむ','qa100-074-mv7nx88rn3n2g4tv@example.com','$2a$10$wLBhfXfB78VdjFcSo7lXjOjamgbQBKRcuoKc/42tFVBJjW6PmQGqe','0','2026-10-14 14:21:48','0');
+INSERT INTO users VALUES ('146','[QA072] 辛口好き','qa100-072-mv7nx86jsuxqrjms@example.com','$2a$10$hSPE54KDvSxTJGD2LBy0BOUA6iItYGHTZZw9jDFWkzEywstSkm1qq','0','2026-10-14 14:21:48','0');
+INSERT INTO users VALUES ('147','[QA075] Sake Fan','qa100-075-mv7nx8cnaftcqujc@example.com','$2a$10$zbUGzKib6OTD8IS6AuDhVe6bofaoAPpH9ithXPy1vAV/s0ojYMkfW','0','2026-10-14 14:21:48','0');
+INSERT INTO users VALUES ('148','[QA077] 辛口好き','qa100-077-mv7nxergdhg6ohyc@example.com','$2a$10$rio2USfjTDTkDzYtNnjKmuV5LwD/vY.KG1LwKpFi6Zn04dG.duitC','0','2026-10-14 14:21:56','0');
+INSERT INTO users VALUES ('149','[QA076] 初心者','qa100-076-mv7nxerfctnhl2gq@example.com','$2a$10$LW1CqYhGyBi42zwk.M2w1uk9qZbO6luSwREhDJNeM9xiiLG28lsu6','0','2026-10-14 14:21:56','0');
+INSERT INTO users VALUES ('150','[QA078] 甘口好き','qa100-078-mv7nxeuii0995cnd@example.com','$2a$10$7wKdxvfjhNv9SecPaipBH.mN9LACn7qdagxPCk6xfGtDcxCv1GPSm','0','2026-10-14 14:21:56','0');
+INSERT INTO users VALUES ('151','[QA079] 料理と楽しむ','qa100-079-mv7nxevgy7r7di16@example.com','$2a$10$0Zu81zDHp4Cifcv..T6FYeHiQh/80zIxa6JUt0qwHXLUALGiYEfMq','0','2026-10-14 14:21:56','0');
+INSERT INTO users VALUES ('152','[QA080] Sake Fan','qa100-080-mv7nxjrsqir1n2ab@example.com','$2a$10$qyrJqSMcblEncHme9.lecOmr56ApAS56RnGLQkam8ZOneEm4P1kPW','0','2026-10-14 14:22:03','0');
+INSERT INTO users VALUES ('153','[QA081] 初心者','qa100-081-mv7nxju806nrdk78@example.com','$2a$10$UnVVPb/4rzKv2O1mJV926uxmSL9CIrBQegAcGT4cLWu.mqAZF6WWO','0','2026-10-14 14:22:03','0');
+INSERT INTO users VALUES ('154','[QA082] 辛口好き','qa100-082-mv7nxni5dpwo6m6b@example.com','$2a$10$WNDzWB5V4HbVvyduNYXYueqCm97yCxALkpRVPVNYJ0fmPlMWrerZG','0','2026-10-14 14:22:07','0');
+INSERT INTO users VALUES ('155','[QA083] 甘口好き','qa100-083-mv7nxni6jjzjkngh@example.com','$2a$10$zzmBcgLSbZrU.JxHLw2dXeBmT0kQ3bVkvspC89XMgnhExfKX5FTUK','0','2026-10-14 14:22:08','0');
+INSERT INTO users VALUES ('156','[QA085] Sake Fan','qa100-085-mv7nxnj1ni8dx0bm@example.com','$2a$10$y9Oc0PrthbABniiwjgRr3uEORP5t5kzo.V0I/dtPH1zOuXA1mIn16','0','2026-10-14 14:22:08','0');
+INSERT INTO users VALUES ('157','[QA084] 料理と楽しむ','qa100-084-mv7nxnieyyqhvlu6@example.com','$2a$10$IUc5NDMtqOQYk9ZFVuE9wOS8Sk/beiW2MOL9DGjC.8tR4lL5QQY7m','0','2026-10-14 14:22:08','0');
+INSERT INTO users VALUES ('158','[QA086] 初心者','qa100-086-mv7nxsk1ff4667eu@example.com','$2a$10$sJqrFaHprOkviiRZrqMnaO/TgVCzSo3su/NLvyoiLrdx9aGp.e0nm','0','2026-10-14 14:22:14','0');
+INSERT INTO users VALUES ('159','[QA087] 辛口好き','qa100-087-mv7nxskhylub46q2@example.com','$2a$10$bLhrgaINfNygdn4WRnyygebl7XVeWiz2szOPHvGgRYm8l6eMJZ4X6','0','2026-10-14 14:22:14','0');
+INSERT INTO users VALUES ('160','[QA088] 甘口好き','qa100-088-mv7nxski7laf3upu@example.com','$2a$10$lI4CW1ZXQTEEzD/.uHLBvesqovQ0XjpHF3nyXLb8zqgtEuguIZs5K','0','2026-10-14 14:22:14','0');
+INSERT INTO users VALUES ('161','[QA089] 料理と楽しむ','qa100-089-mv7nxsqvw71eib95@example.com','$2a$10$pbDjua/czGj5tRsHFHF6mugUZdwNAfd5hr7X6aHJBI7J75qnPXuxe','0','2026-10-14 14:22:14','0');
+INSERT INTO users VALUES ('162','[QA090] Sake Fan','qa100-090-mv7nxy6kbc0d19j1@example.com','$2a$10$cTWhlkL0.ULQtT5O.hcf6uQ6Egw2maYQcZ91G4emMn9wjJHiC6QtW','0','2026-10-14 14:22:21','0');
+INSERT INTO users VALUES ('163','[QA091] 初心者','qa100-091-mv7nxye0z73539mc@example.com','$2a$10$uj5MsYFsnDcW7z31Ct.ZbOB/ntL6v/BUgvGJb7FVRkIfG8JhkJ.wC','0','2026-10-14 14:22:22','0');
+INSERT INTO users VALUES ('164','[QA092] 辛口好き','qa100-092-mv7ny2bllu2oihcn@example.com','$2a$10$fykNnB6KkE8Y3NO3GbxcluqvXy0Rka7tQdgh64.l51yOiSGgvLwH2','0','2026-10-14 14:22:27','0');
+INSERT INTO users VALUES ('165','[QA093] 甘口好き','qa100-093-mv7ny2br6yiy3ucp@example.com','$2a$10$vBM2MWtL2cqihIJJ8yByG.JUod6xhAh1WgVRHDa9YPlxaKFnalYMC','0','2026-10-14 14:22:27','0');
+INSERT INTO users VALUES ('166','[QA095] Sake Fan','qa100-095-mv7ny2c4501dslwh@example.com','$2a$10$IlWJFARVkcB/P/a4Ayv/VeeEYybSQHVt9eUeFhhSc4hivvtzJWgNu','0','2026-10-14 14:22:27','0');
+INSERT INTO users VALUES ('167','[QA094] 料理と楽しむ','qa100-094-mv7ny2btdbhbjwr7@example.com','$2a$10$ThpIZkz144faueo0bdcMKuZD1zNc.c4EPYGP9UuVs953uqGSBtklK','0','2026-10-14 14:22:27','0');
+INSERT INTO users VALUES ('168','[QA098] 甘口好き','qa100-098-mv7ny7u2epijk2i9@example.com','$2a$10$W8OPjW3B7IgMAks0.HmR2ucVUFKQRANl383oF5k/WQylU/kHmCpga','0','2026-10-14 14:22:34','0');
+INSERT INTO users VALUES ('169','[QA099] 料理と楽しむ','qa100-099-mv7ny7uh38gflrko@example.com','$2a$10$dRkx4VPvcZToMoYu0nm1leQCUiWR8L1s1KptOilqOYGkAzp6/uodO','0','2026-10-14 14:22:34','0');
+INSERT INTO users VALUES ('170','[QA097] 辛口好き','qa100-097-mv7ny7u0ia3i83mb@example.com','$2a$10$xySEZoaLaprh.M9Bpq1jJe0E2u6WWitx4EBtL0ipXddJo7BCXeqZS','0','2026-10-14 14:22:34','0');
+INSERT INTO users VALUES ('171','[QA096] 初心者','qa100-096-mv7ny7tt7oibhsw9@example.com','$2a$10$.FHIFaWW4U/DZxK.DwN51ekMBPRPm9/./PbxxKirVPY/wsTE.VXD2','0','2026-10-14 14:22:34','0');
+INSERT INTO users VALUES ('172','[QA100] Sake Fan','qa100-100-mv7nycnu495ak3c6@example.com','$2a$10$ORmvLWt8hT6zdNVTcAVB9eEnXj22jy7oAvA0EGlGC60kY2KW/oMDy','0','2026-10-14 14:22:40','0');
+INSERT INTO users VALUES ('173','トイトイ','mintoayumu1005@icloud.com','$2a$10$kjxUU9qDKBo1Wn5sjLlUZ.CBM7T2we2zneCv9swKYiKqbO9dwpDDG','0','2026-10-19 14:20:02','0');
