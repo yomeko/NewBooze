@@ -42,6 +42,7 @@ public class SecurityConfig {
                     "/brewery-map", "/contact", "/categories", "/tags",
                     "/about", "/privacy", "/external-transmission",
                     "/diagnosis/**",
+                    // 未認証の会員も認証・再送を利用できるよう公開する。POSTのCSRF保護は維持する。
                     "/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/resend",
                     "/css/**", "/js/**", "/images/**"
                 ).permitAll()

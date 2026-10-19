@@ -31,6 +31,7 @@ public class EmailVerificationService {
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
 
+    // テスト用Clockを受け取るコンストラクターと区別し、Springが使う入口を明示する。
     @Autowired
     public EmailVerificationService(UserRepository users, PasswordEncoder encoder, JavaMailSender mail,
             @Value("${app.mail.from}") String from, @Value("${app.base-url}") String baseUrl) {
@@ -45,6 +46,8 @@ public class EmailVerificationService {
         this.mail = mail;
         this.from = from;
         this.clock = clock;
+        // 認証リンクの送信先ドメインを固定し、リクエストのHostによる差し替えを防ぐ。
+        // HTTPを許可するのはローカル開発時だけとし、公開先はHTTPSを必須にする。
         URI uri = URI.create(baseUrl);
         boolean local = "localhost".equals(uri.getHost()) || "127.0.0.1".equals(uri.getHost())
                 || "[::1]".equals(uri.getHost());
@@ -56,12 +59,14 @@ public class EmailVerificationService {
         this.baseUrl = baseUrl.replaceAll("/+$", "");
     }
 
+    // 保存とSMTP送信を同じトランザクションに含め、送信例外時は登録を取り消す。
     @Transactional
     public void register(SignupForm form) {
         User user = new User();
         user.setName(form.getName());
         user.setEmail(form.getEmail().trim());
         user.setPasswordHash(encoder.encode(form.getPassword()));
+        // 認証が済むまでCustomUserDetails.isEnabled()がログインを拒否する。
         user.setEmailVerified(false);
         send(user);
     }
@@ -69,6 +74,7 @@ public class EmailVerificationService {
     /** 登録の有無・認証済みかは呼び出し側へ公開しない。連続再送を60秒制限する。 */
     @Transactional
     public void resend(String email) {
+        // 行ロック中に送信間隔を確認し、同時に届いた再送要求の二重送信を抑える。
         users.findForVerificationByEmail(email.trim()).filter(u -> !u.isEmailVerified())
                 .filter(u -> u.getEmailVerificationSentAt() == null
                         || !u.getEmailVerificationSentAt().isAfter(LocalDateTime.now(clock).minusSeconds(60)))
@@ -78,11 +84,13 @@ public class EmailVerificationService {
     @Transactional
     public boolean verify(String token) {
         if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) return false;
+        // 生のトークンを保存せず、ハッシュで対象行をロックして一度だけ確定する。
         var candidate = users.findByEmailVerificationHash(hash(token));
         if (candidate.isEmpty()) return false;
         User user = candidate.get();
         if (user.isEmailVerified() || user.getEmailVerificationExpiresAt() == null
                 || !user.getEmailVerificationExpiresAt().isAfter(LocalDateTime.now(clock))) return false;
+        // 使用済みのハッシュと期限を消し、同じリンクでの再認証をできなくする。
         user.setEmailVerified(true);
         user.setEmailVerificationHash(null);
         user.setEmailVerificationExpiresAt(null);
@@ -95,17 +103,20 @@ public class EmailVerificationService {
     public boolean updateProfile(Long userId, String name, String email) {
         User user = users.findForProfileUpdateById(userId).orElseThrow();
         user.setName(name);
+        // 氏名だけの変更やメールアドレスの大文字・小文字の差では再認証しない。
         if (user.getEmail().equalsIgnoreCase(email)) {
             users.save(user);
             return false;
         }
         user.setEmail(email);
+        // 認証が済むまでCustomUserDetails.isEnabled()がログインを拒否する。
         user.setEmailVerified(false);
         send(user);
         return true;
     }
 
     private void send(User user) {
+        // 推測しにくい256ビットの乱数を、URLに安全な43文字のトークンにする。
         byte[] bytes = new byte[32];
         random.nextBytes(bytes);
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -113,6 +124,8 @@ public class EmailVerificationService {
         user.setEmailVerificationHash(hash(token));
         user.setEmailVerificationExpiresAt(now.plusHours(24));
         user.setEmailVerificationSentAt(now);
+        // メール送信より先にDB制約を検査し、保存できないリンクの送信を避ける。
+        // 再送の場合は同じ行のハッシュを置き換えるため、以前のリンクは無効になる。
         users.saveAndFlush(user);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
@@ -122,6 +135,7 @@ public class EmailVerificationService {
                 + baseUrl + "/verify-email?token=" + token
                 + "\n\nリンクは24時間有効です。再送すると以前のリンクは無効になります。\n"
                 + "心当たりがない場合は、このメールを破棄してください。");
+        // 例外を握りつぶさず呼び出し元へ返すことで、DBの登録・変更も戻す。
         mail.send(message);
     }
 

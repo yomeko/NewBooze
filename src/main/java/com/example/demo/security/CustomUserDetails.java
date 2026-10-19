@@ -59,6 +59,7 @@ public class CustomUserDetails implements UserDetails {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
+    // パスワードが一致しても、メール未認証の会員はSpring Securityがログインを拒否する。
     public boolean isEnabled() { return user.isEmailVerified(); }
 
     /**

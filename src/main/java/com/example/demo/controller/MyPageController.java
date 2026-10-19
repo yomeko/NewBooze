@@ -248,8 +248,10 @@ public class MyPageController {
             return error(redirect, "正しいメールアドレスを入力してください");
         if (users.existsByEmailAndIdNot(email, user.getId())) return error(redirect, "このメールアドレスは既に登録されています");
         try {
+            // 保存と確認メール送信はServiceでまとめ、送信に失敗したら変更を戻す。
             boolean emailChanged = verification.updateProfile(user.getId(), name, email);
             if (emailChanged) {
+                // 変更前のログイン状態を残さず、新しい宛先での認証後に再ログインさせる。
                 SecurityContextHolder.clearContext();
                 var session = request.getSession(false);
                 if (session != null) session.invalidate();

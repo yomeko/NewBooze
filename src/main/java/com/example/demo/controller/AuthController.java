@@ -68,6 +68,7 @@ public class AuthController {
         }
 
         try {
+            // 未認証会員として保存してメールを送り、この時点ではログイン状態を作らない。
             verification.register(form);
         } catch (MailException exception) {
             bindingResult.reject("mail", "認証メールを送信できませんでした。時間をおいてもう一度お試しください。登録は完了していません。");
