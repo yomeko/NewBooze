@@ -33,7 +33,7 @@ class MyPagePasswordTests {
         user.setTemporaryPassword(true);
         when(users.findById(42L)).thenReturn(Optional.of(user));
         controller = new MyPageController(users, mock(UserPreferenceRepository.class), encoder,
-                mock(UserProfileImageRepository.class), mock(FavoriteRepository.class), mock(SakeRepository.class));
+                mock(UserProfileImageRepository.class), mock(FavoriteRepository.class), mock(SakeRepository.class), mock(com.example.demo.service.EmailVerificationService.class));
     }
 
     @AfterEach void clearAuthentication() {

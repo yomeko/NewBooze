@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数：第1.1版　更新日：2026年10月15日
+版数：第1.2版　更新日：2026年10月19日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的と対象
 
-要件定義書 第1.5版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第1.6版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
 
 ### 1.2 更新方針と開発体制
 
@@ -42,7 +42,7 @@ JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録�
 |---|---|
 | com.example.demo | IsshoNoDeaiApplication |
 | controller | Home、SakeSearch、Diagnosis、Auth、MyPage、Admin等のController |
-| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、TemporaryPassword等のService |
+| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、会員登録・メール認証、TemporaryPassword等のService |
 | repository | Spring Data JPA Repository 17クラス |
 | entity | JPA Entity 17クラスと複合IDクラス |
 | model | 表示用Sake、詳細紹介SakePage、旧診断モデル |
@@ -58,7 +58,7 @@ DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validate�
 
 | テーブル | 主キー | 主な役割 |
 |---|---|---|
-| users | id | name、email、password_hash、temporary_password、admin |
+| users | id | name、email、password_hash、temporary_password、admin、認証状態・トークンハッシュ・期限・送信日時 |
 | breweries | id | 酒蔵名と都道府県 |
 | sake_types | id | 酒種名 |
 | tags | id | 特徴名と分類 |
@@ -104,7 +104,7 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | 商品 detail.html | 基本情報と容量別価格、紹介、タグ、購入先、レビューとお気に入り |
 | 診断 diagnosis.html | 共通4問＋回答別2問、戻る・次へ、分岐変更時の不要回答破棄、離脱確認 |
 | 結果 diagnosis-result.html | 今回の傾向・回答説明・最大5件のおすすめ、保存方法の説明 |
-| 認証 auth配下 | ログイン、会員登録、仮パスワード発行 |
+| 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、仮パスワード発行 |
 | マイページ mypage.html | 保存された嗜好と過去タグ保持の説明、お気に入り、プロフィール |
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
 | 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録 |
@@ -131,11 +131,17 @@ SakeCatalogService.searchは条件の空白と#タグ入力を整え、Repositor
 
 ### 5.2 認証と本人の情報
 
-AuthControllerは入力検証・email重複確認・BCrypt保存後にSecurityContextをHTTPセッションに保存し、診断へ移動する。ログインはSecurityConfigとCustomUserDetailsServiceで処理する。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。現行の会員登録にはメール認証・再送機能を含めない。SignupFormの@Size・@Utf8ByteLengthと共通Utf8InputLengthで、ハッシュ化前に8文字以上・UTF-8で72バイト以内を検証する。上限超過時は登録画面をHTTP 200で再表示し、入力欄に理由を示す。
+AuthControllerは入力検証後に会員登録Serviceへ処理を委譲する。Serviceはemail重複確認、BCrypt保存、未認証状態と認証トークンの保存、SMTP送信を同じトランザクションで行い、送信失敗時は登録をロールバックする。登録後は確認メールの案内を表示し、SecurityContextを作成する自動ログインは行わない。SignupFormの@Size・@Utf8ByteLengthと共通Utf8InputLengthで、ハッシュ化前に8文字以上・UTF-8で72バイト以内を検証する。上限超過時は登録画面をHTTP 200で再表示し、入力欄に理由を示す。
 
-MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。画像はJPEG・PNG・GIFで最大20MBを受信し、900KBを超える場合にJPEGへ圧縮する。保存画像は900KB以下、初期長辺1600px以下を目標にし、位置と拡大率を別フィールドに保存する。
+認証トークンはSecureRandomの32バイトからURL-safe Base64の43文字を作る。DBにはSHA-256の64文字ハッシュ、有効期限、送信日時を保存し、生のトークンは保持しない。有効期間は24時間で、GET /verify-email?token=は確認画面だけを表示する。CSRF付きPOST /verify-emailで行ロック下に未使用・期限内を検証し、認証済みにしてトークン情報を消去する。認証後も自動ログインせずログイン画面へ案内する。
 
-TemporaryPasswordServiceはSecureRandomで14文字の仮パスワードを生成し、ハッシュとtemporary_password=trueを保存してSMTPで送信する。未登録emailにも同じ完了案内を表示する。SMTP例外時はDBトランザクションをロールバックする。メール配信の実運用は設定・確認が必要。
+POST /verify-email/resendは行ロック下で未認証かつ前回送信から60秒以上経過した場合だけ送る。新規トークンへの置換で旧リンクを無効にする。送信失敗は更新をロールバックし、未登録・認証済み・間隔未満にも同じ案内を返す。リンクは受信したHostヘッダーに依存させず、固定設定app.base-urlから構築する。
+
+ログインはSecurityConfigとCustomUserDetailsServiceで処理し、CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員はパスワードが一致してもログインできない。既存ユーザーは移行SQLで認証済みとし、初期管理者も認証済みで作る。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。
+
+MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行う。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。画像はJPEG・PNG・GIFで最大20MBを受信し、900KBを超える場合にJPEGへ圧縮する。保存画像は900KB以下、初期長辺1600px以下を目標にし、位置と拡大率を別フィールドに保存する。
+
+TemporaryPasswordServiceは認証済み会員にだけSecureRandomで14文字の仮パスワードを生成し、ハッシュとtemporary_password=trueを保存してSMTPで送信する。未登録・未認証emailにも同じ完了案内を表示し、認証済みフラグを変更しない。仮パスワードによるメール認証の迂回を防ぐ。SMTP例外時はDBトランザクションをロールバックする。メール配信の実運用は設定・確認が必要。
 
 ### 5.3 レビューと管理登録
 
@@ -162,7 +168,10 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /diagnosis | 診断設問 |
 | POST | /diagnosis/result | choiceの一覧から集計・推薦、会員のみ保存 |
 | GETとPOST | /login | フォームとSpring Security認証 |
-| GETとPOST | /signup | 会員登録 |
+| GETとPOST | /signup | 会員登録と確認メール案内 |
+| GET | /verify-email | tokenを検証し確認画面を表示、未消費 |
+| POST | /verify-email | CSRF付き認証確定、一度限り |
+| POST | /verify-email/resend | 未認証会員の再送、60秒間隔 |
 | GETとPOST | /forgot-password | 仮パスワード案内と発行 |
 | POST | /logout | セッションからログアウト |
 
@@ -182,7 +191,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | POST | /mypage/sake/{id}/favorite | selectedで登録・解除 |
 | POST | /mypage/sake/{id}/review | rating、comment、publishedを保存 |
 | POST | /mypage/sake/{id}/review/delete | 本人レビュー削除 |
-| POST | /mypage/profile | プロフィール変更 |
+| POST | /mypage/profile | プロフィール変更、メール変更時は未認証化・送信後ログアウト |
 | POST | /mypage/password | パスワード変更 |
 | POST | /mypage/account/delete | 本人確認後に退会 |
 
@@ -220,7 +229,9 @@ SakeDiscoveryService.discoverはcatalog.allで登録済みの基本情報とタ�
 
 ### 8.1 運用設定
 
-application-local.propertiesで接続設定を上書きできる。DB_USERNAME、DB_PASSWORD等を環境に設定し、接続URLのAsia/Tokyoも確認する。既存DBには必要な差分SQLを適用し、未使用DBへの新規作成はRESET_DATABASE.mdに従う。詳細JSONを保存する既存環境にはsake_page_details_schema.sqlが必要。今回のガイド・比較機能はスキーマ変更不要。
+application-local.propertiesで接続設定を上書きできる。DB_USERNAME、DB_PASSWORD等を環境に設定し、接続URLのAsia/Tokyoも確認する。既存DBには必要な差分SQLを適用し、未使用DBへの新規作成はRESET_DATABASE.mdに従う。詳細JSONを保存する既存環境にはsake_page_details_schema.sqlが必要。メール認証では起動前にdata/email_verification_schema.sqlでusersの4列とトークンハッシュの一意索引を追加する。既存ユーザーは認証済みとして保持し、ddl-auto=validateを維持する。
+
+Gmail SMTPはsmtp.gmail.comの587番、認証有効、STARTTLS必須とし、接続・読み取り・書き込みのタイムアウトを各5000ミリ秒にする。送信元とアプリパスワードはGit管理外のapplication-local.propertiesへローカル入力し、scripts/configure-gmail.pyを使える。通常のGoogleログイン用パスワードは使わない。固定app.base-urlは開発環境でhttp://localhost:8080、公開環境では利用者が到達できるHTTPS URLを設定する。手順と実送信の確認項目はemail-verification.mdを参照する。
 
 起動時はAdminAccountInitializerが既存でなければ初期管理者を作る。運用時は既知の初期資格情報を変更する。DBとuploads/sake、利用する外部JSONをバックアップする。メール接続情報は環境設定で管理する。
 

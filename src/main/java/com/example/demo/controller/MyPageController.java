@@ -10,6 +10,9 @@ import com.example.demo.repository.UserProfileImageRepository;
 import com.example.demo.repository.FavoriteRepository;
 import com.example.demo.repository.SakeRepository;
 import com.example.demo.security.CustomUserDetails;
+import com.example.demo.service.EmailVerificationService;
+import org.springframework.mail.MailException;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.example.demo.validation.Utf8InputLength;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -53,6 +56,7 @@ public class MyPageController {
     private final UserProfileImageRepository profileImages;
     private final FavoriteRepository favorites;
     private final SakeRepository sake;
+    private final EmailVerificationService verification;
     // MariaDBのmax_allowed_packetが1MBの環境でも、SQLの付加情報を含めて
     // 安全に保存できるよう画像本体は900KB以下にする。
     private static final long MAX_PROFILE_IMAGE_SIZE = 900 * 1024;
@@ -62,13 +66,14 @@ public class MyPageController {
 
     public MyPageController(UserRepository users, UserPreferenceRepository preferences,
             PasswordEncoder passwordEncoder, UserProfileImageRepository profileImages,
-            FavoriteRepository favorites, SakeRepository sake) {
+            FavoriteRepository favorites, SakeRepository sake, EmailVerificationService verification) {
         this.users = users;
         this.preferences = preferences;
         this.passwordEncoder = passwordEncoder;
         this.profileImages = profileImages;
         this.favorites = favorites;
         this.sake = sake;
+        this.verification = verification;
     }
 
     /**
@@ -231,19 +236,31 @@ public class MyPageController {
 
     /**
      * 表示名とメールアドレスの形式・長さ・重複を確認してから保存する。
-     * ログイン中の情報も更新し、次の画面から変更後の表示名を使えるようにする。
+     * メール変更時は確認メールを送りログアウトする。氏名だけならログイン情報を更新する。
      */
     @PostMapping("/profile")
     public String updateProfile(@RequestParam String name, @RequestParam String email,
-            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
+            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect, HttpServletRequest request) {
         User user = current(principal);
         name = name.trim(); email = email.trim();
         if (name.isEmpty() || name.length() > 50) return error(redirect, "表示名は1〜50文字で入力してください");
         if (email.isEmpty() || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") || email.length() > 255)
             return error(redirect, "正しいメールアドレスを入力してください");
         if (users.existsByEmailAndIdNot(email, user.getId())) return error(redirect, "このメールアドレスは既に登録されています");
-        user.setName(name); user.setEmail(email); users.save(user);
-        refreshPrincipal(user);
+        try {
+            boolean emailChanged = verification.updateProfile(user.getId(), name, email);
+            if (emailChanged) {
+                SecurityContextHolder.clearContext();
+                var session = request.getSession(false);
+                if (session != null) session.invalidate();
+                return "redirect:/verify-email";
+            }
+        } catch (MailException exception) {
+            return error(redirect, "認証メールを送信できませんでした。変更は保存されていません。時間をおいて再度お試しください");
+        } catch (DataIntegrityViolationException exception) {
+            return error(redirect, "このメールアドレスは既に登録されています");
+        }
+        refreshPrincipal(users.findById(user.getId()).orElseThrow());
         redirect.addFlashAttribute("success", "プロフィールを変更しました");
         return "redirect:/mypage/account#settings";
     }

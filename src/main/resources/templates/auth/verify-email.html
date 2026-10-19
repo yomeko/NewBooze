@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>メール認証 - 一升の出会い</title>
+  <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('none')}"></header>
+<main class="page auth-page"><div class="auth-card">
+  <p class="eyebrow">EMAIL VERIFICATION</p><h1>メールアドレスの認証</h1>
+  <p class="field-error" th:if="${error}" th:text="${error}"></p>
+  <div th:if="${verified}"><p>メール認証が完了しました。ログインしてご利用ください。</p><a class="button primary" th:href="@{/login}">ログインする</a></div>
+  <div th:unless="${verified}">
+    <form th:if="${token}" th:action="@{/verify-email}" method="post">
+      <input type="hidden" name="token" th:value="${token}">
+      <p>このメールアドレスでの登録を完了します。</p><button class="button primary">メールアドレスを認証する</button>
+    </form>
+    <p th:unless="${token}">登録時に送信した認証メールのリンクを開いてください。認証するまでログインできません。</p>
+    <p th:if="${sent}">未認証の登録がある場合、認証メールを再送しました。再送は60秒以上あけてください。</p>
+    <div class="auth-divider"></div><h2>認証メールを再送</h2>
+    <p>リンクの有効期限は24時間です。届かない場合は迷惑メールフォルダもご確認ください。</p>
+    <form th:action="@{/verify-email/resend}" method="post">
+      <div class="form-group"><label for="email">登録したメールアドレス</label><input id="email" name="email" type="email" autocomplete="email" maxlength="255" required></div>
+      <button class="button">認証メールを再送する</button>
+    </form>
+  </div>
+</div></main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+<script th:src="@{/js/main.js}"></script>
+</body></html>

@@ -2,7 +2,8 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.security.CustomUserDetails;
+import com.example.demo.dto.SignupForm;
+import com.example.demo.service.EmailVerificationService;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -13,9 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
@@ -28,10 +27,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** DBを使わず、登録のバイト境界・入力エラー表示・成功後の認証を確認する。 */
+/** DBを使わず、登録のバイト境界・入力エラー表示・成功後のメール認証案内を確認する。 */
 class AuthControllerTests {
     private final UserRepository users = mock(UserRepository.class);
-    private final BCryptPasswordEncoder encoder = spy(new BCryptPasswordEncoder());
+    private final EmailVerificationService verification = mock(EmailVerificationService.class);
     private MockMvc mvc;
 
     @BeforeEach void setup() {
@@ -46,7 +45,7 @@ class AuthControllerTests {
         var views = new ThymeleafViewResolver();
         views.setTemplateEngine(engine);
         views.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(users, encoder))
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(users, verification))
                 .setViewResolvers(views).build();
     }
 
@@ -59,7 +58,7 @@ class AuthControllerTests {
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(html).contains("UTF-8で72バイト以内", "日本語の多くは24文字", "href=\"/privacy\"",
                 "登録情報の利用目的", "aria-describedby=\"password-help\"");
-        verifyNoInteractions(users, encoder);
+        verifyNoInteractions(users, verification);
     }
 
     @ParameterizedTest(name = "{0}")
@@ -77,30 +76,23 @@ class AuthControllerTests {
         assertThat(result.getResponse().getRedirectedUrl()).isNull();
         assertThat(result.getRequest().getSession(false)).isNull();
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-        verifyNoInteractions(users, encoder);
+        verifyNoInteractions(users, verification);
     }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("allowedPasswords")
-    void allowedPasswordIsHashedSavedAndAutomaticallyLoggedIn(String label, String password) throws Exception {
+    void allowedPasswordRequestsVerificationWithoutLoggingIn(String label, String password) throws Exception {
         when(users.findByEmail("signup@example.com")).thenReturn(Optional.empty());
-        when(users.save(any(User.class))).thenAnswer(call -> {
-            User saved = call.getArgument(0);
-            saved.setId(42L);
-            return saved;
-        });
         var result = mvc.perform(post("/signup").param("name", "登録テスト").param("email", "signup@example.com")
                 .param("password", password))
-                .andExpect(redirectedUrl("/diagnosis")).andReturn();
-        var saved = ArgumentCaptor.forClass(User.class);
-        verify(users).save(saved.capture());
-        assertThat(saved.getValue().getPasswordHash()).isNotEqualTo(password);
-        assertThat(encoder.matches(password, saved.getValue().getPasswordHash())).isTrue();
-        assertThat(saved.getValue().isAdmin()).isFalse();
-        SecurityContext context = (SecurityContext) result.getRequest().getSession(false)
-                .getAttribute("SPRING_SECURITY_CONTEXT");
-        assertThat(context.getAuthentication().isAuthenticated()).isTrue();
-        assertThat(((CustomUserDetails) context.getAuthentication().getPrincipal()).getUserId()).isEqualTo(42L);
+                .andExpect(redirectedUrl("/verify-email")).andReturn();
+        var form = ArgumentCaptor.forClass(SignupForm.class);
+        verify(verification).register(form.capture());
+        assertThat(form.getValue().getPassword()).isEqualTo(password);
+        assertThat(form.getValue().getEmail()).isEqualTo("signup@example.com");
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(result.getRequest().getSession(false)).isNull();
+        verify(users, never()).save(any());
     }
 
     @Test void shortPasswordIsStillRejectedBeforeEncoding() throws Exception {
@@ -108,7 +100,7 @@ class AuthControllerTests {
                 .param("password", "short12"))
                 .andExpect(status().isOk()).andExpect(view().name("auth/signup"))
                 .andExpect(model().attributeHasFieldErrors("signupForm", "password"));
-        verifyNoInteractions(users, encoder);
+        verifyNoInteractions(users, verification);
     }
 
     @Test void duplicateEmailStillShowsFieldErrorWithoutSaving() throws Exception {
@@ -118,7 +110,7 @@ class AuthControllerTests {
                 .andExpect(status().isOk()).andExpect(view().name("auth/signup"))
                 .andExpect(model().attributeHasFieldErrors("signupForm", "email"));
         verify(users, never()).save(any());
-        verifyNoInteractions(encoder);
+        verifyNoInteractions(verification);
     }
 
     static Stream<Arguments> overLimitPasswords() {
