@@ -41,3 +41,7 @@ out/
 
 # 登録された日本酒の商品画像
 /uploads/
+
+# SMTP設定保存時の一時ファイルとPython実行キャッシュ
+.smtp-config-*
+__pycache__/
