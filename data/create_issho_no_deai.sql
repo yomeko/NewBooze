@@ -25,9 +25,13 @@ CREATE TABLE `users` (
   `email_verification_hash` VARCHAR(64) NULL UNIQUE,
   `email_verification_expires_at` DATETIME NULL,
   `email_verification_sent_at` DATETIME NULL,
+  `password_reset_hash` VARCHAR(64) NULL,
+  `password_reset_expires_at` DATETIME NULL,
+  `password_reset_sent_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_users_email` (`email`)
+  UNIQUE KEY `uk_users_email` (`email`),
+  UNIQUE KEY `uk_users_password_reset_hash` (`password_reset_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `breweries` (

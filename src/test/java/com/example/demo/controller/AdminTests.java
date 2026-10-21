@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.entity.User;
 import com.example.demo.repository.*;
 import com.example.demo.security.CustomUserDetails;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,13 +34,25 @@ class AdminTests {
     @Autowired PasswordEncoder encoder;
     @Autowired com.example.demo.service.SakeImageService images;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
+    private static final String ADMIN_PASSWORD = "t4!Ms8-qL2v7";
+    private User testAdmin;
+
+    @BeforeEach void createTestAdministrator() {
+        testAdmin = new User();
+        testAdmin.setName("admin");
+        testAdmin.setEmail("admin-test-" + java.util.UUID.randomUUID() + "@example.com");
+        testAdmin.setPasswordHash(encoder.encode(ADMIN_PASSWORD));
+        testAdmin.setAdmin(true);
+        testAdmin.setEmailVerified(true);
+        users.saveAndFlush(testAdmin);
+    }
 
     // 管理者だけが管理画面を開けて、通常ログイン後も管理画面へ進むことを確認する。
     @Test void adminLoginAndProtectedPages() throws Exception {
-        User admin = users.findByEmail("admin").orElseThrow();
+        User admin = testAdmin;
         assertThat(admin.isAdmin()).isTrue();
-        assertThat(encoder.matches("admin", admin.getPasswordHash())).isTrue();
-        mvc.perform(post("/login").with(csrf()).param("username", "admin").param("password", "admin"))
+        assertThat(encoder.matches(ADMIN_PASSWORD, admin.getPasswordHash())).isTrue();
+        mvc.perform(post("/login").with(csrf()).param("username", admin.getEmail()).param("password", ADMIN_PASSWORD))
                 .andExpect(authenticated().withRoles("USER", "ADMIN"))
                 .andExpect(redirectedUrl("/admin"));
         mvc.perform(get("/admin")).andExpect(status().is3xxRedirection());
@@ -51,7 +64,7 @@ class AdminTests {
 
     // 名前検索、登録の入力チェック、権限とCSRFの確認、保存後の検索表示まで確認する。
     @Test void searchUsersAndRegisterSake() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(testAdmin));
         mvc.perform(get("/admin/users").with(admin).param("keyword", "admin"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("admin</td>")));
         mvc.perform(get("/admin/users").with(admin).param("keyword", "不存在ユーザー123"))
@@ -71,7 +84,7 @@ class AdminTests {
                 .andExpect(status().isOk()).andExpect(content().string(containsString("管理登録テスト")));
     }
     @Test void registersAndServesProductImageAndRejectsInvalidFiles() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(testAdmin));
         var output = new java.io.ByteArrayOutputStream();
         javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
                 java.awt.image.BufferedImage.TYPE_INT_RGB), "png", output);
@@ -107,7 +120,7 @@ class AdminTests {
 
 
     @Test void detailFormatPersistsAndDisplaysAllIntroductionSections() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(testAdmin));
         var tagId = jdbc.queryForObject("SELECT MIN(id) FROM tags", Long.class);
         String typeId = types.findAll().getFirst().getId().toString();
         mvc.perform(get("/admin/sake/new").with(admin)).andExpect(status().isOk())
@@ -145,7 +158,7 @@ class AdminTests {
     }
 
     @Test void invalidDetailInputsPreserveFormAndDoNotSave() throws Exception {
-        var admin = user(new CustomUserDetails(users.findByEmail("admin").orElseThrow()));
+        var admin = user(new CustomUserDetails(testAdmin));
         long count = sake.count();
         mvc.perform(post("/admin/sake/new").with(admin).with(csrf())
                 .param("name", "不正URLテスト").param("sakeTypeId", types.findAll().getFirst().getId().toString())

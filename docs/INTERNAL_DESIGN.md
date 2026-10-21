@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数：第1.3版　更新日：2026年10月21日
+版数：第1.4版　更新日：2026年10月21日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的と対象
 
-要件定義書 第1.6版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第1.7版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
 
 ### 1.2 更新方針と開発体制
 
@@ -42,12 +42,13 @@ JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録�
 |---|---|
 | com.example.demo | IsshoNoDeaiApplication |
 | controller | Home、SakeSearch、Diagnosis、Auth、MyPage、Admin等のController |
-| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、会員登録・メール認証、TemporaryPassword等のService |
+| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、会員登録・メール認証、PasswordReset等のService |
 | repository | Spring Data JPA Repository 17クラス |
 | entity | JPA Entity 17クラスと複合IDクラス |
 | model | 表示用Sake、詳細紹介SakePage、旧診断モデル |
 | dto | SakePageDto、診断表示、入力フォーム、TastePresentation |
-| security | CustomUserDetailsとCustomUserDetailsService |
+| security | CustomUserDetails、CustomUserDetailsService、AccountSessionValidationFilter、AuthenticationRateLimiterとFilter |
+| validation | Utf8InputLength、Utf8ByteLength、BoundedImageDecoder等の入力検証 |
 | config | SecurityConfig、AdminAccountInitializer |
 
 ## 3 データベース設計
@@ -58,7 +59,7 @@ DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validate�
 
 | テーブル | 主キー | 主な役割 |
 |---|---|---|
-| users | id | name、email、password_hash、temporary_password、admin、認証状態・トークンハッシュ・期限・送信日時 |
+| users | id | name、email、password_hash、temporary_password、admin、メール認証状態・認証と再設定の各トークンハッシュ・期限・送信日時 |
 | breweries | id | 酒蔵名と都道府県 |
 | sake_types | id | 酒種名 |
 | tags | id | 特徴名と分類 |
@@ -104,7 +105,7 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | 商品 detail.html | 基本情報と容量別価格、紹介、タグ、購入先、レビューとお気に入り |
 | 診断 diagnosis.html | 共通4問＋回答別2問、戻る・次へ、分岐変更時の不要回答破棄、離脱確認 |
 | 結果 diagnosis-result.html | 今回の傾向・回答説明・最大5件のおすすめ、保存方法の説明 |
-| 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、仮パスワード発行 |
+| 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、パスワード再設定の要求・確定 |
 | マイページ mypage.html | 保存された嗜好と過去タグ保持の説明、お気に入り、プロフィール |
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
 | 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録 |
@@ -139,11 +140,17 @@ POST /verify-email/resendは前後の空白を除いたemailの形式と255文�
 
 Serviceは行ロック下で未認証かつ前回送信から60秒以上経過した場合だけ送る。未登録・認証済み・間隔未満・送信成功には同じ条件付きの受付案内を表示し、送信例外は共通のメールエラーを案内する。再送成功時だけトークンの置換が確定して旧リンクが無効になり、失敗時はハッシュ・期限・送信日時を戻す。リンクは受信したHostヘッダーに依存させず、固定設定app.base-urlから構築する。
 
-ログインはSecurityConfigとCustomUserDetailsServiceで処理し、CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員はパスワードが一致してもログインできない。既存ユーザーは移行SQLで認証済みとし、初期管理者も認証済みで作る。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。
+ログインはSecurityConfigとCustomUserDetailsServiceで処理し、CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員はパスワードが一致してもログインできない。旧既定パスワードの管理者も拒否する。既存ユーザーはメール認証移行SQLで認証済みとして保持し、明示的な初回設定で作る管理者も認証済みとする。旧機能で発行済みの仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。新規の仮パスワード発行は行わない。
 
-MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行う。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。画像はJPEG・PNG・GIFで最大20MBを受信し、900KBを超える場合にJPEGへ圧縮する。保存画像は900KB以下、初期長辺1600px以下を目標にし、位置と拡大率を別フィールドに保存する。
+CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。別ブラウザに残ったセッションを変更前の権限で使い続けることを防ぐ。
 
-TemporaryPasswordServiceは認証済み会員にだけSecureRandomで14文字の仮パスワードを生成し、ハッシュとtemporary_password=trueを保存してSMTPで送信する。未登録・未認証emailにも同じ完了案内を表示し、認証済みフラグを変更しない。仮パスワードによるメール認証の迂回を防ぐ。SMTP例外時はDBトランザクションをロールバックする。メール配信の実運用は設定・確認が必要。
+MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行い、未使用のパスワード再設定トークンを無効にする。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。パスワード変更時にも未使用の再設定トークンを無効にする。
+
+画像はJPEG・PNG・GIFで最大20MBを受信し、BoundedImageDecoderが実際の画像形式と2000万画素以下をメモリー展開前に確認する。GIFは論理画面と全フレームの寸法も検証し、最初のフレームだけ展開する。壊れた画像は入力エラーにし、保存MIMEは実形式から決める。900KBを超える場合は初期長辺1600px以下を目標にJPEGへ圧縮し、画質と寸法を段階的に下げて900KB以下で保存する。900KB以下のGIFは元のバイト列を保持してアニメーションを維持する。画像変更時は位置・拡大率を中央・等倍へ戻し、表示調整は別フィールドに保存する。
+
+PasswordResetServiceは認証済み会員にだけSecureRandomの32バイトから43文字のURL-safeトークンを発行する。DBにはSHA-256の64文字ハッシュ・30分の期限・送信日時を保存し、会員行のロック下で前回送信から60秒以上あいた場合だけ送る。要求時に既存のpassword_hashを変更しない。再送成功時に旧トークンを置換し、SMTP例外時はトランザクションを戻す。送信先・トークンを含まない共通の受付案内を未登録・未認証・間隔未満・SMTP失敗にも表示し、GETへリダイレクトする。
+
+GET /reset-password?token=は形式を確認してトークンをセッションへ置き、/reset-passwordへ移動してURLから除く。このGETはパスワード変更・トークン消費を行わない。フォームにはトークンを埋め込まず、CSRF保護付きPOST /reset-passwordでセッションのトークン、新パスワードと確認入力を使う。Serviceは行ロック下で未使用・期限内・認証済みを確認してBCryptハッシュを保存し、temporary_password=falseとする。成功時は再設定ハッシュと期限を消去し、60秒制限のため送信日時は残す。セッションのトークンを除いて/login?passwordResetへ移動し、自動ログインしない。再設定関連ページはCache-Control: no-storeとReferrer-Policy: no-referrerを返す。リンクは固定app.base-urlから作り、HTTPSまたはlocalhostのHTTPだけを許可する。
 
 ### 5.3 レビューと管理登録
 
@@ -152,6 +159,19 @@ SakeInteractionServiceはJdbcTemplateで本人のレビューと公開一覧を�
 AdminControllerは酒種・タグ・URL・画像を検証し、銘柄をsaveAndFlush、詳細JSONを保存、選択タグを選択順に応じたscoreで登録する。酒蔵名が新規なら作成する。DB処理はトランザクション化し、保存失敗時は保存済み画像の削除も試みる。商品画像はJPEG・PNG、最大5MB・2000万画素でuploads/sakeへ保存する。
 
 登録フォームはクリックした選択順のtagIdsを送信する。N個選択時は選択順にN、N−1、…、1をsake_tags.scoreへ保存する。解除時は残りの順序で重みを付け直し、再選択時は末尾に追加する。入力エラーでの再表示にも送信された順序を保持する。
+
+### 5.4 認証操作の回数制限
+
+AuthenticationRateLimitFilterはCSRF確認後、認証・SMTP送信より前に次のPOSTを制限する。ログイン成功・失敗にかかわらず、許可された要求を数える。
+
+| POSTのURL | 制限単位と回数 |
+|---|---|
+| /login | IPごと20回／5分、ログインIDごと10回／5分の両方 |
+| /signup、/forgot-password | URL・IPごと5回／15分 |
+| /reset-password、/verify-email/resend | URL・IPごと10回／15分 |
+| /verify-email | IPごと20回／15分 |
+
+超過はHTTP 429、待ち時間のRetry-After、no-storeと日本語案内を返す。AuthenticationRateLimiterはIPやログインIDの原文を保持せずSHA-256で管理キーを作り、最大20000件をプロセス内メモリーに保持する。満杯時は有効な制限を追い出さず、新しい要求を待たせる。再起動で記録は消え、複数インスタンスでは共有の制限機構が必要となる。IPはrequest.getRemoteAddr()を使い、X-Forwarded-For等を直接信用しない。単一プロキシのIPに全利用者が集約される構成では正当な利用も同じ制限になるため、公開前に信頼するプロキシと利用者IPの取得方法を決めて検証する。
 
 ## 6 エンドポイントと権限
 
@@ -174,7 +194,9 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /verify-email | tokenを検証し確認画面を表示、未消費 |
 | POST | /verify-email | CSRF付き認証確定、一度限り |
 | POST | /verify-email/resend | 再送受付、60秒間隔、GETへ移動 |
-| GETとPOST | /forgot-password | 仮パスワード案内と発行 |
+| GETとPOST | /forgot-password | 再設定リンクの要求と共通の受付案内 |
+| GET | /reset-password | 初回tokenをセッションへ移してURLから除き、再設定フォームを表示 |
+| POST | /reset-password | CSRF付き新パスワード確定、一度限り |
 | POST | /logout | セッションからログアウト |
 
 商品が存在しなければ404。診断の回答が空・重複・未回答・別経路の混入なら保存せず説明付き質問画面を表示する。結果表示はPOST /diagnosis/resultであり、旧案のPOST /diagnosis/answerとGET /diagnosis/resultは存在しない。
@@ -233,9 +255,13 @@ SakeDiscoveryService.discoverはcatalog.allで登録済みの基本情報とタ�
 
 application-local.propertiesで接続設定を上書きできる。DB_USERNAME、DB_PASSWORD等を環境に設定し、接続URLのAsia/Tokyoも確認する。既存DBには必要な差分SQLを適用し、未使用DBへの新規作成はRESET_DATABASE.mdに従う。詳細JSONを保存する既存環境にはsake_page_details_schema.sqlが必要。メール認証では起動前にdata/email_verification_schema.sqlでusersの4列とトークンハッシュの一意索引を追加する。既存ユーザーは認証済みとして保持し、ddl-auto=validateを維持する。
 
+パスワード再設定では起動前にdata/password_reset_token_schema.sqlでusersのNULL許容3列とハッシュの一意索引を追加する。既存ユーザー・パスワードは変更しない。対象DBとバックアップを確認し、未適用のDBに一度だけ実行する。今回の文書更新自体は実DB適用・再照合の完了を意味しない。
+
 Gmail SMTPはsmtp.gmail.comの587番、認証有効、STARTTLS必須とし、接続・読み取り・書き込みのタイムアウトを各5000ミリ秒にする。送信元とアプリパスワードはGit管理外のapplication-local.propertiesへローカル入力し、scripts/configure-gmail.pyを使える。通常のGoogleログイン用パスワードは使わない。固定app.base-urlは開発環境でhttp://localhost:8080、公開環境では利用者が到達できるHTTPS URLを設定する。手順と実送信の確認項目はemail-verification.mdを参照する。
 
-起動時はAdminAccountInitializerが既存でなければ初期管理者を作る。運用時は既知の初期資格情報を変更する。DBとuploads/sake、利用する外部JSONをバックアップする。メール接続情報は環境設定で管理する。
+AdminAccountInitializerは既定で無効。初回だけADMIN_BOOTSTRAP_ENABLED=trueとADMIN_EMAIL・ADMIN_PASSWORD・ADMIN_NAMEを設定する。メールアドレスと表示名を検証し、パスワードは12文字以上・UTF-8で72バイト以内、英大文字・英小文字・数字・記号のうち3種類以上とし、既知の既定値や単純な繰り返しを拒否する。同じメールアドレスが存在すればパスワード・権限を変更しない。制限した環境で一意のメールアドレスを持つ新管理者を作成し、動作確認後に初期作成を無効にして資格情報設定を除く。旧既定パスワードの管理者はログイン・セッションを拒否するがレコードは自動変更しないため、公開前に旧権限の解除などを明示的に行う。手順はadmin.mdとSECURITY.mdを参照する。
+
+DBとuploads/sake、利用する外部JSONをバックアップする。接続情報・SMTP情報・管理者初期設定は秘密として管理する。HTTPS、Cookie、信頼するプロキシ、複数インスタンスの制限共有は公開先の構成で確認する。
 
 ### 8.2 検証と未提供の機能
 
@@ -243,4 +269,4 @@ Gradleの全テストでDB接続・表示・権限・保存・画像等を検証
 
 残課題は準備中ページ、プライバシーポリシーの運用情報（連絡先・保存期間・委託先）の確認、飲酒投稿・いいね・通報の操作経路、診断履歴一覧、トピック初期表示のランダム化、参考価格・度数等のデモ商品情報の精査、SMTPと公開環境の運用確認。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を検討する。今回はこれらの未提供機能を追加したと記載しない。
 
-参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、docs/admin.md。
+参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、docs/admin.md、docs/SECURITY.md。

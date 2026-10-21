@@ -5,12 +5,13 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.EmailVerificationService;
-import com.example.demo.service.TemporaryPasswordService;
+import com.example.demo.service.PasswordResetService;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -57,24 +59,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class EmailVerificationIntegrationTests {
+    private static final AtomicInteger CLIENT_SEQUENCE = new AtomicInteger(80);
     private static final String PASSWORD = "verification-test-password";
     private static final Pattern TOKEN = Pattern.compile("[?&]token=([A-Za-z0-9_-]{43})");
-    private static final Pattern TEMPORARY_PASSWORD = Pattern.compile("仮パスワード: ([^\\r\\n]+)");
     private static final Pattern RESEND_STATUS = Pattern.compile("<[^>]+\\bid=\"resend-status\"[^>]*>([^<]*)<");
 
     @Autowired private MockMvc mvc;
     @Autowired private UserRepository users;
     @Autowired private EmailVerificationService verification;
-    @Autowired private TemporaryPasswordService temporaryPasswords;
+    @Autowired private PasswordResetService passwordResets;
     @Autowired private PasswordEncoder encoder;
     @Autowired private PlatformTransactionManager transactionManager;
     @MockitoBean private JavaMailSender mail;
 
     private final List<String> testEmails = new ArrayList<>();
+    private String requestIp;
 
     @BeforeEach
     void resetMailAndAuthentication() {
         reset(mail);
+        requestIp = "198.51.100." + CLIENT_SEQUENCE.incrementAndGet();
         SecurityContextHolder.clearContext();
     }
 
@@ -142,18 +146,18 @@ class EmailVerificationIntegrationTests {
         assertThat(after.getEmailVerificationExpiresAt()).isAfter(before.getEmailVerificationExpiresAt());
         assertThat(after.getEmailVerificationSentAt()).isAfter(before.getEmailVerificationSentAt());
 
-        mvc.perform(post("/verify-email").with(csrf()).param("token", oldToken))
+        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", oldToken))
                 .andExpect(status().isOk()).andExpect(model().attributeExists("error"))
                 .andExpect(model().attributeDoesNotExist("verified"));
         assertThat(readUser(email).isEmailVerified()).isFalse();
         assertThat(readUser(email).getEmailVerificationHash()).isEqualTo(after.getEmailVerificationHash());
 
-        mvc.perform(post("/verify-email").with(csrf()).param("token", newToken))
+        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", newToken))
                 .andExpect(status().isOk()).andExpect(model().attribute("verified", true))
                 .andExpect(unauthenticated());
         assertThat(readUser(email).isEmailVerified()).isTrue();
         assertThat(verification.verify(newToken)).isFalse();
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", PASSWORD))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
         verify(mail).send(any(SimpleMailMessage.class));
@@ -176,7 +180,7 @@ class EmailVerificationIntegrationTests {
         assertThat(afterRepeatedRequest.getEmailVerificationHash()).isEqualTo(afterSend.getEmailVerificationHash());
         assertThat(afterRepeatedRequest.getEmailVerificationSentAt()).isEqualTo(afterSend.getEmailVerificationSentAt());
 
-        mvc.perform(get("/verify-email")).andExpect(status().isOk())
+        mvc.perform(get("/verify-email").with(client())).andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist("sent"));
         verify(mail).send(any(SimpleMailMessage.class));
 
@@ -192,12 +196,12 @@ class EmailVerificationIntegrationTests {
 
     @Test
     void missingAndInvalidResendEmailsRedirectToAnErrorWithoutSending() throws Exception {
-        var requests = List.of(post("/verify-email/resend").with(csrf()),
-                post("/verify-email/resend").with(csrf()).param("email", ""),
-                post("/verify-email/resend").with(csrf()).param("email", "   "),
-                post("/verify-email/resend").with(csrf()).param("email", "invalid"),
-                post("/verify-email/resend").with(csrf()).param("email", "x@y"),
-                post("/verify-email/resend").with(csrf())
+        var requests = List.of(post("/verify-email/resend").with(client()).with(csrf()),
+                post("/verify-email/resend").with(client()).with(csrf()).param("email", ""),
+                post("/verify-email/resend").with(client()).with(csrf()).param("email", "   "),
+                post("/verify-email/resend").with(client()).with(csrf()).param("email", "invalid"),
+                post("/verify-email/resend").with(client()).with(csrf()).param("email", "x@y"),
+                post("/verify-email/resend").with(client()).with(csrf())
                         .param("email", "x".repeat(256) + "@example.invalid"));
         for (var request : requests) {
             MvcResult result = mvc.perform(request)
@@ -207,7 +211,7 @@ class EmailVerificationIntegrationTests {
                     .andExpect(header().string("Cache-Control", "no-store"))
                     .andExpect(header().string("Referrer-Policy", "no-referrer"))
                     .andReturn();
-            mvc.perform(get("/verify-email").flashAttrs(result.getFlashMap()))
+            mvc.perform(get("/verify-email").with(client()).flashAttrs(result.getFlashMap()))
                     .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
         }
         verifyNoInteractions(mail);
@@ -224,14 +228,14 @@ class EmailVerificationIntegrationTests {
         doThrow(new MailSendException("simulated SMTP failure"))
                 .when(mail).send(any(SimpleMailMessage.class));
 
-        MvcResult result = mvc.perform(post("/verify-email/resend").with(csrf()).param("email", email))
+        MvcResult result = mvc.perform(post("/verify-email/resend").with(client()).with(csrf()).param("email", email))
                 .andExpect(redirectedUrl("/verify-email"))
                 .andExpect(flash().attributeExists("error"))
                 .andExpect(response -> assertThat(response.getFlashMap().containsKey("sent")).isFalse())
                 .andExpect(header().string("Cache-Control", "no-store"))
                 .andExpect(header().string("Referrer-Policy", "no-referrer"))
                 .andReturn();
-        mvc.perform(get("/verify-email").flashAttrs(result.getFlashMap()))
+        mvc.perform(get("/verify-email").with(client()).flashAttrs(result.getFlashMap()))
                 .andExpect(status().isOk()).andExpect(model().attributeExists("error"))
                 .andExpect(model().attributeDoesNotExist("sent"));
 
@@ -246,7 +250,7 @@ class EmailVerificationIntegrationTests {
     @Test
     void signupStaysLoggedOutAndOnlyAnExplicitConfirmationEnablesLogin() throws Exception {
         String email = newEmail();
-        mvc.perform(post("/signup").with(csrf()).param("name", "メール認証統合テスト")
+        mvc.perform(post("/signup").with(client()).with(csrf()).param("name", "メール認証統合テスト")
                         .param("email", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/verify-email"))
                 .andExpect(unauthenticated());
@@ -255,22 +259,22 @@ class EmailVerificationIntegrationTests {
         assertThat(pending.isEmailVerified()).isFalse();
         assertThat(pending.getEmailVerificationHash()).isNotEqualTo(token);
 
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", PASSWORD))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"))
                 .andExpect(unauthenticated());
 
-        mvc.perform(get("/verify-email").param("token", token)).andExpect(status().isOk());
+        mvc.perform(get("/verify-email").with(client()).param("token", token)).andExpect(status().isOk());
         User afterGet = readUser(email);
         assertThat(afterGet.isEmailVerified()).isFalse();
         assertThat(afterGet.getEmailVerificationHash()).isEqualTo(pending.getEmailVerificationHash());
 
-        mvc.perform(post("/verify-email").with(csrf()).param("token", token))
+        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", token))
                 .andExpect(status().isOk()).andExpect(unauthenticated());
         assertThat(readUser(email).isEmailVerified()).isTrue();
         assertThat(readUser(email).getEmailVerificationHash()).isNull();
         assertThat(verification.verify(token)).isFalse();
 
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", PASSWORD))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
     }
@@ -278,7 +282,7 @@ class EmailVerificationIntegrationTests {
     @Test
     void signupConfirmationAndResendRequireCsrf() throws Exception {
         String email = newEmail();
-        mvc.perform(post("/signup").param("name", "メール認証統合テスト")
+        mvc.perform(post("/signup").with(client()).param("name", "メール認証統合テスト")
                         .param("email", email).param("password", PASSWORD))
                 .andExpect(status().isForbidden());
         assertThat(users.findByEmail(email)).isEmpty();
@@ -289,8 +293,8 @@ class EmailVerificationIntegrationTests {
         String previousHash = readUser(email).getEmailVerificationHash();
         reset(mail);
 
-        mvc.perform(post("/verify-email").param("token", token)).andExpect(status().isForbidden());
-        mvc.perform(post("/verify-email/resend").param("email", email)).andExpect(status().isForbidden());
+        mvc.perform(post("/verify-email").with(client()).param("token", token)).andExpect(status().isForbidden());
+        mvc.perform(post("/verify-email/resend").with(client()).param("email", email)).andExpect(status().isForbidden());
 
         User pending = readUser(email);
         assertThat(pending.isEmailVerified()).isFalse();
@@ -311,35 +315,38 @@ class EmailVerificationIntegrationTests {
         });
 
         assertThat(new CustomUserDetails(readUser(email)).isEnabled()).isTrue();
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", PASSWORD))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
         verifyNoInteractions(mail);
     }
 
     @Test
-    void aTemporaryPasswordCannotBypassVerificationAndKeepsItsChangeReminderAfterConfirmation()
+    void passwordResetRequestsCannotChangeAnUnverifiedAccountsPasswordOrBypassVerification()
             throws Exception {
         String email = newEmail();
         verification.register(signup(email));
         String token = sentToken();
-        temporaryPasswords.issueFor(email);
-        var messages = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mail, times(2)).send(messages.capture());
-        var matcher = TEMPORARY_PASSWORD.matcher(messages.getAllValues().get(1).getText());
-        assertThat(matcher.find()).isTrue();
-        String temporaryPassword = matcher.group(1);
+        String previousHash = readUser(email).getPasswordHash();
+        passwordResets.requestFor(email);
+        verify(mail, times(1)).send(any(SimpleMailMessage.class));
         User pending = readUser(email);
-        assertThat(pending.isTemporaryPassword()).isTrue();
+        assertThat(pending.getPasswordHash()).isEqualTo(previousHash);
+        assertThat(pending.getPasswordResetHash()).isNull();
+        assertThat(pending.isTemporaryPassword()).isFalse();
         assertThat(pending.isEmailVerified()).isFalse();
 
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", temporaryPassword))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"))
                 .andExpect(unauthenticated());
         assertThat(verification.verify(token)).isTrue();
-        mvc.perform(post("/login").with(csrf()).param("username", email).param("password", temporaryPassword))
-                .andExpect(redirectedUrl("/mypage?passwordChangeRequired"))
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
+                .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
+    }
+
+    private RequestPostProcessor client() {
+        return request -> { request.setRemoteAddr(requestIp); return request; };
     }
 
     private String newEmail() {
@@ -370,7 +377,7 @@ class EmailVerificationIntegrationTests {
     }
 
     private MvcResult resend(String email) throws Exception {
-        return mvc.perform(post("/verify-email/resend").with(csrf()).param("email", email))
+        return mvc.perform(post("/verify-email/resend").with(client()).with(csrf()).param("email", email))
                 .andExpect(redirectedUrl("/verify-email"))
                 .andExpect(flash().attribute("sent", true))
                 .andExpect(flash().attribute("resendEmail", email.trim()))
@@ -381,7 +388,7 @@ class EmailVerificationIntegrationTests {
     }
 
     private MvcResult resendPage(MvcResult result) throws Exception {
-        return mvc.perform(get("/verify-email").flashAttrs(result.getFlashMap()))
+        return mvc.perform(get("/verify-email").with(client()).flashAttrs(result.getFlashMap()))
                 .andExpect(status().isOk()).andExpect(model().attribute("sent", true))
                 .andExpect(model().attribute("resendEmail", result.getFlashMap().get("resendEmail")))
                 .andExpect(model().attributeDoesNotExist("error"))

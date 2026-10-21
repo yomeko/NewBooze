@@ -31,7 +31,10 @@ class MyPagePasswordTests {
         user.setEmail("password@example.com");
         user.setPasswordHash(new BCryptPasswordEncoder().encode("current123"));
         user.setTemporaryPassword(true);
+        user.setPasswordResetHash("pending-reset-hash");
+        user.setPasswordResetExpiresAt(java.time.LocalDateTime.now().plusMinutes(30));
         when(users.findById(42L)).thenReturn(Optional.of(user));
+        when(users.findForProfileUpdateById(42L)).thenReturn(Optional.of(user));
         controller = new MyPageController(users, mock(UserPreferenceRepository.class), encoder,
                 mock(UserProfileImageRepository.class), mock(FavoriteRepository.class), mock(SakeRepository.class), mock(com.example.demo.service.EmailVerificationService.class));
     }
@@ -50,6 +53,7 @@ class MyPagePasswordTests {
         assertThat(redirect.getFlashAttributes().get("error").toString()).contains("UTF-8で72バイト以内");
         assertThat(user.getPasswordHash()).isEqualTo(previousHash);
         assertThat(user.isTemporaryPassword()).isTrue();
+        assertThat(user.getPasswordResetHash()).isEqualTo("pending-reset-hash");
         verify(encoder, never()).encode(any());
         verify(users, never()).save(any());
     }
@@ -63,6 +67,8 @@ class MyPagePasswordTests {
         assertThat(redirect.getFlashAttributes()).containsKey("success").doesNotContainKey("error");
         assertThat(encoder.matches(password, user.getPasswordHash())).isTrue();
         assertThat(user.isTemporaryPassword()).isFalse();
+        assertThat(user.getPasswordResetHash()).isNull();
+        assertThat(user.getPasswordResetExpiresAt()).isNull();
         verify(users).save(user);
         assertThat(((CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal())
                 .isTemporaryPassword()).isFalse();

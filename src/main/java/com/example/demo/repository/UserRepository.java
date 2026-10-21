@@ -27,6 +27,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailVerificationHash(String hash);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select u from User u where u.email = :email")
+    Optional<User> findForPasswordResetByEmail(@org.springframework.data.repository.query.Param("email") String email);
+
+    // 再設定の確認・消費を行ロック内で行い、同じリンクの同時使用を防ぐ。
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    Optional<User> findByPasswordResetHash(String hash);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @org.springframework.data.jpa.repository.Query("select u from User u where u.id = :id")
     // メール変更と再送・認証が競合しないよう、プロフィール更新も行ロックする。
     Optional<User> findForProfileUpdateById(@org.springframework.data.repository.query.Param("id") Long id);

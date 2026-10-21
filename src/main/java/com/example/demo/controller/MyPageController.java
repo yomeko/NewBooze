@@ -14,6 +14,7 @@ import com.example.demo.service.EmailVerificationService;
 import org.springframework.mail.MailException;
 import org.springframework.dao.DataIntegrityViolationException;
 import com.example.demo.validation.Utf8InputLength;
+import com.example.demo.validation.BoundedImageDecoder;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +29,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -61,8 +61,10 @@ public class MyPageController {
     // 安全に保存できるよう画像本体は900KB以下にする。
     private static final long MAX_PROFILE_IMAGE_SIZE = 900 * 1024;
     private static final long MAX_UPLOAD_IMAGE_SIZE = 20 * 1024 * 1024;
+    private static final long MAX_PROFILE_IMAGE_PIXELS = 20_000_000;
     private static final int MAX_IMAGE_DIMENSION = 1600;
     private static final Set<String> ALLOWED_IMAGE_TYPES = Set.of("image/jpeg", "image/png", "image/gif");
+    private static final Set<String> ALLOWED_IMAGE_FORMATS = Set.of("jpeg", "png", "gif");
 
     public MyPageController(UserRepository users, UserPreferenceRepository preferences,
             PasswordEncoder passwordEncoder, UserProfileImageRepository profileImages,
@@ -136,7 +138,7 @@ public class MyPageController {
 
     /**
      * 画像の有無・サイズ・形式を確認して保存する。
-     * 900KBを超える画像は圧縮し、小さい画像も実際に画像として読めるか確認する。
+     * 展開前に実形式と2000万画素以下を確認し、900KBを超える画像は圧縮する。
      * 保存後は位置と拡大率を中央・等倍に戻し、設定画面へ移動する。
      */
     @PostMapping("/profile-image")
@@ -148,16 +150,22 @@ public class MyPageController {
         if (contentType == null || !ALLOWED_IMAGE_TYPES.contains(contentType))
             return imageError(redirect, "JPEG・PNG・GIF形式の画像を選択してください");
 
-        byte[] uploadedBytes = file.getBytes();
+        byte[] uploadedBytes;
         StoredImage storedImage;
-        if (uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE) {
-            storedImage = compressProfileImage(uploadedBytes);
-            if (storedImage == null) return imageError(redirect, "画像を圧縮できませんでした。別の画像を選択してください");
-        } else {
-            // 拡張子やContent-Typeだけでなく、実際に画像として読み込めることも確認する。
-            if (ImageIO.read(new ByteArrayInputStream(uploadedBytes)) == null)
-                return imageError(redirect, "正しい画像ファイルを選択してください");
-            storedImage = new StoredImage(uploadedBytes, contentType);
+        try {
+            uploadedBytes = file.getBytes();
+            var decoded = BoundedImageDecoder.decode(uploadedBytes, ALLOWED_IMAGE_FORMATS, MAX_PROFILE_IMAGE_PIXELS);
+            if (uploadedBytes.length > MAX_PROFILE_IMAGE_SIZE) {
+                storedImage = compressProfileImage(decoded.image());
+                if (storedImage == null) return imageError(redirect, "画像を圧縮できませんでした。別の画像を選択してください");
+            } else {
+                // 小さなGIFは元のバイト列を残し、アニメーションを維持する。MIMEは実形式に合わせる。
+                storedImage = new StoredImage(uploadedBytes, decoded.contentType());
+            }
+        } catch (IllegalArgumentException exception) {
+            return imageError(redirect, exception.getMessage());
+        } catch (IOException exception) {
+            return imageError(redirect, "画像を読み込めませんでした。別の画像を選択してください");
         }
 
         User user = current(principal);
@@ -272,14 +280,16 @@ public class MyPageController {
      * 仮パスワード利用中の印も解除し、ログイン情報へ反映する。
      */
     @PostMapping("/password")
+    @org.springframework.transaction.annotation.Transactional
     public String updatePassword(@RequestParam String currentPassword, @RequestParam String newPassword,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
-        User user = current(principal);
+        User user = users.findForProfileUpdateById(principal.getUserId()).orElseThrow();
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) return error(redirect, "現在のパスワードが違います");
         if (newPassword.length() < 8 || !Utf8InputLength.isAtMost(newPassword, 72))
             return error(redirect, "新しいパスワードは8文字以上、UTF-8で72バイト以内にしてください（半角英数字は72文字、日本語の多くは24文字が目安です）");
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setTemporaryPassword(false);
+        user.clearPasswordResetToken();
         users.save(user);
         refreshPrincipal(user);
         redirect.addFlashAttribute("success", "パスワードを変更しました");
@@ -322,12 +332,9 @@ public class MyPageController {
     /**
      * 画像の長辺を1600px以下にし、保存可能なサイズのJPEGを作る。
      * まず画質を下げて試し、それでも大きければ縦横を80%に縮めて再試行する。
-     * 最大6段階で試し、900KB以下にできない場合や画像を読めない場合はnullを返す。
+     * 最大6段階で試し、900KB以下にできない場合はnullを返す。
      */
-    private StoredImage compressProfileImage(byte[] source) throws IOException {
-        BufferedImage original = ImageIO.read(new ByteArrayInputStream(source));
-        if (original == null) return null;
-
+    private StoredImage compressProfileImage(BufferedImage original) throws IOException {
         double initialScale = Math.min(1.0,
                 (double) MAX_IMAGE_DIMENSION / Math.max(original.getWidth(), original.getHeight()));
         int width = Math.max(1, (int) Math.round(original.getWidth() * initialScale));

@@ -109,6 +109,7 @@ public class EmailVerificationService {
             return false;
         }
         user.setEmail(email);
+        user.clearPasswordResetToken();
         // 認証が済むまでCustomUserDetails.isEnabled()がログインを拒否する。
         user.setEmailVerified(false);
         send(user);

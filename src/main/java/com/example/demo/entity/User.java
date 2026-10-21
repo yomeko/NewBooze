@@ -70,6 +70,22 @@ public class User {
     @Column(name = "email_verification_sent_at")
     private LocalDateTime emailVerificationSentAt;
 
+    /** 再設定リンクは生の値を保存せず、一度限りのハッシュと期限を保持する。 */
+    @Column(name = "password_reset_hash", length = 64, unique = true)
+    private String passwordResetHash;
+
+    @Column(name = "password_reset_expires_at")
+    private LocalDateTime passwordResetExpiresAt;
+
+    @Column(name = "password_reset_sent_at")
+    private LocalDateTime passwordResetSentAt;
+
+    /** パスワード・メール変更後、以前発行したリンクを使えなくする。送信間隔は維持する。 */
+    public void clearPasswordResetToken() {
+        passwordResetHash = null;
+        passwordResetExpiresAt = null;
+    }
+
     // DB側で DEFAULT CURRENT_TIMESTAMP が設定されているため、
     // アプリ側からは insertable/updatable = false にして値を渡さないようにする。
     @Column(name = "created_at", insertable = false, updatable = false)

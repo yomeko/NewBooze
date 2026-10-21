@@ -15,10 +15,25 @@ import java.util.List;
  */
 public class CustomUserDetails implements UserDetails {
 
-    private final User user;
+    // 認証時点の値を保持し、DB更新後も古いセッションの権限や認証情報を比較できるようにする。
+    private final Long userId;
+    private final String name;
+    private final String email;
+    private final String passwordHash;
+    private final boolean admin;
+    private final boolean temporaryPassword;
+    private final boolean emailVerified;
+    // 同じ不変ハッシュへの高コストな照合はセッション中に繰り返さない。復元時には再確認する。
+    private transient volatile boolean legacyAdminPasswordChecked;
 
     public CustomUserDetails(User user) {
-        this.user = user;
+        this.userId = user.getId();
+        this.name = user.getName();
+        this.email = user.getEmail();
+        this.passwordHash = user.getPasswordHash();
+        this.admin = user.isAdmin();
+        this.temporaryPassword = user.isTemporaryPassword();
+        this.emailVerified = user.isEmailVerified();
     }
 
     /**
@@ -26,7 +41,7 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.isAdmin()
+        return admin
                 ? List.of(new SimpleGrantedAuthority("ROLE_USER"), new SimpleGrantedAuthority("ROLE_ADMIN"))
                 : List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
@@ -36,7 +51,7 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return passwordHash;
     }
 
     /**
@@ -45,7 +60,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         // Spring Securityの「username」概念にはメールアドレスを割り当てる
-        return user.getEmail();
+        return email;
     }
 
     // 有効期限・ロックは管理せず、ログインの可否だけメール認証状態で決める。
@@ -60,26 +75,34 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     // パスワードが一致しても、メール未認証の会員はSpring Securityがログインを拒否する。
-    public boolean isEnabled() { return user.isEmailVerified(); }
+    public boolean isEnabled() { return emailVerified; }
 
     /**
      * DBの本人のユーザーIDを返す。ControllerはこのIDで保存先を特定する。
      */
     public Long getUserId() {
-        return user.getId();
+        return userId;
     }
 
     /**
      * 画面に表示するユーザーの名前を返す。
      */
     public String getName() {
-        return user.getName();
+        return name;
     }
 
     /**
      * 仮パスワード利用中かを返し、ログイン後の案内先や画面の注意文に使う。
      */
     public boolean isTemporaryPassword() {
-        return user.isTemporaryPassword();
+        return temporaryPassword;
+    }
+
+    boolean isLegacyAdminPasswordChecked() {
+        return legacyAdminPasswordChecked;
+    }
+
+    void markLegacyAdminPasswordChecked() {
+        legacyAdminPasswordChecked = true;
     }
 }

@@ -8,6 +8,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import com.example.demo.security.CustomUserDetails;
+import com.example.demo.security.AuthenticationRateLimiter;
+import com.example.demo.security.AuthenticationRateLimitFilter;
+import com.example.demo.security.AccountSessionValidationFilter;
+import com.example.demo.repository.UserRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 /**
  * どのページを誰が使えるか、ログイン・ログアウトをどう処理するかを決める。
@@ -31,8 +38,13 @@ public class SecurityConfig {
      * 上から順にURLを照合し、最初に一致した権限ルールを使う。
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationRateLimiter limiter,
+            UserRepository users, PasswordEncoder encoder) throws Exception {
         http
+            .addFilterAfter(new AuthenticationRateLimitFilter(limiter), CsrfFilter.class)
+            .addFilterBefore(new AccountSessionValidationFilter(users, encoder), AuthorizationFilter.class)
+            .headers(headers -> headers.referrerPolicy(policy ->
+                policy.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)))
             .authorizeHttpRequests(auth -> auth
                 // 管理者専用のURLを先に確認する。hasRole("ADMIN")はROLE_ADMINという権限を要求する。
                 .requestMatchers("/admin", "/admin/**").hasRole("ADMIN")
@@ -43,7 +55,7 @@ public class SecurityConfig {
                     "/about", "/privacy", "/external-transmission",
                     "/diagnosis/**",
                     // 未認証の会員も認証・再送を利用できるよう公開する。POSTのCSRF保護は維持する。
-                    "/login", "/signup", "/forgot-password", "/verify-email", "/verify-email/resend",
+                    "/login", "/signup", "/forgot-password", "/reset-password", "/verify-email", "/verify-email/resend",
                     "/css/**", "/js/**", "/images/**"
                 ).permitAll()
                 // お気に入り(S06)・マイページ(S08)はログイン必須

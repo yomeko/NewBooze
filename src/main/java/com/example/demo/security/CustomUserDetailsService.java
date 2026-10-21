@@ -5,6 +5,7 @@ import com.example.demo.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,9 +17,11 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -27,7 +30,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("ユーザーが見つかりません: " + email));
-        return new CustomUserDetails(user);
+                .orElseThrow(() -> new UsernameNotFoundException("ログインできません。"));
+        // 過去の自動作成で残った既定パスワードの管理者は、IDを変更済みでも使用を拒否する。
+        // 既存DBを自動更新せず、安全な新管理者への移行後に手動で無効化する。
+        if (user.isAdmin() && passwordEncoder.matches("admin", user.getPasswordHash())) {
+            throw new UsernameNotFoundException("ログインできません。");
+        }
+        CustomUserDetails details = new CustomUserDetails(user);
+        if (user.isAdmin()) {
+            details.markLegacyAdminPasswordChecked();
+        }
+        return details;
     }
 }
