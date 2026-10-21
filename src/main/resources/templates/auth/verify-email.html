@@ -11,7 +11,7 @@
 <header th:replace="~{fragments/site-header :: siteHeader('none')}"></header>
 <main class="page auth-page"><div class="auth-card">
   <p class="eyebrow">EMAIL VERIFICATION</p><h1>メールアドレスの認証</h1>
-  <p class="field-error" th:if="${error}" th:text="${error}"></p>
+  <p class="field-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <div th:if="${verified}"><p>メール認証が完了しました。ログインしてご利用ください。</p><a class="button primary" th:href="@{/login}">ログインする</a></div>
   <div th:unless="${verified}">
     <!--/* リンクの表示だけでは認証せず、POSTで本人の確定操作を受け付ける。 */-->
@@ -21,13 +21,15 @@
     </form>
     <p th:unless="${token}">登録時に送信した認証メールのリンクを開いてください。認証するまでログインできません。</p>
     <!--/* 宛先が登録済みかどうかにかかわらず同じ再送案内を表示する。 */-->
-    <p th:if="${sent}">未認証の登録がある場合、認証メールを再送しました。再送は60秒以上あけてください。</p>
+    <p id="resend-status" role="status" th:if="${sent}">再送リクエストを受け付けました。未認証の登録があり、前回の送信から60秒以上経過している場合にメールを送信します。</p>
     <div class="auth-divider"></div><h2>認証メールを再送</h2>
-    <p>リンクの有効期限は24時間です。届かない場合は迷惑メールフォルダもご確認ください。</p>
+    <p>リンクの有効期限は24時間です。登録直後や前回の再送から60秒未満の場合は送信されません。</p>
+    <p>再送後は最新のメールのリンクを使ってください。以前のリンクは無効になります。届かない場合は迷惑メールフォルダもご確認ください。</p>
     <form th:action="@{/verify-email/resend}" method="post">
-      <div class="form-group"><label for="email">登録したメールアドレス</label><input id="email" name="email" type="email" autocomplete="email" maxlength="255" required></div>
+      <div class="form-group"><label for="email">登録したメールアドレス</label><input id="email" name="email" type="email" autocomplete="email" maxlength="255" th:value="${resendEmail}" required></div>
       <button class="button">認証メールを再送する</button>
     </form>
+    <p>認証済みの方は<a th:href="@{/login}">ログイン</a>してください。</p>
   </div>
 </div></main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>

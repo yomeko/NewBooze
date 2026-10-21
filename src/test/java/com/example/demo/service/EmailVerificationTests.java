@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HexFormat;
@@ -34,7 +35,7 @@ class EmailVerificationTests {
         service = new EmailVerificationService(users, new BCryptPasswordEncoder(), mail,
                 "sender@example.com", "https://example.com", clock);
         pending = new User();
-        pending.setEmail("sotsugyoukenkyuyou2026@gmail.com");
+        pending.setEmail("pending@example.test");
         pending.setName("テスト");
         pending.setEmailVerified(false);
     }
@@ -87,12 +88,81 @@ class EmailVerificationTests {
         verify(mail, times(1)).send(any(SimpleMailMessage.class));
     }
 
+    @Test void resendIsBlockedAt59SecondsAndAllowedAtExactly60Seconds() {
+        LocalDateTime now = LocalDateTime.now(clock);
+        pending.setEmailVerificationHash("previous");
+        pending.setEmailVerificationSentAt(now.minusSeconds(59));
+        when(users.findForVerificationByEmail(pending.getEmail())).thenReturn(Optional.of(pending));
+
+        service.resend(pending.getEmail());
+
+        verifyNoInteractions(mail);
+        verify(users, never()).saveAndFlush(any(User.class));
+        assertThat(pending.getEmailVerificationHash()).isEqualTo("previous");
+        assertThat(pending.getEmailVerificationSentAt()).isEqualTo(now.minusSeconds(59));
+
+        pending.setEmailVerificationSentAt(now.minusSeconds(60));
+        service.resend(pending.getEmail());
+
+        verify(mail).send(any(SimpleMailMessage.class));
+        verify(users).saveAndFlush(pending);
+        assertThat(pending.getEmailVerificationHash()).isNotEqualTo("previous");
+        assertThat(pending.getEmailVerificationSentAt()).isEqualTo(now);
+        assertThat(pending.getEmailVerificationExpiresAt()).isEqualTo(now.plusHours(24));
+    }
+
+    @Test void resendInvalidatesThePreviousTokenAndOnlyTheNewTokenEnablesLogin() throws Exception {
+        String previousToken = "C".repeat(43);
+        pending.setEmailVerificationHash(hash(previousToken));
+        pending.setEmailVerificationExpiresAt(LocalDateTime.now(clock).plusHours(1));
+        when(users.findForVerificationByEmail(pending.getEmail())).thenReturn(Optional.of(pending));
+        when(users.findByEmailVerificationHash(anyString())).thenAnswer(invocation ->
+                invocation.getArgument(0).equals(pending.getEmailVerificationHash())
+                        ? Optional.of(pending) : Optional.empty());
+
+        service.resend(pending.getEmail());
+        var message = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mail).send(message.capture());
+        String newToken = message.getValue().getText().split("token=")[1].split("\n")[0];
+
+        assertThat(newToken).isNotEqualTo(previousToken);
+        assertThat(service.verify(previousToken)).isFalse();
+        assertThat(new CustomUserDetails(pending).isEnabled()).isFalse();
+        assertThat(service.verify(newToken)).isTrue();
+        assertThat(new CustomUserDetails(pending).isEnabled()).isTrue();
+        assertThat(service.verify(newToken)).isFalse();
+    }
+
+    @Test void aTokenExpiresAtExactly24HoursAfterSending() {
+        SignupForm form = new SignupForm();
+        form.setName("テスト"); form.setEmail(pending.getEmail()); form.setPassword("test-password");
+        service.register(form);
+        var user = ArgumentCaptor.forClass(User.class);
+        verify(users).saveAndFlush(user.capture());
+        User registered = user.getValue();
+        var message = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mail).send(message.capture());
+        String token = message.getValue().getText().split("token=")[1].split("\n")[0];
+        when(users.findByEmailVerificationHash(registered.getEmailVerificationHash()))
+                .thenReturn(Optional.of(registered));
+        EmailVerificationService atExpiry = new EmailVerificationService(users, new BCryptPasswordEncoder(),
+                mail, "sender@example.com", "https://example.com", Clock.offset(clock, Duration.ofHours(24)));
+
+        assertThat(registered.getEmailVerificationExpiresAt())
+                .isEqualTo(LocalDateTime.now(clock).plusHours(24));
+        assertThat(atExpiry.verify(token)).isFalse();
+        assertThat(new CustomUserDetails(registered).isEnabled()).isFalse();
+        assertThat(registered.getEmailVerificationHash()).isNotNull();
+        verify(users, never()).save(any(User.class));
+    }
+
     @Test void verifiedAndUnknownAccountsReceiveNoResend() {
         pending.setEmailVerified(true);
         when(users.findForVerificationByEmail(pending.getEmail())).thenReturn(Optional.of(pending));
         service.resend(pending.getEmail());
-        service.resend("unknown@example.com");
+        service.resend("unknown@example.test");
         verifyNoInteractions(mail);
+        verify(users, never()).saveAndFlush(any(User.class));
     }
 
     private String hash(String token) throws Exception {
