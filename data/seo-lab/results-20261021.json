@@ -1,0 +1,962 @@
+{
+  "checked_on": "2026-10-21",
+  "source_revision": "e4ee58af63dd9844e38a92e0f53d1ad2b37ccc6f",
+  "captured_at_utc": "2026-10-21T03:11:02.756437+00:00",
+  "scope": {
+    "local_only": true,
+    "app_source_modified": false,
+    "published": false,
+    "rankings_measured": false,
+    "rank_prediction": null,
+    "query_method": "事前固定した7検索語。NFKC・空白除去・大小文字の正規化後に語句の部分一致を確認。同義語・検索需要・被リンク・Googleの評価は推定しない。",
+    "variant_method": "5ページでtitle・description・H1の仮案を比較。本体と保存HTMLを変更せず、本文モデルはH1だけ置換。本文に新たな記事は追加しない。",
+    "limitations": "語句がないことは機能がないことを意味しない。例えば『ログインせず』と『登録なし』を同一視しない。本文にはH1を含む。Googleの検索表示・順位・クリック率・Core Web Vitalsは未測定。"
+  },
+  "observations": {
+    "urls_checked": 27,
+    "public_pages": 18,
+    "public_direct_200": 18,
+    "public_with_title": 18,
+    "public_with_description": 0,
+    "public_with_canonical": 0,
+    "public_with_json_ld": 0,
+    "public_with_single_h1": 18,
+    "catalog_entries": 10,
+    "catalog_with_drinking": 1,
+    "catalog_with_taste": 1,
+    "catalog_with_recommended_for": 1
+  },
+  "requests": [
+    {
+      "path": "/",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/",
+      "redirect_chain": [],
+      "title": "一升の出会い | 日本酒初心者向け好み診断",
+      "main_characters": 1466
+    },
+    {
+      "path": "/diagnosis",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/diagnosis",
+      "redirect_chain": [],
+      "title": "好み診断 | 一升の出会い",
+      "main_characters": 729
+    },
+    {
+      "path": "/guide",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/guide",
+      "redirect_chain": [],
+      "title": "購入から開封後までの初心者ガイド | 一升の出会い",
+      "main_characters": 1676
+    },
+    {
+      "path": "/search",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/search",
+      "redirect_chain": [],
+      "title": "日本酒をさがす | 一升の出会い",
+      "main_characters": 1057
+    },
+    {
+      "path": "/sake/1",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/1",
+      "redirect_chain": [],
+      "title": "獺祭 純米大吟醸45 | 一升の出会い",
+      "main_characters": 694
+    },
+    {
+      "path": "/sake/7",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/7",
+      "redirect_chain": [],
+      "title": "出羽桜 桜花吟醸 | 一升の出会い",
+      "main_characters": 508
+    },
+    {
+      "path": "/about",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/about",
+      "redirect_chain": [],
+      "title": "運営者情報 | 一升の出会い",
+      "main_characters": 594
+    },
+    {
+      "path": "/contact",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/contact",
+      "redirect_chain": [],
+      "title": "お問い合わせ | 一升の出会い",
+      "main_characters": 271
+    },
+    {
+      "path": "/privacy",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/privacy",
+      "redirect_chain": [],
+      "title": "プライバシーポリシー | 一升の出会い",
+      "main_characters": 1992
+    },
+    {
+      "path": "/external-transmission",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/external-transmission",
+      "redirect_chain": [],
+      "title": "利用者情報の送信について | 一升の出会い",
+      "main_characters": 904
+    },
+    {
+      "path": "/robots.txt",
+      "initial_status": 302,
+      "final_status": 200,
+      "final_path": "/login",
+      "redirect_chain": [
+        {
+          "status": 302,
+          "followed": true
+        }
+      ],
+      "title": "ログイン - 一升の出会い",
+      "main_characters": 106
+    },
+    {
+      "path": "/sitemap.xml",
+      "initial_status": 302,
+      "final_status": 200,
+      "final_path": "/login",
+      "redirect_chain": [
+        {
+          "status": 302,
+          "followed": true
+        }
+      ],
+      "title": "ログイン - 一升の出会い",
+      "main_characters": 106
+    },
+    {
+      "path": "/sake/2",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/2",
+      "redirect_chain": [],
+      "title": "新政 No.6 | 一升の出会い",
+      "main_characters": 467
+    },
+    {
+      "path": "/sake/3",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/3",
+      "redirect_chain": [],
+      "title": "十四代 本丸 | 一升の出会い",
+      "main_characters": 468
+    },
+    {
+      "path": "/sake/4",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/4",
+      "redirect_chain": [],
+      "title": "黒龍 いっちょらい | 一升の出会い",
+      "main_characters": 472
+    },
+    {
+      "path": "/sake/5",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/5",
+      "redirect_chain": [],
+      "title": "而今 特別純米 | 一升の出会い",
+      "main_characters": 471
+    },
+    {
+      "path": "/sake/6",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/6",
+      "redirect_chain": [],
+      "title": "田酒 特別純米 | 一升の出会い",
+      "main_characters": 464
+    },
+    {
+      "path": "/sake/8",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/8",
+      "redirect_chain": [],
+      "title": "八海山 特別本醸造 | 一升の出会い",
+      "main_characters": 520
+    },
+    {
+      "path": "/sake/9",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/9",
+      "redirect_chain": [],
+      "title": "風の森 秋津穂 | 一升の出会い",
+      "main_characters": 466
+    },
+    {
+      "path": "/sake/10",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/10",
+      "redirect_chain": [],
+      "title": "鍋島 特別純米 | 一升の出会い",
+      "main_characters": 469
+    },
+    {
+      "path": "/search?keyword=%E7%8D%BA%E7%A5%AD",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/search",
+      "redirect_chain": [],
+      "title": "日本酒をさがす | 一升の出会い",
+      "main_characters": 399
+    },
+    {
+      "path": "/search?page=1",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/search",
+      "redirect_chain": [],
+      "title": "日本酒をさがす | 一升の出会い",
+      "main_characters": 789
+    },
+    {
+      "path": "/?draw=seo-lab",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/",
+      "redirect_chain": [],
+      "title": "一升の出会い | 日本酒初心者向け好み診断",
+      "main_characters": 1462
+    },
+    {
+      "path": "/sake/1?reviewSort=rating-high",
+      "initial_status": 200,
+      "final_status": 200,
+      "final_path": "/sake/1",
+      "redirect_chain": [],
+      "title": "獺祭 純米大吟醸45 | 一升の出会い",
+      "main_characters": 694
+    },
+    {
+      "path": "/ranking",
+      "initial_status": 302,
+      "final_status": 200,
+      "final_path": "/login",
+      "redirect_chain": [
+        {
+          "status": 302,
+          "followed": true
+        }
+      ],
+      "title": "ログイン - 一升の出会い",
+      "main_characters": 106
+    },
+    {
+      "path": "/pairings",
+      "initial_status": 302,
+      "final_status": 200,
+      "final_path": "/login",
+      "redirect_chain": [
+        {
+          "status": 302,
+          "followed": true
+        }
+      ],
+      "title": "ログイン - 一升の出会い",
+      "main_characters": 106
+    },
+    {
+      "path": "/goods",
+      "initial_status": 302,
+      "final_status": 200,
+      "final_path": "/login",
+      "redirect_chain": [
+        {
+          "status": 302,
+          "followed": true
+        }
+      ],
+      "title": "ログイン - 一升の出会い",
+      "main_characters": 106
+    }
+  ],
+  "duplicate_titles": [
+    {
+      "value": "一升の出会い | 日本酒初心者向け好み診断",
+      "paths": [
+        "/",
+        "/?draw=seo-lab"
+      ]
+    },
+    {
+      "value": "日本酒をさがす | 一升の出会い",
+      "paths": [
+        "/search",
+        "/search?keyword=%E7%8D%BA%E7%A5%AD",
+        "/search?page=1"
+      ]
+    },
+    {
+      "value": "獺祭 純米大吟醸45 | 一升の出会い",
+      "paths": [
+        "/sake/1",
+        "/sake/1?reviewSort=rating-high"
+      ]
+    },
+    {
+      "value": "ログイン - 一升の出会い",
+      "paths": [
+        "/robots.txt",
+        "/sitemap.xml",
+        "/ranking",
+        "/pairings",
+        "/goods"
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "query": "日本酒 診断",
+      "path": "/diagnosis",
+      "terms": [
+        "日本酒",
+        "診断"
+      ],
+      "baseline": {
+        "title": "好み診断 | 一升の出会い",
+        "description": "",
+        "h1": "日本酒診断"
+      },
+      "proposed": {
+        "title": "日本酒の好み診断｜登録なしで試せる | 一升の出会い",
+        "description": "専門知識がなくても、質問に答えて好みに合いそうな日本酒を探せます。ログインせず診断でき、未ログイン時の回答や好みの点数は保存されません。",
+        "h1": "日本酒の好み診断"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "診断"
+            ],
+            "missing": [
+              "日本酒"
+            ]
+          },
+          "h1": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "日本酒",
+              "診断"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          },
+          "description": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "診断"
+            ],
+            "missing": []
+          }
+        }
+      }
+    },
+    {
+      "query": "日本酒 好み診断 登録なし",
+      "path": "/diagnosis",
+      "terms": [
+        "日本酒",
+        "好み診断",
+        "登録なし"
+      ],
+      "baseline": {
+        "title": "好み診断 | 一升の出会い",
+        "description": "",
+        "h1": "日本酒診断"
+      },
+      "proposed": {
+        "title": "日本酒の好み診断｜登録なしで試せる | 一升の出会い",
+        "description": "専門知識がなくても、質問に答えて好みに合いそうな日本酒を探せます。ログインせず診断でき、未ログイン時の回答や好みの点数は保存されません。",
+        "h1": "日本酒の好み診断"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "好み診断"
+            ],
+            "missing": [
+              "日本酒",
+              "登録なし"
+            ]
+          },
+          "h1": {
+            "found": [
+              "日本酒"
+            ],
+            "missing": [
+              "好み診断",
+              "登録なし"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "日本酒",
+              "好み診断",
+              "登録なし"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒"
+            ],
+            "missing": [
+              "好み診断",
+              "登録なし"
+            ]
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "日本酒",
+              "好み診断",
+              "登録なし"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [
+              "日本酒",
+              "好み診断"
+            ],
+            "missing": [
+              "登録なし"
+            ]
+          },
+          "description": {
+            "found": [
+              "日本酒"
+            ],
+            "missing": [
+              "好み診断",
+              "登録なし"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "好み診断"
+            ],
+            "missing": [
+              "登録なし"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "query": "日本酒 初心者 選び方",
+      "path": "/guide",
+      "terms": [
+        "日本酒",
+        "初心者",
+        "選び方"
+      ],
+      "baseline": {
+        "title": "購入から開封後までの初心者ガイド | 一升の出会い",
+        "description": "",
+        "h1": "購入から開封後までの初心者ガイド"
+      },
+      "proposed": {
+        "title": "日本酒初心者ガイド｜選び方・保存・開封後 | 一升の出会い",
+        "description": "はじめての日本酒を買う場所、選び方、持ち帰り、保存、開封・飲み方、開封後の扱いを場面別に案内。商品ラベルや蔵元の案内とあわせて確認できます。",
+        "h1": "日本酒初心者ガイド：購入から保存・開封後まで"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "初心者"
+            ],
+            "missing": [
+              "日本酒",
+              "選び方"
+            ]
+          },
+          "h1": {
+            "found": [
+              "初心者"
+            ],
+            "missing": [
+              "日本酒",
+              "選び方"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "日本酒",
+              "初心者",
+              "選び方"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "初心者",
+              "選び方"
+            ],
+            "missing": []
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "日本酒",
+              "初心者",
+              "選び方"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [
+              "日本酒",
+              "初心者"
+            ],
+            "missing": [
+              "選び方"
+            ]
+          },
+          "description": {
+            "found": [
+              "日本酒",
+              "選び方"
+            ],
+            "missing": [
+              "初心者"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "初心者",
+              "選び方"
+            ],
+            "missing": []
+          }
+        }
+      }
+    },
+    {
+      "query": "日本酒 保存 開封後",
+      "path": "/guide",
+      "terms": [
+        "日本酒",
+        "保存",
+        "開封後"
+      ],
+      "baseline": {
+        "title": "購入から開封後までの初心者ガイド | 一升の出会い",
+        "description": "",
+        "h1": "購入から開封後までの初心者ガイド"
+      },
+      "proposed": {
+        "title": "日本酒初心者ガイド｜選び方・保存・開封後 | 一升の出会い",
+        "description": "はじめての日本酒を買う場所、選び方、持ち帰り、保存、開封・飲み方、開封後の扱いを場面別に案内。商品ラベルや蔵元の案内とあわせて確認できます。",
+        "h1": "日本酒初心者ガイド：購入から保存・開封後まで"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "開封後"
+            ],
+            "missing": [
+              "日本酒",
+              "保存"
+            ]
+          },
+          "h1": {
+            "found": [
+              "開封後"
+            ],
+            "missing": [
+              "日本酒",
+              "保存"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ],
+            "missing": []
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ],
+            "missing": []
+          },
+          "description": {
+            "found": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ],
+            "missing": []
+          },
+          "main_including_h1": {
+            "found": [
+              "日本酒",
+              "保存",
+              "開封後"
+            ],
+            "missing": []
+          }
+        }
+      }
+    },
+    {
+      "query": "獺祭45 度数",
+      "path": "/sake/1",
+      "terms": [
+        "獺祭",
+        "45",
+        "度数"
+      ],
+      "baseline": {
+        "title": "獺祭 純米大吟醸45 | 一升の出会い",
+        "description": "",
+        "h1": "獺祭 純米大吟醸45"
+      },
+      "proposed": {
+        "title": "獺祭 純米大吟醸45｜基本情報と飲み方 | 一升の出会い",
+        "description": "獺祭 純米大吟醸45の種類・産地・アルコール度数などの登録情報を確認できます。価格・仕様は購入前に公式サイトや商品ラベルで最新情報をご確認ください。",
+        "h1": "獺祭 純米大吟醸45の基本情報"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "獺祭",
+              "45"
+            ],
+            "missing": [
+              "度数"
+            ]
+          },
+          "h1": {
+            "found": [
+              "獺祭",
+              "45"
+            ],
+            "missing": [
+              "度数"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "獺祭",
+              "45",
+              "度数"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "獺祭",
+              "45",
+              "度数"
+            ],
+            "missing": []
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "獺祭",
+              "45"
+            ],
+            "missing": [
+              "度数"
+            ]
+          },
+          "h1": {
+            "found": [
+              "獺祭",
+              "45"
+            ],
+            "missing": [
+              "度数"
+            ]
+          },
+          "description": {
+            "found": [
+              "獺祭",
+              "45",
+              "度数"
+            ],
+            "missing": []
+          },
+          "main_including_h1": {
+            "found": [
+              "獺祭",
+              "45",
+              "度数"
+            ],
+            "missing": []
+          }
+        }
+      }
+    },
+    {
+      "query": "出羽桜 桜花吟醸 価格 720ml",
+      "path": "/sake/7",
+      "terms": [
+        "出羽桜",
+        "桜花吟醸",
+        "価格",
+        "720ml"
+      ],
+      "baseline": {
+        "title": "出羽桜 桜花吟醸 | 一升の出会い",
+        "description": "",
+        "h1": "出羽桜 桜花吟醸"
+      },
+      "proposed": {
+        "title": "出羽桜 桜花吟醸｜基本情報 | 一升の出会い",
+        "description": "出羽桜 桜花吟醸の種類・産地・アルコール度数などの登録情報を確認できます。価格・仕様は購入前に公式サイトや商品ラベルで最新情報をご確認ください。",
+        "h1": "出羽桜 桜花吟醸の基本情報"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸"
+            ],
+            "missing": [
+              "価格",
+              "720ml"
+            ]
+          },
+          "h1": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸"
+            ],
+            "missing": [
+              "価格",
+              "720ml"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "出羽桜",
+              "桜花吟醸",
+              "価格",
+              "720ml"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸",
+              "価格",
+              "720ml"
+            ],
+            "missing": []
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸"
+            ],
+            "missing": [
+              "価格",
+              "720ml"
+            ]
+          },
+          "h1": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸"
+            ],
+            "missing": [
+              "価格",
+              "720ml"
+            ]
+          },
+          "description": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸",
+              "価格"
+            ],
+            "missing": [
+              "720ml"
+            ]
+          },
+          "main_including_h1": {
+            "found": [
+              "出羽桜",
+              "桜花吟醸",
+              "価格",
+              "720ml"
+            ],
+            "missing": []
+          }
+        }
+      }
+    },
+    {
+      "query": "一升の出会い",
+      "path": "/",
+      "terms": [
+        "一升の出会い"
+      ],
+      "baseline": {
+        "title": "一升の出会い | 日本酒初心者向け好み診断",
+        "description": "",
+        "h1": "日本酒を知らなくても、好きな一本に出会える"
+      },
+      "proposed": {
+        "title": "日本酒の好み診断・初心者ガイド | 一升の出会い",
+        "description": "日本酒初心者向けの一升の出会い。登録なしで好み診断を試し、日本酒を検索できます。購入場所・選び方から保存・開封後までのガイドも読めます。",
+        "h1": "日本酒の好み診断で、好きな一本に出会う"
+      },
+      "literal_matches": {
+        "baseline": {
+          "title": {
+            "found": [
+              "一升の出会い"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [],
+            "missing": [
+              "一升の出会い"
+            ]
+          },
+          "description": {
+            "found": [],
+            "missing": [
+              "一升の出会い"
+            ]
+          },
+          "main_including_h1": {
+            "found": [],
+            "missing": [
+              "一升の出会い"
+            ]
+          }
+        },
+        "proposed": {
+          "title": {
+            "found": [
+              "一升の出会い"
+            ],
+            "missing": []
+          },
+          "h1": {
+            "found": [],
+            "missing": [
+              "一升の出会い"
+            ]
+          },
+          "description": {
+            "found": [
+              "一升の出会い"
+            ],
+            "missing": []
+          },
+          "main_including_h1": {
+            "found": [],
+            "missing": [
+              "一升の出会い"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
