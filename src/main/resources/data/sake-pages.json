@@ -116,11 +116,16 @@
     "brewery": "",
     "taste": [],
     "aroma": [],
-    "prices": [],
+    "prices": [
+      {
+        "volume": "720ml",
+        "yen": 1771
+      }
+    ],
     "drinking": [],
     "food": [],
     "recommendedFor": [],
-    "officialUrl": "",
+    "officialUrl": "https://www.dewazakura.co.jp/item/cat03/oka.html",
     "similarIds": [],
     "purchaseLinks": []
   },
@@ -135,7 +140,7 @@
     "drinking": [],
     "food": [],
     "recommendedFor": [],
-    "officialUrl": "",
+    "officialUrl": "https://www.hakkaisan.co.jp/sake/honjyozo/",
     "similarIds": [],
     "purchaseLinks": []
   },

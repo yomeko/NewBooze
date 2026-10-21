@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>お問い合わせ | 一升の出会い</title>
+  <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('contact')}"></header>
+<main class="beginner-guide publication-page">
+  <h1>お問い合わせ</h1>
+  <p class="lead">登録情報、掲載内容、個人情報の取り扱いに関する窓口をご案内します。</p>
+  <section class="guide-step" aria-labelledby="contact-address">
+    <h2 id="contact-address">問い合わせ窓口</h2>
+    <div th:if="${publication.contactConfigured}">
+      <p>下のメールアドレスへご連絡ください。お使いのメールアプリが開きます。</p>
+      <p class="contact-address"><a th:href="${'mailto:' + publication.contactEmail}" th:text="${publication.contactEmail}"></a></p>
+      <p>内容の確認に必要な範囲で、登録メールアドレスや該当ページをお知らせください。パスワードや、メールで届いた認証・再設定リンクは送らないでください。</p>
+    </div>
+    <div th:unless="${publication.contactConfigured}" class="publication-notice">
+      <p><strong>問い合わせ窓口は準備中です。</strong></p>
+      <p>公開用のメールアドレスは未定です。一般公開の前に、このページへ連絡先を掲載します。</p>
+    </div>
+  </section>
+  <section class="guide-step" aria-labelledby="contact-account">
+    <h2 id="contact-account">登録内容を変更・削除したいとき</h2>
+    <p>ログイン後の<a th:href="@{/mypage/account}">アカウント設定</a>から、表示名、メールアドレス、パスワード、プロフィール画像の変更や、アカウントの削除ができます。</p>
+    <p>ログインできない場合は、<a th:href="@{/forgot-password}">パスワードの再設定</a>をご利用ください。掲載情報の訂正など、設定画面で対応できない内容は、窓口の掲載後にご連絡ください。</p>
+  </section>
+
+  <div class="actions"><a class="button" th:href="@{/privacy}">プライバシーポリシー</a><a class="button" th:href="@{/}">ホームへ戻る</a></div>
+</main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

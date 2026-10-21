@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数：第1.4版　更新日：2026年10月21日
+版数：第1.5版　更新日：2026年10月21日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的と対象
 
-要件定義書 第1.7版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第1.8版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
 
 ### 1.2 更新方針と開発体制
 
@@ -42,14 +42,14 @@ JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録�
 |---|---|
 | com.example.demo | IsshoNoDeaiApplication |
 | controller | Home、SakeSearch、Diagnosis、Auth、MyPage、Admin等のController |
-| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、会員登録・メール認証、PasswordReset等のService |
+| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、ProductImagePublication、会員登録・メール認証、PasswordReset等のService |
 | repository | Spring Data JPA Repository 17クラス |
 | entity | JPA Entity 17クラスと複合IDクラス |
 | model | 表示用Sake、詳細紹介SakePage、旧診断モデル |
 | dto | SakePageDto、診断表示、入力フォーム、TastePresentation |
 | security | CustomUserDetails、CustomUserDetailsService、AccountSessionValidationFilter、AuthenticationRateLimiterとFilter |
 | validation | Utf8InputLength、Utf8ByteLength、BoundedImageDecoder等の入力検証 |
-| config | SecurityConfig、AdminAccountInitializer |
+| config | SecurityConfig、AdminAccountInitializer、PublicationInformation |
 
 ## 3 データベース設計
 
@@ -110,7 +110,8 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
 | 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録 |
 | 案内 collection.html | 各準備中ページの共通表示とメニューの準備中ラベル |
-| プライバシー privacy.html | 登録前にも読める情報の利用目的と公開範囲 |
+| 公開案内 about.html、contact.html、external-transmission.html | 研究と終了予定、運営者・窓口の設定状態、外部接続の説明 |
+| プライバシー privacy.html | 登録前にも読める情報の利用目的、公開範囲、保存と終了時の扱い |
 
 ### 4.2 共通UIと導線
 
@@ -128,7 +129,11 @@ entity.Sakeはsakeに対応するJPA Entity。酒蔵・酒種はManyToOneで、�
 
 SakeCatalogService.searchは条件の空白と#タグ入力を整え、RepositoryのPageをSakePageDtoへ変換する。ページ番号は0始まり、負の指定は0、範囲超過は最終ページ。SakePageDtoは独自recordでありPageインターフェースの実装ではない。Repositoryでは実際のSpring Data Pageを使用する。search.htmlのキーワード入力を含む検索欄に現在値を戻し、条件の再送信・並べ替え・価格帯追加で維持する。すべての条件を解除するリンクも設ける。価格帯は参考価格と表示し、検索・価格帯・価格順にはDBの価格を使う。
 
-詳細の基本情報はmodel.Sakeの酒種・産地・度数を使う。度数が0以下なら未確認とし、登録された参考値である旨を付記する。SakePage.pricesに容量別の税込価格があれば表示し、容量または金額が空なら未確認と表示する。pricesが空ならDBの参考価格を対象容量未確認として表示する。価格の変動や一覧との相違、購入前の公式情報確認を案内する。今回の変更ではDB値やスキーマを変更しない。
+詳細の基本情報はmodel.Sakeの酒種・産地・度数を使う。度数が0以下なら未確認とし、登録された参考値である旨を付記する。SakePage.pricesに容量別の税込価格があれば表示し、容量または金額が空なら未確認と表示する。pricesが空ならDBの参考価格を対象容量未確認として表示する。価格の変動や一覧との相違、購入前の公式情報確認を案内する。
+
+ProductImagePublicationServiceはproduct-image-publication.jsonの承認台帳を起動時に読み、銘柄ID・名称・URLの完全一致で表示可能な商品写真を判定する。approved=trueに加えて権利者、HTTPSの利用根拠URL、有効な確認日、利用条件、許可された形式の画像URLが必要で、同じ対象の重複は起動時に拒否する。公式配信ドメインやローカル保存先にあるだけでは承認しない。SakeCatalogServiceのEntityからmodel.Sakeへの変換で未承認URLをnullとし、検索・詳細・診断・ホーム比較へ同じ判定を適用する。DBの元URLは変更しない。台帳の初期7候補はすべて未承認で、写真の代替表示または省略を行う。プロフィール画像とサイト共通アイコンは商品写真台帳の対象外である。
+
+2026年10月21日の商品情報確認では、作成SQLの獺祭 純米大吟醸45を15%へ訂正し、既存DB向けcatalog_publication_corrections.sqlに旧値・名称・産地を限定する更新を用意する。sake-pages.jsonには出羽桜 桜花吟醸の720ml・税込1771円と公式URL、八海山 特別本醸造の公式URLを反映する。商品・容量・販売時期を特定できない参考価格は変更しない。DB保存済みの詳細JSONが優先されるため、ファイル更新だけで実DBの表示が変更済みとは扱わない。10銘柄の根拠と未確認事項はcatalog-publication-audit.csv、今回の実DB適用と検証結果はPUBLICATION.mdを参照する。
 
 ### 5.2 認証と本人の情報
 
@@ -172,6 +177,14 @@ AuthenticationRateLimitFilterはCSRF確認後、認証・SMTP送信より前に�
 | /verify-email | IPごと20回／15分 |
 
 超過はHTTP 429、待ち時間のRetry-After、no-storeと日本語案内を返す。AuthenticationRateLimiterはIPやログインIDの原文を保持せずSHA-256で管理キーを作り、最大20000件をプロセス内メモリーに保持する。満杯時は有効な制限を追い出さず、新しい要求を待たせる。再起動で記録は消え、複数インスタンスでは共有の制限機構が必要となる。IPはrequest.getRemoteAddr()を使い、X-Forwarded-For等を直接信用しない。単一プロキシのIPに全利用者が集約される構成では正当な利用も同じ制限になるため、公開前に信頼するプロキシと利用者IPの取得方法を決めて検証する。
+
+### 5.5 公開案内と設定
+
+PublicationInformationはapp.public.operator-nameとapp.public.contact-emailを受け取り、前後の空白を除いてHomeControllerから公開案内へ渡す。SITE_OPERATOR_NAMEとSITE_CONTACT_EMAILを環境変数として指定できる。空値は許可し、運営者名は未定、窓口は準備中と表示する。設定された連絡先は形式を起動時に検証し、不正な値を拒否する。テンプレートはテキストをエスケープし、連絡先が設定済みの場合だけmailtoリンクを表示する。問い合わせ受付フォームは作らず、SMTPの送信元情報から運営者名や窓口を推定しない。
+
+about、contact、privacy、external-transmissionは認証不要の専用ページとする。Google Fontsの読み込みではブラウザからGoogleへ接続すること、認証・再設定メールはサーバーが設定済みSMTPへ宛先と本文を渡すこと、外部リンクを開く操作や承認済み外部商品写真も別の接続を伴うことを説明する。未承認の商品写真のURLはHTMLへ渡さない。
+
+卒業研究終了時にサービスを終了する方針を表示する。終了日、データ削除日、バックアップ保持期間と事前告知・処理手順は未確定で、公開前に運営者が決定する。退会は既存の本人確認付き削除処理を利用し、連動する会員データの削除とバックアップの扱いを分けて説明する。サービスの自動停止や全データの自動削除を行う機構は今回追加しない。
 
 ## 6 エンドポイントと権限
 
@@ -227,9 +240,11 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /admin/users | ADMIN、keywordとpage、30件ずつ |
 | GETとPOST | /admin/sake/new | ADMIN、銘柄登録 |
 | GET | /ranking、/pairings、/goods | 認証必須、準備中の案内 |
-| GET | /brewery-map、/contact、/categories、/tags | 公開、準備中の案内 |
-| GET | /about、/external-transmission | 公開、準備中の案内 |
-| GET | /privacy | 公開、現行機能の情報利用と公開範囲の説明 |
+| GET | /brewery-map、/categories、/tags | 公開、準備中の案内 |
+| GET | /about | 公開、研究の目的・運営者情報・終了予定 |
+| GET | /contact | 公開、窓口の設定状態と連絡方法、未設定なら準備中 |
+| GET | /external-transmission | 公開、ブラウザの外部接続とサーバーのメール送信 |
+| GET | /privacy | 公開、現行機能の情報利用・公開範囲・保存と終了時の扱い |
 
 ## 7 推薦とランダム比較
 
@@ -263,10 +278,12 @@ AdminAccountInitializerは既定で無効。初回だけADMIN_BOOTSTRAP_ENABLED=
 
 DBとuploads/sake、利用する外部JSONをバックアップする。接続情報・SMTP情報・管理者初期設定は秘密として管理する。HTTPS、Cookie、信頼するプロキシ、複数インスタンスの制限共有は公開先の構成で確認する。
 
+公開表示用の運営者名と問い合わせ先はSITE_OPERATOR_NAME・SITE_CONTACT_EMAILで設定する。現時点ではどちらも未定で、終了日、データ削除日、バックアップ保持期間、公開環境の提供者と委託先も公開前に確定する。商品写真は承認台帳の個別確認後に有効化する。公開内容と設定、ローカルの検証を先に進め、公開サーバーの作業はその後とする。
+
 ### 8.2 検証と未提供の機能
 
 Gradleの全テストでDB接続・表示・権限・保存・画像等を検証する。追加テストはメジャー候補限定、本人除外、タグ比率、同点、タグ不足、空・1件カタログ、匿名ガイドと比較画面を扱う。JSテストは診断、トピック、プロフィール画像を確認する。PC・スマートフォン幅で目次と比較表示を確認する。
 
-残課題は準備中ページ、プライバシーポリシーの運用情報（連絡先・保存期間・委託先）の確認、飲酒投稿・いいね・通報の操作経路、診断履歴一覧、トピック初期表示のランダム化、参考価格・度数等のデモ商品情報の精査、SMTPと公開環境の運用確認。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を検討する。今回はこれらの未提供機能を追加したと記載しない。
+残課題は準備中ページ、運営者と窓口・保存期間・委託先の確定、終了時の告知と処理手順、飲酒投稿・いいね・通報の操作経路、診断履歴一覧、トピック初期表示のランダム化、参考価格・度数等の商品情報と写真の掲載許諾の継続確認、SMTPと公開環境の運用確認。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を検討する。今回はこれらの未提供機能を追加したと記載しない。今回の公開内容整備のテスト、画面確認、実DB適用の結果はPUBLICATION.mdを参照し、過去の検証と区別する。
 
-参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、docs/admin.md、docs/SECURITY.md。
+参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md。

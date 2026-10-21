@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.service.SakeDiscoveryService;
+import com.example.demo.config.PublicationInformation;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,11 +15,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class HomeController {
 
     private final SakeDiscoveryService discoveryService;
+    private final PublicationInformation publication;
 
     // コンストラクタインジェクション。@Autowiredを付けなくても、
     // コンストラクタが1つだけの場合はSpringが自動でDIしてくれる。
-    public HomeController(SakeDiscoveryService discoveryService) {
+    public HomeController(SakeDiscoveryService discoveryService, PublicationInformation publication) {
         this.discoveryService = discoveryService;
+        this.publication = publication;
     }
 
     /**
@@ -73,11 +76,12 @@ public class HomeController {
     }
 
     /**
-     * お問い合わせの準備中画面を表示する。
+     * 設定された問い合わせ先と、窓口が未設定の場合の案内を表示する。
      */
     @GetMapping("/contact")
     public String contact(Model model) {
-        return collectionPage(model, "contact", "お問い合わせ", "お問い合わせの掲載内容を準備しています。");
+        model.addAttribute("publication", publication);
+        return "contact";
     }
 
     /**
@@ -97,25 +101,27 @@ public class HomeController {
     }
 
     /**
-     * 運営者情報の準備中画面を表示する。
+     * 運営者情報と研究終了に伴う運用方針を表示する。
      */
     @GetMapping("/about")
     public String about(Model model) {
-        return collectionPage(model, "about", "運営者情報", "運営者情報の掲載内容を準備しています。");
+        model.addAttribute("publication", publication);
+        return "about";
     }
 
     /** 登録前から、現在の機能で扱う情報と利用目的を確認できるようにする。 */
     @GetMapping("/privacy")
-    public String privacy() {
+    public String privacy(Model model) {
+        model.addAttribute("publication", publication);
         return "privacy";
     }
 
     /**
-     * 利用者情報の送信についての準備中画面を表示する。
+     * 現在の外部接続先と送信される情報を表示する。
      */
     @GetMapping("/external-transmission")
     public String externalTransmission(Model model) {
-        return collectionPage(model, "external-transmission", "利用者情報の送信について", "利用者情報の送信についての掲載内容を準備しています。");
+        return "external-transmission";
     }
 
     /**

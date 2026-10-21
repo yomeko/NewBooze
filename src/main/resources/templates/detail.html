@@ -20,9 +20,9 @@
   <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <div class="sake-product-layout">
   <div class="sake-product-sidebar">
-  <!-- th:ifの条件を満たす場合だけ写真欄を出す。商品画像URLが未登録なら欄ごと省略する。 -->
+  <!-- imageUrlは公開利用を確認した写真のみ。未登録・未確認なら写真欄を省略する。 -->
   <figure class="sake-product-photo" th:if="${!#strings.isEmpty(sake.imageUrl)}">
-    <img th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" width="480" height="480" decoding="async">
+    <img th:src="${sake.imageUrl}" th:alt="|${sake.name}の商品写真|" width="480" height="480" decoding="async" referrerpolicy="no-referrer">
   </figure>
     <!-- 写真とお気に入り・購入リンクをまとめて追従させる。 -->
       <div class="sake-header-actions">

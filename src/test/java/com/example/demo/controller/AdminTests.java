@@ -83,7 +83,7 @@ class AdminTests {
         mvc.perform(get("/search").param("keyword", "管理登録テスト"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("管理登録テスト")));
     }
-    @Test void registersAndServesProductImageAndRejectsInvalidFiles() throws Exception {
+    @Test void storesProductImageButDoesNotPublishItWithoutApprovalAndRejectsInvalidFiles() throws Exception {
         var admin = user(new CustomUserDetails(testAdmin));
         var output = new java.io.ByteArrayOutputStream();
         javax.imageio.ImageIO.write(new java.awt.image.BufferedImage(8, 8,
@@ -111,7 +111,9 @@ class AdminTests {
                     .andExpect(result -> assertThat(javax.imageio.ImageIO.read(
                             new java.io.ByteArrayInputStream(result.getResponse().getContentAsByteArray())).getWidth()).isEqualTo(8));
             mvc.perform(get("/sake/" + id)).andExpect(status().isOk())
-                    .andExpect(content().string(containsString("src=\"" + url + "\"")));
+                    .andExpect(result -> assertThat(result.getResponse().getContentAsString())
+                            .doesNotContain("src=\"" + url + "\""));
+            assertThat(sake.findById(id).orElseThrow().getImageUrl()).isEqualTo(url);
             mvc.perform(get("/sake/images/invalid.png")).andExpect(status().isNotFound());
         } finally {
             images.delete(url);

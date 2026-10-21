@@ -1,0 +1,11 @@
+checked_on,seed_id,product_name,previous_seed_abv,seed_abv,legacy_reference_price_yen,status,official_product_name,confirmed_abv,confirmed_volume_ml,confirmed_price_yen,tax_basis,source_urls,remaining_check
+2026-10-21,1,獺祭 純米大吟醸45,16.0,15.0,2180,partially_verified,獺祭 純米大吟醸45,15.0,720,2475,inclusive,https://www.dassaistore.com/product-detail/47,参考価格の容量・税区分を確認する。ローカルDBの訂正適用結果はdocs/PUBLICATION.md参照。台帳は公式情報との照合を記録。
+2026-10-21,2,新政 No.6,13.0,13.0,2500,variant_and_year_unspecified,No.6 X-type・S-type・R-type（検索結果に保存された2021醸造年度）,,,,,https://www.aramasa.jp/collection/no.6.html,直接取得は502エラー。タイプと年度を特定して現行仕様・価格を確認する。過去の記載を現行値へ流用しない。
+2026-10-21,3,十四代 本丸,15.0,15.0,3200,unverified,,,,,,,同一商品の現行仕様・価格を蔵元公式で確認する。
+2026-10-21,4,黒龍 いっちょらい,15.0,15.0,1650,unverified,,,,,,https://www.kokuryu.co.jp/ja,公式の仕様本文を取得できず。度数・容量別価格を確認する。
+2026-10-21,5,而今 特別純米,16.0,16.0,2800,variant_unspecified,而今 特別純米 生・特別純米 火入,,,,,https://kiyashow.com/sake/,生・火入を特定して度数・容量別価格を確認する。
+2026-10-21,6,田酒 特別純米,16.0,16.0,1900,unverified,,,,,,https://www.densyu.co.jp/,公式の仕様本文を取得できず。度数・容量別価格を確認する。
+2026-10-21,7,出羽桜 桜花吟醸,15.0,15.0,1500,partially_verified,出羽桜 桜花吟醸酒,15.0,720,1771,inclusive,https://www.dewazakura.co.jp/item/cat03/oka.html,参考価格の容量・税区分を確認する。本文JSONに720ml税込1771円を追加。
+2026-10-21,8,八海山 特別本醸造,15.5,15.5,1400,partially_verified,特別本醸造 八海山,15.5,720,1320,exclusive,https://www.hakkaisan.co.jp/sake/honjyozo/ | https://www.hakkaisan.co.jp/wp-content/uploads/2026/01/a6e2b5b7ada51c8e694893beae69a62e.pdf,2026-03-02出荷分以降の税抜価格。計算による税込価格は本文JSONへ追加していない。DB参考価格の容量・税区分は未確認。
+2026-10-21,9,風の森 秋津穂,17.0,17.0,1600,variant_unspecified,風の森 秋津穂657,,,,,https://yucho-sake.jp/product/kazenomori/,657・807や採り方を特定して度数・価格を確認する。別仕様の度数を流用しない。
+2026-10-21,10,鍋島 特別純米,15.0,15.0,1800,unverified,,,,,,https://nabeshima.biz/sake.html,公式ラインナップだけでは同一商品の度数・現行価格を確定できず。仕様を確認する。

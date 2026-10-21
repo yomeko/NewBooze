@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>運営者情報 | 一升の出会い</title>
+  <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('about')}"></header>
+<main class="beginner-guide publication-page">
+  <h1>運営者情報</h1>
+  <p class="lead">一升の出会いは、日本酒を探し、自分の好みを知るための卒業研究のサービスです。</p>
+  <section class="guide-step" aria-labelledby="about-operator">
+    <h2 id="about-operator">運営について</h2>
+    <dl class="publication-details">
+      <dt>サービス名</dt><dd>一升の出会い</dd>
+      <dt>運営者名</dt><dd th:text="${publication.operatorConfigured ? publication.operatorName : '未定（公開前に掲載します）'}">未定</dd>
+      <dt>お問い合わせ</dt><dd><a th:href="@{/contact}">問い合わせ窓口の案内</a></dd>
+    </dl>
+    <p>銘柄情報の検索、好み診断、お気に入り、レビューを通して、日本酒選びを手助けします。20歳以上の方を対象としています。</p>
+    <p>掲載する商品名や酒蔵名は銘柄の説明のために使用しています。酒蔵やメーカーの公式サービスではなく、提携を示すものではありません。このサイト内での酒類の販売・決済は行いません。</p>
+  </section>
+  <section class="guide-step" aria-labelledby="about-period">
+    <h2 id="about-period">サービスの期間</h2>
+    <p>卒業研究の終了に合わせて、このサービスの運営を終了する予定です。終了日は未定です。日程が決まり次第、終了日とデータの削除予定を事前にサイト上でお知らせします。</p>
+    <p>終了後の保存期間やバックアップの削除時期を含む取り扱いは、公開前に確定して案内します。情報の取り扱いについては、プライバシーポリシーでもご案内します。</p>
+  </section>
+  <section class="guide-step" aria-labelledby="about-catalog">
+    <h2 id="about-catalog">商品情報と写真</h2>
+    <p>公式情報を確認しながら掲載内容を整えています。同じ商品名でも容量や製造年度などで仕様が異なります。検索に使う参考価格は、現在の販売価格や在庫を保証するものではありません。購入時はリンク先の公式情報を確認してください。</p>
+    <p>商品写真は出典と公開利用の根拠を確認できたものだけを表示します。確認中の写真は表示を保留します。</p>
+  </section>
+
+  <div class="actions"><a class="button" th:href="@{/privacy}">プライバシーポリシー</a><a class="button" th:href="@{/}">ホームへ戻る</a></div>
+</main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

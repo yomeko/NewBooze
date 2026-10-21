@@ -41,6 +41,14 @@ class HomeGuideTests {
                 .andExpect(content().string(containsString("href=\"/signup\"")));
     }
 
+    @Test void operationalInformationIsReadableWithoutAnAccount() throws Exception {
+        for (String page : new String[]{"about", "contact", "external-transmission"}) {
+            mvc.perform(get("/" + page)).andExpect(status().isOk()).andExpect(view().name(page));
+        }
+        mvc.perform(get("/about")).andExpect(content().string(containsString("卒業研究の終了に合わせて")));
+        mvc.perform(get("/privacy")).andExpect(content().string(containsString("削除予定日")));
+    }
+
     @Test void homeRendersPairAndSelectionEvidence() throws Exception {
         Sake selected = sake(30, "発見した一本");
         var reference = new SakeDiscoveryService.MajorReference("比較の定番", "公式情報と取扱店を確認",

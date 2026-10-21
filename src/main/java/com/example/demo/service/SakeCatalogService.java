@@ -30,11 +30,20 @@ public class SakeCatalogService {
 
     private final SakeRepository sakeRepository;
     private final SakeTagRepository sakeTagRepository;
+    private final ProductImagePublicationService productImages;
 
     public SakeCatalogService(SakeRepository sakeRepository,
                               SakeTagRepository sakeTagRepository) {
+        this(sakeRepository, sakeTagRepository, ProductImagePublicationService.denyAll());
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public SakeCatalogService(SakeRepository sakeRepository,
+                              SakeTagRepository sakeTagRepository,
+                              ProductImagePublicationService productImages) {
         this.sakeRepository = sakeRepository;
         this.sakeTagRepository = sakeTagRepository;
+        this.productImages = productImages;
     }
 
     /**
@@ -194,7 +203,7 @@ public class SakeCatalogService {
                 entity.getSakeType().getName(),
                 entity.getRegion(), entity.getAbv() == null ? 0 : entity.getAbv().doubleValue(),
                 entity.getPrice() == null ? 0 : entity.getPrice(), entity.getDescription(),
-                entity.getImageUrl(),
+                productImages.displayUrl(entity.getId(), entity.getName(), entity.getImageUrl()),
                 Map.copyOf(tags), entity.getAverageRating(), entity.getReviewCount() == null ? 0 : entity.getReviewCount());
     }
 

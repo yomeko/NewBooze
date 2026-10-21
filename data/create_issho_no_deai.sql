@@ -288,7 +288,9 @@ INSERT INTO `choice_tags` (`choice_id`, `tag_id`, `weight`) VALUES
 -- ---------- Sake catalog demo data ----------
 
 INSERT INTO `sake` (`id`, `sake_type_id`, `name`, `region`, `abv`, `price`, `description`) VALUES
-  (1, 1, '獺祭 純米大吟醸45', '山口県', 16.0, 2180, '華やかな香りと、透明感のあるやわらかな甘みが特徴です。'),
+  -- ABV source checked 2026-10-21: https://www.dassaistore.com/product-detail/47
+  -- Catalog price is legacy capacity-unspecified demo data; it is not the verified 720ml price.
+  (1, 1, '獺祭 純米大吟醸45', '山口県', 15.0, 2180, '華やかな香りと、透明感のあるやわらかな甘みが特徴です。'),
   (2, 2, '新政 No.6', '秋田県', 13.0, 2500, '爽やかな酸味とみずみずしい口当たりを楽しめる生酒です。'),
   (3, 3, '十四代 本丸', '山形県', 15.0, 3200, 'やさしい旨みと上品な甘みが広がる、なめらかな味わいです。'),
   (4, 4, '黒龍 いっちょらい', '福井県', 15.0, 1650, 'すっきりとした切れ味と、穏やかな吟醸香のバランスが魅力です。'),

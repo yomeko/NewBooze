@@ -6,9 +6,9 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="comparison(sake)" class="sake-comparison">
-  <!-- 画像がなければ案内を表示する。画像URLがあって読み込みに失敗した場合もmain.jsが案内へ切り替える。 -->
+  <!-- imageUrlは公開利用を確認した写真のみ。未登録・未確認・読み込み失敗時は案内を表示する。 -->
   <div class="sake-card-image">
-    <img th:if="${!#strings.isEmpty(sake.imageUrl)}" th:src="${sake.imageUrl}" th:alt="|${sake.name}の瓶・ラベル|" loading="lazy" width="240" height="180">
+    <img th:if="${!#strings.isEmpty(sake.imageUrl)}" th:src="${sake.imageUrl}" th:alt="|${sake.name}の瓶・ラベル|" loading="lazy" width="240" height="180" referrerpolicy="no-referrer">
     <span class="sake-image-fallback" th:hidden="${!#strings.isEmpty(sake.imageUrl)}"><span aria-hidden="true">◇</span>商品写真準備中</span>
   </div>
   <!-- JavaのtasteIndicators()で作る3項目を表示する。強さがnullなら数値とmeterを表示しない。 -->

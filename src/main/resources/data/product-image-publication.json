@@ -1,0 +1,79 @@
+[
+  {
+    "sakeId": 1,
+    "sakeName": "獺祭 純米大吟醸45",
+    "imageUrl": "https://dassai.com/files/dassai45.jpg",
+    "sourcePage": "https://dassai.com/product/main/45.html",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式出典の記録のみ。公開利用の許諾は未確認（2026-10-21）。"
+  },
+  {
+    "sakeId": 4,
+    "sakeName": "黒龍 いっちょらい",
+    "imageUrl": "https://images.microcms-assets.io/assets/13f2c790a2684060bddbf97b3cad8e72/97247b5b47ec46e883b290c0aec3fd58/4GR_kok_icr_syuku.png",
+    "sourcePage": "https://www.kokuryu.co.jp/ja/brew/kokuryu",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式サイトの配信URLという出典記録のみ。公開利用の許諾は未確認（2026-10-21）。"
+  },
+  {
+    "sakeId": 5,
+    "sakeName": "而今 特別純米",
+    "imageUrl": "https://kiyashow.com/asset/img/sake/jikon_25.webp",
+    "sourcePage": "https://kiyashow.com/sake/",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式出典・著作権表示の確認のみ。公開利用の許諾は未確認（2026-10-21）。"
+  },
+  {
+    "sakeId": 7,
+    "sakeName": "出羽桜 桜花吟醸",
+    "imageUrl": "https://www.dewazakura.co.jp/item/img/oka-2-main.png",
+    "sourcePage": "https://www.dewazakura.co.jp/item/cat03/oka.html",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式出典・著作権表示の確認のみ。公開利用の許諾は未確認（2026-10-21）。"
+  },
+  {
+    "sakeId": 8,
+    "sakeName": "八海山 特別本醸造",
+    "imageUrl": "https://www.hakkaisan.co.jp/wp-content/uploads/2024/05/tokubetu-honjyozou_720ml_-347x800.jpg",
+    "sourcePage": "https://www.hakkaisan.co.jp/sake/honjyozo/",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "一般利用規約は画像の直接埋め込みを控えるよう案内。素材規約は酒販店・飲食店向け販促用途で、Web記事掲載は別途依頼を案内。本サイトでの許諾は未確認（2026-10-21）。規約URLは data/SAKE_IMAGES.md。"
+  },
+  {
+    "sakeId": 9,
+    "sakeName": "風の森 秋津穂",
+    "imageUrl": "https://yucho-sake.jp/assets/img/product/kazenomori/Kaze_no_Mori_Akitsuho_657.png",
+    "sourcePage": "https://yucho-sake.jp/product/kazenomori/",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式出典の記録のみ。公開利用の許諾は未確認（2026-10-21）。"
+  },
+  {
+    "sakeId": 10,
+    "sakeName": "鍋島 特別純米",
+    "imageUrl": "https://nabeshima.biz/sake/28.jpg",
+    "sourcePage": "https://nabeshima.biz/sake.html",
+    "approved": false,
+    "rightsHolder": null,
+    "permissionSource": null,
+    "permissionCheckedOn": null,
+    "usageConditions": "公式出典の記録のみ。公開利用の許諾は未確認（2026-10-21）。"
+  }
+]
