@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>飲酒投稿の通報 | 一升の出会い</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+  <link rel="stylesheet" th:href="@{/css/drink-posts.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
+<main class="admin-page drink-posts">
+  <h1>飲酒投稿の通報</h1>
+  <nav class="admin-nav" aria-label="管理メニュー">
+    <a th:href="@{/admin}">管理トップ</a>
+    <a th:href="@{/admin/sake/new}">日本酒を登録</a>
+    <a th:href="@{/admin/users}">ユーザー一覧・検索</a>
+    <a th:href="@{/admin/post-reports}" aria-current="page">飲酒投稿の通報</a>
+  </nav>
+  <p>投稿内容を確認し、投稿を残してこの通報を閉じるか、対象の投稿を削除します。</p>
+  <p class="auth-alert success" role="status" th:if="${success}" th:text="${success}"></p>
+  <p th:if="${reports.empty}">対応待ちの通報はありません。</p>
+  <article class="guide-step drink-post" th:each="report : ${reports.content}">
+    <h2 th:text="${report.sakeName}"></h2>
+    <p>投稿者 <span th:text="${report.author}"></span></p>
+    <p class="drink-post-comment" th:unless="${#strings.isEmpty(report.comment)}" th:text="${report.comment}"></p>
+    <p>通報理由 <strong th:text="${report.reason}"></strong></p>
+    <p class="muted">通報日時 <time th:attr="datetime=${report.createdAt}" th:text="${#temporals.format(report.createdAt, 'yyyy/MM/dd HH:mm')}"></time></p>
+    <form th:action="@{/admin/post-reports/{id}/dismiss(id=${report.id})}" method="post">
+      <input type="hidden" name="page" th:value="${reports.number}">
+      <button class="button" type="submit">投稿を残して通報を閉じる</button>
+    </form>
+    <!-- 投稿の削除は通報1件の処理より影響が大きいため、削除の説明を開いてから実行する。 -->
+    <details>
+      <summary>対象の投稿を削除</summary>
+      <form th:action="@{/admin/post-reports/{id}/delete-post(id=${report.id})}" method="post">
+        <input type="hidden" name="page" th:value="${reports.number}">
+        <p>この投稿と、投稿についたすべてのいいね・通報を削除します。</p>
+        <button class="button" type="submit">投稿を削除する</button>
+      </form>
+    </details>
+  </article>
+  <nav class="pagination" th:if="${reports.totalPages > 1}" aria-label="通報のページ">
+    <a th:if="${reports.hasPrevious()}" th:href="@{/admin/post-reports(page=${reports.number - 1})}">前のページ</a>
+    <span th:text="|${reports.number + 1} / ${reports.totalPages}|"></span>
+    <a th:if="${reports.hasNext()}" th:href="@{/admin/post-reports(page=${reports.number + 1})}">次のページ</a>
+  </nav>
+</main>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

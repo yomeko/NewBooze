@@ -12,6 +12,7 @@ import com.example.demo.security.AuthenticationRateLimiter;
 import com.example.demo.security.AuthenticationRateLimitFilter;
 import com.example.demo.security.AccountSessionValidationFilter;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.validation.Utf8InputLength;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -30,7 +31,13 @@ public class SecurityConfig {
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new BCryptPasswordEncoder() {
+            @Override
+            protected boolean matchesNonNull(String rawPassword, String encodedPassword) {
+                // BCryptが末尾を無視して同じパスワードと判定しないよう、照合も設定時と同じ上限で行う。
+                return Utf8InputLength.isAtMost(rawPassword, 72) && super.matchesNonNull(rawPassword, encodedPassword);
+            }
+        };
     }
 
     /**

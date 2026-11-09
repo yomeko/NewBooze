@@ -17,6 +17,7 @@
     <section class="mypage-card wide" id="taste"><div class="card-title"><span>01</span><div><p class="eyebrow">YOUR TASTE</p><h2>保存された好みの傾向</h2></div><a th:href="@{/diagnosis}">診断し直す</a></div>
       <p class="muted" th:if="${#lists.isEmpty(preferences)}">まだ診断結果がありません。好み診断をすると、あなたの好きな系統が表示されます。</p>
       <p class="muted" th:unless="${#lists.isEmpty(preferences)}">これまでの診断で保存された特徴です。診断し直すと、今回出た特徴の点数だけを更新し、今回出なかった過去の特徴は残します。そのため、直後の診断結果とは表示される特徴や順番が異なることがあります。</p>
+      <p><a th:href="@{/mypage/diagnosis-history}">過去の診断回答を見る</a></p>
       <!-- 保存された特徴と点数を表示する。棒の幅は点数×12%で、100%を超えないようにする。 -->
       <div class="taste-list"><div class="taste-item" th:each="preference : ${preferences}"><div><strong th:text="${preference.tag.name}"></strong><small th:text="${preference.tag.category}"></small></div><div class="score"><i th:style="|width:${T(java.lang.Math).min(preference.score * 12, 100)}%|"></i></div></div></div>
     </section>

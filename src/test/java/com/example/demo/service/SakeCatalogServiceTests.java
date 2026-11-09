@@ -78,4 +78,15 @@ class SakeCatalogServiceTests {
 
         verify(repository).search(null, null, null, null, null, null, pageable);
     }
+
+    @Test
+    void hugePageNumberKeepsJpaOffsetInRangeAndEmptyResultsStartOnFirstPage() {
+        var bounded = PageRequest.of(Integer.MAX_VALUE / 6, 6, Sort.by(Sort.Direction.ASC, "id"));
+        when(repository.search(null, null, null, null, null, null, bounded)).thenReturn(Page.empty(bounded));
+
+        var result = service.search("", "", "", null, null, "", "recommended", Integer.MAX_VALUE);
+
+        org.assertj.core.api.Assertions.assertThat(result.pageNumber()).isZero();
+        org.assertj.core.api.Assertions.assertThat(result.content()).isEmpty();
+    }
 }

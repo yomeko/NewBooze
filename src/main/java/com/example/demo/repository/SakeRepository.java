@@ -69,6 +69,9 @@ public interface SakeRepository extends JpaRepository<Sake, Long> {
             @Param("taste") String taste,
             Pageable pageable);
 
+    // 評価未登録の銘柄を順位・件数・ページ数のすべてから除く。
+    Page<Sake> findByHasPublicReviews(int hasPublicReviews, Pageable pageable);
+
     // DISTINCTで同じ産地を1回だけ返し、未登録や空欄の産地は除く。
     @Query("SELECT DISTINCT s.region FROM Sake s WHERE s.region IS NOT NULL AND s.region <> '' ORDER BY s.region")
     java.util.List<String> findDistinctRegions();

@@ -1,9 +1,8 @@
 <!--
-  ランキングや各種案内で共通して使う、掲載準備中の画面。
-  HomeControllerが渡すtitle・description・currentPageで、見出しと現在のメニューを切り替える。
+  6つの特集で見出しとナビゲーションを共通化し、本文だけをページごとに切り替える。
 -->
 <!doctype html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/extras/spring-security">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
   <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
   <meta charset="UTF-8">
@@ -14,14 +13,100 @@
 <body>
 <header th:replace="~{fragments/site-header :: siteHeader(${currentPage})}"></header>
 <main class="page collection-page">
-  <!-- 見出しと説明はControllerから渡された値に置き換える。掲載準備中の案内は共通で表示する。 -->
   <section class="collection-hero" aria-labelledby="collection-title">
     <p class="eyebrow">一升の出会い 特集</p>
     <h1 id="collection-title" th:text="${title}">特集</h1>
     <p class="lead" th:text="${description}">一升の出会いのおすすめを紹介します。</p>
-    <p class="collection-status">掲載内容を準備しています。公開までしばらくお待ちください。</p>
-    <a class="button primary" th:href="@{/search}">日本酒をさがす</a>
   </section>
+
+  <div class="collection-content" th:switch="${currentPage}">
+    <section th:case="'ranking'" aria-label="公開レビューの順位">
+      <p th:if="${#lists.isEmpty(ranking.content)}" class="collection-status">公開レビューが登録されると、ここに順位が表示されます。</p>
+      <!-- 並べ替えと対象の絞り込みはDBで済ませ、次のページでも順位が続くようにする。 -->
+      <ol th:unless="${#lists.isEmpty(ranking.content)}" class="collection-list"
+          th:start="${ranking.number * ranking.size + 1}">
+        <li th:each="item : ${ranking.content}">
+          <a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}">銘柄</a>
+          <p th:text="|平均 ${#numbers.formatDecimal(item.averageRating, 1, 2)} / 5・${item.reviewCount} 件|">平均 4.00 / 5・1 件</p>
+        </li>
+      </ol>
+      <nav th:if="${ranking.totalPages > 1}" class="pagination" aria-label="ランキングのページ送り">
+        <a th:if="${ranking.hasPrevious()}" th:href="@{/ranking(page=${ranking.number - 1})}">前へ</a>
+        <span th:text="|${ranking.number + 1} / ${ranking.totalPages} ページ|">1 / 2 ページ</span>
+        <a th:if="${ranking.hasNext()}" th:href="@{/ranking(page=${ranking.number + 1})}">次へ</a>
+      </nav>
+    </section>
+
+    <div th:case="'pairings'">
+      <section class="guide-step" aria-labelledby="pairings-food">
+        <h2 id="pairings-food">おつまみを選ぶ</h2>
+        <p>香りの華やかな吟醸酒には白身魚のカルパッチョ、うま味のある純米酒には肉料理や発酵食品など、味わいを手がかりに組み合わせを試せます。</p>
+        <p class="guide-source">出典 <a href="https://japansake.or.jp/traditional_sake_making/" rel="noopener noreferrer" target="_blank">日本酒造組合中央会「國酒と料理の新しいペアリング」（別タブ）</a>。2026年11月9日確認。</p>
+        <h3>銘柄ごとの料理例</h3>
+        <p th:if="${#lists.isEmpty(foodSuggestions)}" class="muted">銘柄ごとの料理例はまだ登録されていません。</p>
+        <ul th:unless="${#lists.isEmpty(foodSuggestions)}" class="collection-list">
+          <li th:each="item : ${foodSuggestions}">
+            <a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}">銘柄</a>
+            <p th:text="${#strings.listJoin(item.food, '、')}">料理の例</p>
+          </li>
+        </ul>
+      </section>
+      <section class="guide-step" aria-labelledby="pairings-cups">
+        <h2 id="pairings-cups">酒器を選ぶ</h2>
+        <p>少量ずつ楽しむなら小さなおちょこ。色合いも見たいときは透明なグラスが候補です。とっくりを温めて使う場合は、湯せんや電子レンジに対応しているか商品表示を確認しましょう。</p>
+        <div class="actions"><a class="button" th:href="@{/goods}">メーカーの酒器を見る</a><a class="button" th:href="@{/guide#open}">初心者ガイドの飲み方へ</a></div>
+      </section>
+    </div>
+
+    <section th:case="'goods'" aria-labelledby="goods-cups">
+      <h2 id="goods-cups">メーカーの酒器</h2>
+      <ul class="collection-list">
+        <li>
+          <h3>東洋佐々木ガラスの冷酒グラス</h3>
+          <p>口元がすぼまった100 mlのグラスです。</p>
+          <a href="https://onlineshop.toyo.sasaki.co.jp/products/detail/1824" rel="noopener noreferrer" target="_blank">冷酒グラスの公式商品ページ（別タブ）</a>
+        </li>
+        <li>
+          <h3>能作の片口とぐい呑のセット</h3>
+          <p>注ぐための片口と、錫・金箔のぐい呑を組み合わせたセットです。</p>
+          <a href="https://www.nousaku.co.jp/product/recommend/" rel="noopener noreferrer" target="_blank">能作の公式商品案内（別タブ）</a>
+        </li>
+      </ul>
+      <p class="muted">公式情報確認日 2026年11月9日。価格、在庫、取り扱い方法は、リンク先の最新情報を確認してください。</p>
+      <a class="button" th:href="@{/pairings#pairings-cups}">酒器の選び方を見る</a>
+    </section>
+
+    <section th:case="'brewery-map'" aria-label="都道府県ごとの酒蔵">
+      <p th:if="${#maps.isEmpty(breweries)}" class="collection-status">カタログに酒蔵が登録されると、ここに一覧が表示されます。</p>
+      <p th:unless="${#maps.isEmpty(breweries)}" class="muted">訪問する場合は、検索結果の所在地・営業情報を酒蔵の案内で確認してください。</p>
+      <section th:each="area : ${breweries}" class="guide-step">
+        <h2 th:text="${area.key}">都道府県</h2>
+        <ul class="collection-list">
+          <li th:each="brewery : ${area.value}">
+            <span th:text="${brewery.name}">酒蔵</span>
+            <a th:href="${brewery.mapUrl}" rel="noopener noreferrer" target="_blank"
+               th:attr="aria-label=|Google マップで${brewery.name}を検索（別タブ）|">地図で探す（別タブ）</a>
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <section th:case="'categories'" aria-label="登録済みの酒種">
+      <p th:if="${#lists.isEmpty(types)}" class="collection-status">銘柄が登録されると、検索できる酒種が表示されます。</p>
+      <ul th:unless="${#lists.isEmpty(types)}" class="collection-links">
+        <li th:each="type : ${types}"><a class="button" th:href="@{/search(type=${type})}" th:text="${type}">酒種</a></li>
+      </ul>
+    </section>
+
+    <section th:case="'tags'" aria-label="銘柄に付いているタグ">
+      <p th:if="${#lists.isEmpty(tastes)}" class="collection-status">銘柄に特徴が登録されると、検索できるタグが表示されます。</p>
+      <ul th:unless="${#lists.isEmpty(tastes)}" class="collection-links">
+        <li th:each="taste : ${tastes}"><a class="button" th:href="@{/search(taste=${taste})}" th:text="|#${taste}|">#特徴</a></li>
+      </ul>
+    </section>
+
+    <div class="actions collection-actions"><a class="button primary" th:href="@{/search}">日本酒をさがす</a></div>
+  </div>
 </main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
 <script th:src="@{/js/main.js}"></script>

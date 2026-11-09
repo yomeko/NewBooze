@@ -4,6 +4,7 @@ import com.example.demo.model.Sake;
 import com.example.demo.model.SakePage;
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -45,12 +46,31 @@ public class SakePageService {
      * 銘柄IDに対応する紹介情報を返す。紹介情報や表示名が未登録ならDBの情報で補う。
      */
     public SakePage pageFor(Sake sake) {
-        // JSONに紹介情報がまだない新規銘柄は、DBのID・名前・酒蔵だけで詳細画面を表示する。
         if (jdbc != null) {
             var saved = jdbc.query("SELECT detail_json FROM sake_page_details WHERE sake_id = ?",
                     (row, index) -> mapper.readValue(row.getString(1), SakePage.class), sake.id());
             if (!saved.isEmpty()) return saved.getFirst();
         }
+        return fallbackPage(sake);
+    }
+
+    /** 特集では全登録銘柄を扱うため、管理画面で保存した紹介情報を一括取得する。 */
+    public List<SakePage> pagesForCatalog(List<Sake> catalog) {
+        if (catalog.isEmpty()) return List.of();
+        Map<Long, SakePage> saved = new LinkedHashMap<>();
+        if (jdbc != null) {
+            jdbc.query("SELECT sake_id, detail_json FROM sake_page_details", row -> {
+                saved.put(row.getLong("sake_id"), mapper.readValue(row.getString("detail_json"), SakePage.class));
+            });
+        }
+        return catalog.stream().map(sake -> {
+            SakePage page = saved.get(sake.id());
+            return page == null ? fallbackPage(sake) : page;
+        }).toList();
+    }
+
+    private SakePage fallbackPage(Sake sake) {
+        // DBに保存した紹介がなければ初期データを使い、どちらにもなければ銘柄名・酒蔵だけを返す。
         SakePage page = pages.getOrDefault(sake.id(), new SakePage(sake.id(), sake.name(), "",
                 sake.breweryName(), null, null, null, null, null, null, null, null, null));
         if (!page.name().isEmpty()) return page;

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>飲酒投稿 | 一升の出会い</title>
+  <link rel="icon" type="image/png" th:href="@{/images/site-icon.png}">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <link rel="stylesheet" th:href="@{/css/drink-posts.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('posts')}"></header>
+<main class="beginner-guide drink-posts">
+  <h1>飲酒投稿</h1>
+  <p class="lead">飲んだ日本酒や感想を、ログイン中の会員に共有できます。</p>
+  <p class="auth-alert success" role="status" th:if="${success}" th:text="${success}"></p>
+
+  <section class="guide-step" aria-labelledby="new-post">
+    <h2 id="new-post">飲んだお酒を投稿</h2>
+    <p>表示名・銘柄名・感想・投稿日時が会員に表示されます。連絡先などの個人情報は書き込まないでください。</p>
+    <form th:action="@{/posts}" method="post" th:object="${drinkPostForm}">
+      <p class="auth-alert" role="alert" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></p>
+      <div class="form-group">
+        <label for="sakeName">銘柄名（必須、100文字以内）</label>
+        <input id="sakeName" type="text" th:field="*{sakeName}" required maxlength="100"
+               th:attr="aria-invalid=${#fields.hasErrors('sakeName')},aria-describedby=${#fields.hasErrors('sakeName') ? 'sakeName-error' : null}">
+        <p id="sakeName-error" class="auth-alert" role="alert" th:if="${#fields.hasErrors('sakeName')}" th:errors="*{sakeName}"></p>
+      </div>
+      <div class="form-group">
+        <label for="comment">感想（任意、500文字以内）</label>
+        <textarea id="comment" th:field="*{comment}" rows="4" maxlength="500"
+                  th:attr="aria-invalid=${#fields.hasErrors('comment')},aria-describedby=${#fields.hasErrors('comment') ? 'comment-error' : null}"></textarea>
+        <p id="comment-error" class="auth-alert" role="alert" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}"></p>
+      </div>
+      <button class="button primary" type="submit">会員に公開する</button>
+    </form>
+  </section>
+
+  <section aria-labelledby="recent-posts">
+    <h2 id="recent-posts">みんなの飲酒投稿</h2>
+    <p th:if="${timeline.empty}">まだ飲酒投稿がありません。</p>
+    <!-- 投稿者が入力した文字列はHTMLとして扱わず、th:textで表示する。 -->
+    <article class="guide-step drink-post" th:each="post : ${timeline.content}">
+      <h3 th:text="${post.sakeName}"></h3>
+      <p class="muted">
+        <span th:text="${post.author}"></span>
+        <time th:attr="datetime=${post.createdAt}" th:text="${#temporals.format(post.createdAt, 'yyyy/MM/dd HH:mm')}"></time>
+      </p>
+      <p class="drink-post-comment" th:unless="${#strings.isEmpty(post.comment)}" th:text="${post.comment}"></p>
+      <div class="drink-post-actions">
+        <form th:action="@{/posts/{id}/like(id=${post.id})}" method="post">
+          <input type="hidden" name="page" th:value="${timeline.number}">
+          <input type="hidden" name="liked" th:value="${!post.liked}">
+          <button class="button" type="submit" th:text="${post.liked ? 'いいねを取り消す' : 'いいね'}"></button>
+        </form>
+        <span th:text="|いいね ${post.likeCount}件|"></span>
+      </div>
+      <details th:if="${post.owner}">
+        <summary>自分の投稿を削除</summary>
+        <form th:action="@{/posts/{id}/delete(id=${post.id})}" method="post">
+          <input type="hidden" name="page" th:value="${timeline.number}">
+          <p>投稿と、投稿についたいいね・通報を削除します。</p>
+          <button class="button" type="submit">削除する</button>
+        </form>
+      </details>
+      <p class="muted" th:if="${post.reported}">通報を受け付けました。</p>
+      <details th:if="${!post.owner && !post.reported}">
+        <summary>不適切な投稿を通報</summary>
+        <form th:action="@{/posts/{id}/report(id=${post.id})}" method="post" class="drink-post-actions">
+          <input type="hidden" name="page" th:value="${timeline.number}">
+          <label th:for="|reason-${post.id}|">通報理由</label>
+          <select th:id="|reason-${post.id}|" name="reason" required>
+            <option value="">選択してください</option>
+            <option th:each="reason : ${reportReasons}" th:value="${reason.name()}" th:text="${reason.label}"></option>
+          </select>
+          <button class="button" type="submit">通報する</button>
+        </form>
+      </details>
+    </article>
+    <nav class="pagination" th:if="${timeline.totalPages > 1}" aria-label="飲酒投稿のページ">
+      <a th:if="${timeline.hasPrevious()}" th:href="@{/posts(page=${timeline.number - 1})}">前のページ</a>
+      <span th:text="|${timeline.number + 1} / ${timeline.totalPages}|"></span>
+      <a th:if="${timeline.hasNext()}" th:href="@{/posts(page=${timeline.number + 1})}">次のページ</a>
+    </nav>
+  </section>
+</main>
+<footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

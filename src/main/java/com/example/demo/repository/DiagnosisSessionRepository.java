@@ -1,7 +1,8 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.DiagnosisSession;
-import java.util.List;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -10,6 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * findBy...などのメソッドは名前から検索条件を組み立て、@Queryがある場合は指定した検索文を使う。
  */
 public interface DiagnosisSessionRepository extends JpaRepository<DiagnosisSession, Long> {
-    // ユーザーの診断履歴を新しい順に取得する。現在のマイページでは履歴一覧を表示していない。
-    List<DiagnosisSession> findByUserIdOrderByTakenAtDesc(Long userId);
+    // 同じ秒に複数回保存された場合も、ページをまたいで表示順がぶれないようIDで並べる。
+    Slice<DiagnosisSession> findByUserIdOrderByTakenAtDescIdDesc(Long userId, Pageable pageable);
 }

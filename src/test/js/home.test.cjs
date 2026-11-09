@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 // 画面要素と操作の代役を作り、対象のJavaScriptを実行してテスト用の操作口を返す。
-function setup(reduced = false) {
+function setup(reduced = false, random = 0) {
   const element = () => {
     const classes = new Set();
     return {
@@ -32,7 +32,7 @@ function setup(reduced = false) {
   const motion = { matches: reduced, addEventListener(t, f) { this.changed = f; } };
   const document = { hidden: false, handlers: {}, querySelector: () => root, createElement: element, addEventListener(t, f) { this.handlers[t] = f; if (t === 'DOMContentLoaded') f(); } };
   vm.runInNewContext(fs.readFileSync('src/main/resources/static/js/home.js', 'utf8'), {
-    document, window: { matchMedia: () => motion },
+    document, window: { matchMedia: () => motion }, Math: Object.create(Math, { random: { value: () => random } }),
     setTimeout(f) { pending = f; return 1; }, clearTimeout() { pending = undefined; }
   });
   return { slides, selectors, document, track, motion, dots: selectors['.topic-dots'].children,
@@ -42,6 +42,18 @@ function setup(reduced = false) {
     active() { return slides.findIndex(s => s.attributes['aria-hidden'] === 'false'); }
   };
 }
+test('a random initial article sets the active slide and dot without starting autoplay', () => {
+  for (const [random, index] of [[0, 0], [0.5, 1], [0.99, 2]]) {
+    const c = setup(false, random);
+    assert.equal(c.active(), index);
+    assert.equal(c.track.style.values['--topic-offset'], index + 1);
+    assert.equal(c.selectors['.topic-position'].textContent, `${index + 1} / 3`);
+    assert.equal(c.dots[index].attributes['aria-current'], 'true');
+    assert.equal(c.running(), false);
+    c.click('next');
+    assert.equal(c.active(), (index + 1) % 3);
+  }
+});
 // ボタンにフォーカスとマウスが残っていても自動で切り替わり、停止ボタンで止める。
 test('carousel starts manual, autoplays with focused controls, wraps and stops', () => {
   const c = setup();

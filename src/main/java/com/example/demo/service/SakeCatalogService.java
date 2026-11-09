@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class SakeCatalogService {
     private static final int PAGE_SIZE = 6;
+    private static final int RANKING_PAGE_SIZE = 10;
     private static final int FEATURED_SIZE = 4;
     private static final Sort CATALOG_ORDER = Sort.by(Sort.Direction.ASC, "id");
 
@@ -67,12 +69,16 @@ public class SakeCatalogService {
                 normalizedKeyword = null;
             }
         }
-        int pageNumber = Math.max(0, requestedPage);
+        // JPAの検索開始位置はintのため、URLのページ番号をそのまま件数倍すると上限を超える。
+        int pageNumber = Math.clamp(requestedPage, 0, Integer.MAX_VALUE / PAGE_SIZE);
         Page<com.example.demo.entity.Sake> page = findPage(
                 normalizedKeyword, normalizedName, normalizedType, minPrice, maxPrice,
                 normalizedTaste, sortOrder, pageNumber);
-        if (page.getTotalPages() > 0 && pageNumber >= page.getTotalPages()) {
-            pageNumber = page.getTotalPages() - 1;
+        int totalPages = page.getTotalPages();
+        if (totalPages == 0) {
+            pageNumber = 0;
+        } else if (pageNumber >= totalPages) {
+            pageNumber = totalPages - 1;
             page = findPage(normalizedKeyword, normalizedName, normalizedType, minPrice, maxPrice,
                     normalizedTaste, sortOrder, pageNumber);
         }
@@ -89,6 +95,20 @@ public class SakeCatalogService {
                                                          int pageNumber) {
         return sakeRepository.search(keyword, name, type, minPrice, maxPrice, taste,
                 PageRequest.of(pageNumber, PAGE_SIZE, searchSort(sortOrder)));
+    }
+
+    /** 公開レビューの平均が高い順。同点は件数が多い順、さらに同点なら銘柄ID順に固定する。 */
+    @Transactional(readOnly = true)
+    public Page<Sake> ranking(int requestedPage) {
+        // DBへのオフセットが整数の上限を超えないようにし、範囲外なら最後のページを表示する。
+        int pageNumber = Math.clamp(requestedPage, 0, Integer.MAX_VALUE / RANKING_PAGE_SIZE);
+        Sort sort = searchSort("ratingDesc");
+        var page = sakeRepository.findByHasPublicReviews(1, PageRequest.of(pageNumber, RANKING_PAGE_SIZE, sort));
+        if (pageNumber >= Math.max(1, page.getTotalPages())) {
+            pageNumber = Math.max(0, page.getTotalPages() - 1);
+            page = sakeRepository.findByHasPublicReviews(1, PageRequest.of(pageNumber, RANKING_PAGE_SIZE, sort));
+        }
+        return new PageImpl<>(mapAll(page.getContent()), page.getPageable(), page.getTotalElements());
     }
 
     /**

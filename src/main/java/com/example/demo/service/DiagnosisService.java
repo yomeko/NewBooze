@@ -17,10 +17,14 @@ import com.example.demo.repository.DiagnosisQuestionRepository;
 import com.example.demo.repository.DiagnosisSessionRepository;
 import com.example.demo.repository.UserPreferenceRepository;
 import com.example.demo.repository.UserRepository;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -158,6 +162,28 @@ public class DiagnosisService {
 
     // 質問・回答・特徴の一覧を、結果画面の説明欄へ渡すためのデータ。
     public record AnswerSummary(String question, String answer, List<String> tags) {}
+
+    /**
+     * 本人の診断をページ単位で取得し、各回の回答を記録された順番で表示用データに変換する。
+     * 診断当時の点数やおすすめ銘柄は保存していないため、履歴では保存済みの回答を表示する。
+     */
+    @Transactional(readOnly = true)
+    public Slice<HistoryEntry> history(Long userId, Pageable pageable) {
+        Slice<DiagnosisSession> sessions = sessionRepository.findByUserIdOrderByTakenAtDescIdDesc(userId, pageable);
+        List<Long> sessionIds = sessions.getContent().stream().map(DiagnosisSession::getId).toList();
+        List<DiagnosisAnswer> answers = sessionIds.isEmpty() ? List.of()
+                : answerRepository.findBySessionUserIdAndSessionIdInOrderByIdAsc(userId, sessionIds);
+        Map<Long, List<HistoryAnswer>> answersBySession = new LinkedHashMap<>();
+        for (DiagnosisAnswer answer : answers) {
+            answersBySession.computeIfAbsent(answer.getSession().getId(), ignored -> new ArrayList<>())
+                    .add(new HistoryAnswer(answer.getQuestion().getQuestionText(), answer.getChoice().getChoiceText()));
+        }
+        return sessions.map(session -> new HistoryEntry(session.getTakenAt(),
+                List.copyOf(answersBySession.getOrDefault(session.getId(), List.of()))));
+    }
+
+    public record HistoryEntry(LocalDateTime takenAt, List<HistoryAnswer> answers) {}
+    public record HistoryAnswer(String question, String choice) {}
 
     /**
      * 診断1回分の記録を作り、その記録へ質問ごとの回答を結び付けて保存する。

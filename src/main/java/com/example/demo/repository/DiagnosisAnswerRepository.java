@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import com.example.demo.entity.DiagnosisAnswer;
 import java.util.List;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
  * findBy...などのメソッドは名前から検索条件を組み立て、@Queryがある場合は指定した検索文を使う。
  */
 public interface DiagnosisAnswerRepository extends JpaRepository<DiagnosisAnswer, Long> {
-    // 指定した診断1回分の回答を取得するためのメソッド。現在の集計処理では使っていない。
-    List<DiagnosisAnswer> findBySessionId(Long sessionId);
+    // 表示対象の診断だけを絞り、関連する質問と選択肢をまとめて読む。
+    @EntityGraph(attributePaths = {"question", "choice"})
+    List<DiagnosisAnswer> findBySessionUserIdAndSessionIdInOrderByIdAsc(Long userId, List<Long> sessionIds);
 }

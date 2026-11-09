@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return dot;
   });
 
-  // 初期状態は手動操作。再生ボタンを押すと7秒ごとに切り替える。
-  let index = 0;
-  let offset = 1;
+  // ページを開くたびに最初の記事を選ぶ。自動切り替えは再生ボタンを押してから始める。
+  let index = Math.floor(Math.random() * slides.length);
+  let offset = index + 1;
   let paused = true;
   let timer;
   let touchStart;

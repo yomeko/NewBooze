@@ -4,6 +4,7 @@ import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.DiagnosisService;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,13 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * 好み診断の質問画面と結果画面を担当する。
+ * 好み診断の質問画面、結果画面、本人の診断履歴を担当する。
  * 質問の回答をDiagnosisServiceへ渡し、好みの特徴とおすすめ銘柄をHTMLへ渡す。
  * 誰でも診断できるが、回答と点数をデータベースへ保存するのはログイン中だけ。
  */
 @Controller
 public class DiagnosisController {
 
+    private static final int HISTORY_PAGE_SIZE = 10;
     private final DiagnosisService diagnosisService;
 
     public DiagnosisController(DiagnosisService diagnosisService) {
@@ -35,6 +37,19 @@ public class DiagnosisController {
         model.addAttribute("questionCount", questions.stream().filter(q -> q.conditionChoiceId() == null).count()
                 + (questions.stream().anyMatch(q -> q.conditionChoiceId() != null) ? 2 : 0));
         return "diagnosis";
+    }
+
+    @GetMapping("/mypage/diagnosis-history")
+    public String history(@RequestParam(defaultValue = "0") int page,
+                          @AuthenticationPrincipal CustomUserDetails principal, Model model) {
+        // 古いページへのリンクや不正なページ番号からも、最初のページへ戻れるようにする。
+        if (page < 0 || page > Integer.MAX_VALUE / HISTORY_PAGE_SIZE) return "redirect:/mypage/diagnosis-history";
+
+        // /mypage/** はログイン必須。表示対象はリクエストの値ではなくログイン中の本人に固定する。
+        var history = diagnosisService.history(principal.getUserId(), PageRequest.of(page, HISTORY_PAGE_SIZE));
+        if (page > 0 && history.isEmpty()) return "redirect:/mypage/diagnosis-history";
+        model.addAttribute("history", history);
+        return "diagnosis-history";
     }
 
     /**

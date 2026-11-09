@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import com.example.demo.config.SecurityConfig;
+import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import java.net.URI;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
@@ -91,6 +93,21 @@ class AuthenticationSecurityChainTests {
                 .param("username", "context@example.invalid").param("password", "invalid-password"))
                 .andExpect(status().isTooManyRequests());
         verify(accounts, times(10)).loadUserByUsername("context@example.invalid");
+    }
+
+    @Test void bcryptDoesNotAcceptAnExtraSuffixAfterA72BytePassword() throws Exception {
+        // 24文字の日本語でUTF-8の上限ちょうどにし、末尾が切り捨てられてもログインできないことを確認する。
+        String password = "あ".repeat(24);
+        var account = new User();
+        account.setId(1L);
+        account.setEmail("boundary@example.invalid");
+        account.setPasswordHash(context.getBean(PasswordEncoder.class).encode(password));
+        doReturn(new CustomUserDetails(account)).when(accounts).loadUserByUsername(account.getEmail());
+
+        mvc.perform(post("/login").with(csrf()).param("username", account.getEmail())
+                .param("password", password + "a")).andExpect(redirectedUrl("/login?error"));
+        mvc.perform(post("/login").with(csrf()).param("username", account.getEmail())
+                .param("password", password)).andExpect(redirectedUrl("/"));
     }
 
     @Configuration

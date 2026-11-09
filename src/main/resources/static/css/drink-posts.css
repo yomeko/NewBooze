@@ -1,0 +1,40 @@
+/* 投稿者が入力した長い文字列もスマートフォンの幅で折り返す。 */
+.drink-post h2,
+.drink-post h3,
+.drink-post-comment {
+  overflow-wrap: anywhere;
+}
+
+.drink-post-comment {
+  white-space: pre-wrap;
+}
+
+.drink-posts textarea,
+.drink-posts select {
+  max-width: 100%;
+  padding: 0.65rem;
+  border: 1px solid var(--line, #ccc);
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.drink-posts textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+}
+
+.drink-post-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.drink-post details {
+  margin-top: 0.75rem;
+}
+
+.drink-post details form {
+  margin-top: 0.75rem;
+}

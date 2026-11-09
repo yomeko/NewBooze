@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数 第1.6版　更新日 2026年11月9日
+版数 第1.7版　更新日 2026年11月9日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的と対象
 
-要件定義書 第1.9版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第2.0版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。診断履歴、飲酒投稿と通報対応、カタログを使う特集画面も対象とする。
 
 ### 1.2 更新方針と開発体制
 
@@ -34,7 +34,7 @@
 
 Spring SecurityがURL権限とCSRFを確認し、Controllerが入力を受け付け、ServiceとRepositoryでDBから取得・保存した情報をThymeleafへ渡す。主要な関連データはServiceのトランザクション内で表示用recordへ変換する。open-in-view=falseにより、Viewでの暗黙の遅延取得に頼らない。
 
-JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。
+JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計で、評価対象の銘柄に限定する。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
 
 ### 2.3 パッケージ構成
 
@@ -91,7 +91,7 @@ sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キ�
 
 商品詳細はsake_page_detailsに保存されていれば優先する。なければsake-pages.json、その銘柄も未登録ならDBの基本情報で補完する。レビューは1人・1銘柄で更新し、公開平均・件数・一覧はpublished=1だけを対象とする。
 
-drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryがある。PostModerationServiceも存在するが、現行Controllerと画面に投稿・いいね・通報の操作経路はない。診断履歴は保存されるが、マイページはこれまでに保存された嗜好スコアとお気に入りを表示し、診断履歴一覧を提供していない。
+DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceに処理を委ねる。Serviceは認証済みのIDを使い、投稿者行をロックしてPostModerationServiceの確認と投稿保存を直列化する。いいね・通報・削除は投稿行をロックする。いいねは要求された状態へ更新し、通報は同一会員・同一投稿の対応待ちを重複させない。通報を閉じると該当の通報を削除する。投稿を削除すると既存の外部キーにより関連するいいね・通報も消える。DiagnosisService.historyは本人のセッションを日時とIDの降順で10件ずつ取得し、対象回の回答をID順に一括取得して表示用に変換する。保存済みの旧形式の回答も表示できる。
 
 ## 4 画面設計
 
@@ -107,9 +107,11 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | 結果 diagnosis-result.html | 今回の傾向・回答説明・最大5件のおすすめ、保存方法の説明 |
 | 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、パスワード再設定の要求・確定 |
 | マイページ mypage.html | 保存された嗜好と過去タグ保持の説明、お気に入り、プロフィール |
+| 診断履歴 diagnosis-history.html | 本人の診断日時と設問・回答 |
+| 飲酒投稿 drink-posts.html | 会員向けの一覧と投稿、いいね、通報、本人による削除 |
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
-| 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録 |
-| 案内 collection.html | 各準備中ページの共通表示とメニューの準備中ラベル |
+| 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録、飲酒投稿の通報と対応 |
+| 特集 collection.html | ランキング、食事と酒器、関連商品、酒蔵、酒種、タグの案内 |
 | 公開案内 about.html、contact.html、external-transmission.html | 研究と終了予定、運営者・窓口の設定状態、外部接続の説明 |
 | プライバシー privacy.html | 登録前にも読める情報の利用目的、公開範囲、保存と終了時の扱い |
 
@@ -119,7 +121,7 @@ site-headerの検索、横スクロールナビ、標準dialogのその他メニ
 
 スマートフォン用の非表示・ドロップダウン指定は.site-header .main-navに限定する。検索のページ送りは全幅で表示して必要に応じ折り返し、現在ページにaria-currentを付ける。設定画面のマイページに戻るリンクも全幅で表示する。
 
-home.jsは3記事を左右・ドット・キー・スワイプで切り替える。初期は手動、再生で7秒間隔。動きを減らす設定では自動を停止する。初期トピックのランダム化は未実装。銘柄比較の写真と3項目の5段階表示はsake-comparisonを共通利用する。タグ未登録の項目は未登録と表示する。
+home.jsは3記事を左右・ドット・キー・スワイプで切り替える。JavaScript有効時は初期記事を無作為に選び、手動で開始する。再生操作で7秒間隔になり、動きを減らす設定では自動を停止する。銘柄比較の写真と3項目の5段階表示はsake-comparisonを共通利用する。タグ未登録の項目は未登録と表示する。
 
 ## 5 クラスと保存処理
 
@@ -149,7 +151,7 @@ Serviceは行ロック下で未認証かつ前回送信から60秒以上経過�
 
 CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。表示名だけを変更した場合は、認証時点の値をセッションに保持する。同時にパスワードや権限が変更されても、古いセッションは新しい値を引き継がず次の要求で失効する。
 
-MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行い、未使用のパスワード再設定トークンを無効にする。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。パスワード変更時にも未使用の再設定トークンを無効にする。
+MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行い、未使用のパスワード再設定トークンを無効にする。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。パスワードの照合でもUTF-8の72バイト上限を適用し、BCryptが長い入力の末尾を無視して一致と判定することを防ぐ。パスワード変更時にも未使用の再設定トークンを無効にする。
 
 画像はJPEG・PNG・GIFで最大20MBを受信し、BoundedImageDecoderが実際の画像形式と2000万画素以下をメモリー展開前に確認する。GIFは論理画面と全フレームの寸法も検証し、最初のフレームだけ展開する。壊れた画像は入力エラーにし、保存MIMEは実形式から決める。900KBを超える場合は初期長辺1600px以下を目標にJPEGへ圧縮し、画質と寸法を段階的に下げて900KB以下で保存する。900KB以下のGIFは元のバイト列を保持してアニメーションを維持する。画像変更時は位置・拡大率を中央・等倍へ戻し、表示調整は別フィールドに保存する。
 
@@ -219,6 +221,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | メソッド | URL | 処理 |
 |---|---|---|
 | GET | /mypage | 本人の嗜好とお気に入り |
+| GET | /mypage/diagnosis-history | 本人の診断履歴、10件ずつ |
 | GET | /mypage/account | アカウント設定 |
 | GETとPOST | /mypage/profile-image | 本人画像の取得・保存 |
 | POST | /mypage/profile-image/delete | 本人画像削除 |
@@ -231,6 +234,8 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | POST | /mypage/profile | プロフィール変更、メール変更時は未認証化・送信後ログアウト |
 | POST | /mypage/password | パスワード変更 |
 | POST | /mypage/account/delete | 本人確認後に退会 |
+| GETとPOST | /posts | 会員、飲酒投稿の一覧と作成 |
+| POST | /posts/{id}/like、/report、/delete | 会員、いいねの付与・取消、通報、本人の投稿削除 |
 
 ### 6.3 管理と案内
 
@@ -239,8 +244,10 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /admin | ADMIN、管理トップ |
 | GET | /admin/users | ADMIN、keywordとpage、30件ずつ |
 | GETとPOST | /admin/sake/new | ADMIN、銘柄登録 |
-| GET | /ranking、/pairings、/goods | 認証必須、準備中の案内 |
-| GET | /brewery-map、/categories、/tags | 公開、準備中の案内 |
+| GET | /admin/post-reports | ADMIN、対応待ち通報を20件ずつ確認 |
+| POST | /admin/post-reports/{id}/dismiss、/delete-post | ADMIN、通報を閉じる、または投稿を削除 |
+| GET | /ranking、/pairings、/goods | 認証必須、公開レビューの順位・食事と酒器・関連商品案内 |
+| GET | /brewery-map、/categories、/tags | 公開、登録酒蔵・酒種・味わいタグの案内 |
 | GET | /about | 公開、研究の目的・運営者情報・終了予定 |
 | GET | /contact | 公開、窓口の設定状態と連絡方法、未設定なら準備中 |
 | GET | /external-transmission | 公開、ブラウザの外部接続とサーバーのメール送信 |
@@ -278,12 +285,12 @@ AdminAccountInitializerは既定で無効。初回だけADMIN_BOOTSTRAP_ENABLED=
 
 DBとuploads/sake、利用する外部JSONをバックアップする。接続情報・SMTP情報・管理者初期設定は秘密として管理する。HTTPS、Cookie、信頼するプロキシ、複数インスタンスの制限共有は公開先の構成で確認する。
 
-公開表示用の運営者名と問い合わせ先はSITE_OPERATOR_NAME・SITE_CONTACT_EMAILで設定する。現時点ではどちらも未定で、終了日、データ削除日、バックアップ保持期間、公開環境の提供者と委託先も公開前に確定する。商品写真は承認台帳の個別確認後に有効化する。公開内容と設定、ローカルの検証を先に進め、公開サーバーの作業はその後とする。
+公開表示用の運営者名と問い合わせ先はSITE_OPERATOR_NAME・SITE_CONTACT_EMAILで設定する。運営者名と問い合わせ先はローカルで設定済み。終了日、データ削除日、バックアップ保持期間、公開環境の提供者と委託先は公開前に確定する。商品写真は承認台帳の個別確認後に有効化する。公開内容と設定、ローカルの検証を先に進め、公開サーバーの作業はその後とする。
 
-### 8.2 検証と未提供の機能
+### 8.2 検証と残課題
 
 Gradleの全テストでDB接続・表示・権限・保存・画像等を検証する。追加テストはメジャー候補限定、本人除外、タグ比率、同点、タグ不足、空・1件カタログ、匿名ガイドと比較画面を扱う。JSテストは診断、トピック、プロフィール画像を確認する。PC・スマートフォン幅で目次と比較表示を確認する。
 
-残課題は準備中ページ、運営者と窓口・保存期間・委託先の確定、終了時の告知と処理手順、飲酒投稿・いいね・通報の操作経路、診断履歴一覧、トピック初期表示のランダム化、参考価格・度数等の商品情報と写真の掲載許諾の継続確認、SMTPと公開環境の運用確認。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を検討する。今回はこれらの未提供機能を追加したと記載しない。今回の公開内容整備のテスト、画面確認、実DB適用の結果はPUBLICATION.mdを参照し、過去の検証と区別する。
+残課題は公開環境の接続・運用確認、サービス終了・データ削除の実施計画、酒蔵と商品の情報・写真利用条件の確認、利用者調査と評価である。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を見直す。公開準備の状況はPUBLICATION.mdを参照する。
 
 参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md。
