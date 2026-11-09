@@ -80,7 +80,7 @@ public class AuthenticationRateLimiter {
         String ip = address == null ? "unknown" : address;
         if ("/login".equals(action)) {
             rules.add(new Rule(hash(action + ":ip:" + ip), 20, Duration.ofMinutes(5)));
-            String login = account == null ? "" : account.strip().toLowerCase(Locale.ROOT);
+            String login = normalizeLoginId(account);
             rules.add(new Rule(hash(action + ":account:" + login), 10, Duration.ofMinutes(5)));
         } else {
             int limit = switch (action) {
@@ -92,6 +92,11 @@ public class AuthenticationRateLimiter {
             if (limit != 0) rules.add(new Rule(hash(action + ":ip:" + ip), limit, Duration.ofMinutes(15)));
         }
         return rules;
+    }
+
+    static String normalizeLoginId(String account) {
+        // フォーム認証と同じ前後空白の扱いにし、大文字・小文字だけを揃える。
+        return account == null ? "" : account.trim().toLowerCase(Locale.ROOT);
     }
 
     private static long remaining(Instant now, Instant end) {

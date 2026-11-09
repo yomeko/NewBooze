@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.PasswordResetService;
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -87,27 +88,37 @@ class PasswordResetIntegrationTests {
         assertThat(after.getPasswordResetSentAt()).isEqualTo(before.getPasswordResetSentAt());
     }
 
-    @Test void getDoesNotChangePasswordAndCsrfIsRequiredBeforeOneTimeReset() throws Exception {
+    @Test void separateFormsResetOnlyTheirOwnAccountAndRequireCsrf() throws Exception {
         String email = createUser();
         passwords.requestFor(email);
         String token = sentToken();
-        var entry = mvc.perform(get("/reset-password").with(client()).param("token", token))
-                .andExpect(redirectedUrl("/reset-password"))
-                .andExpect(header().string("Referrer-Policy", "no-referrer"))
-                .andExpect(header().string("Cache-Control", "no-store")).andReturn();
-        MockHttpSession session = (MockHttpSession) entry.getRequest().getSession(false);
-        mvc.perform(get("/reset-password").with(client()).session(session)).andExpect(status().isOk());
+        MockHttpSession session = new MockHttpSession();
+        String firstForm = openResetForm(session, token);
+        String otherEmail = createUser();
+        reset(mail);
+        passwords.requestFor(otherEmail);
+        String secondForm = openResetForm(session, sentToken());
+        assertThat(secondForm).isNotEqualTo(firstForm);
+
         assertThat(encoder.matches(OLD_PASSWORD, users.findByEmail(email).orElseThrow().getPasswordHash())).isTrue();
-        mvc.perform(post("/reset-password").with(client()).session(session).param("newPassword", NEW_PASSWORD)
-                .param("confirmPassword", NEW_PASSWORD)).andExpect(status().isForbidden());
+        mvc.perform(post("/reset-password").with(client()).session(session).param("formId", firstForm)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD)).andExpect(status().isForbidden());
         assertThat(encoder.matches(OLD_PASSWORD, users.findByEmail(email).orElseThrow().getPasswordHash())).isTrue();
-        mvc.perform(post("/reset-password").with(client()).session(session).with(csrf()).param("newPassword", NEW_PASSWORD)
-                .param("confirmPassword", NEW_PASSWORD)).andExpect(redirectedUrl("/login?passwordReset"));
+        mvc.perform(post("/reset-password").with(client()).session(session).with(csrf()).param("formId", firstForm)
+                .param("newPassword", NEW_PASSWORD).param("confirmPassword", NEW_PASSWORD))
+                .andExpect(redirectedUrl("/login?passwordReset"));
         User updated = users.findByEmail(email).orElseThrow();
         assertThat(encoder.matches(NEW_PASSWORD, updated.getPasswordHash())).isTrue();
         assertThat(updated.getPasswordResetHash()).isNull();
         assertThat(updated.getPasswordResetExpiresAt()).isNull();
         assertThat(passwords.reset(token, "third-valid-password")).isFalse();
+        User other = users.findByEmail(otherEmail).orElseThrow();
+        assertThat(encoder.matches(OLD_PASSWORD, other.getPasswordHash())).isTrue();
+        assertThat(other.getPasswordResetHash()).isNotNull();
+        mvc.perform(post("/reset-password").with(client()).session(session).with(csrf()).param("formId", secondForm)
+                .param("newPassword", "other-valid-password").param("confirmPassword", "other-valid-password"))
+                .andExpect(redirectedUrl("/login?passwordReset"));
+        assertThat(encoder.matches("other-valid-password", users.findByEmail(otherEmail).orElseThrow().getPasswordHash())).isTrue();
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", OLD_PASSWORD))
                 .andExpect(unauthenticated());
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", NEW_PASSWORD))
@@ -208,6 +219,16 @@ class PasswordResetIntegrationTests {
                 .param("username", email).param("password", OLD_PASSWORD))
                 .andExpect(authenticated().withUsername(email)).andReturn();
         return (MockHttpSession) result.getRequest().getSession(false);
+    }
+
+    private String openResetForm(MockHttpSession session, String token) throws Exception {
+        String location = mvc.perform(get("/reset-password").with(client()).session(session).param("token", token))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Referrer-Policy", "no-referrer"))
+                .andExpect(header().string("Cache-Control", "no-store")).andReturn().getResponse().getRedirectedUrl();
+        assertThat(location).doesNotContain(token);
+        return (String) mvc.perform(get(URI.create(location)).with(client()).session(session))
+                .andExpect(model().attribute("canReset", true)).andReturn().getModelAndView().getModel().get("formId");
     }
 
     private RequestPostProcessor client() {

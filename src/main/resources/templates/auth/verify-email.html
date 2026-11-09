@@ -17,7 +17,31 @@
     <!--/* リンクの表示だけでは認証せず、POSTで本人の確定操作を受け付ける。 */-->
     <form th:if="${token}" th:action="@{/verify-email}" method="post">
       <input type="hidden" name="token" th:value="${token}">
-      <p>このメールアドレスでの登録を完了します。</p><button class="button primary">メールアドレスを認証する</button>
+      <div th:unless="${signup}">
+        <p>ご自身が登録またはメールアドレスの変更を申請した場合は、そのときのパスワードを入力してください。</p>
+        <p>心当たりがなく登録を進められない場合は、<a th:href="@{/contact}">運営者へお問い合わせください</a>。</p>
+        <div class="form-group">
+          <label for="current-password">現在のパスワード</label>
+          <input id="current-password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+      </div>
+      <div th:if="${signup}">
+        <p>表示名とパスワードを設定して、このメールアドレスでの登録を完了してください。</p>
+        <div class="form-group">
+          <label for="display-name">表示名</label>
+          <input id="display-name" name="name" type="text" autocomplete="nickname" maxlength="50" th:value="${displayName}" required>
+        </div>
+        <div class="form-group">
+          <label for="new-password">パスワード</label>
+          <input id="new-password" name="password" type="password" autocomplete="new-password" minlength="8" aria-describedby="password-help" required>
+          <p id="password-help" class="muted">8文字以上、UTF-8で72バイト以内で入力してください。半角英数字は72文字、日本語の多くは24文字が上限の目安です。</p>
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">パスワード（確認）</label>
+          <input id="confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+      </div>
+      <button class="button primary" th:text="${signup} ? '登録を完了する' : 'パスワードを確認して認証する'">登録を完了する</button>
     </form>
     <p th:unless="${token}">登録時に送信した認証メールのリンクを開いてください。認証するまでログインできません。</p>
     <!--/* 宛先が登録済みかどうかにかかわらず同じ再送案内を表示する。 */-->

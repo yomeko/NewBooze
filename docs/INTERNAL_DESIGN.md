@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数：第1.5版　更新日：2026年10月21日
+版数 第1.6版　更新日 2026年11月9日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -8,7 +8,7 @@
 
 ### 1.1 目的と対象
 
-要件定義書 第1.8版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第1.9版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
 
 ### 1.2 更新方針と開発体制
 
@@ -137,9 +137,9 @@ ProductImagePublicationServiceはproduct-image-publication.jsonの承認台帳�
 
 ### 5.2 認証と本人の情報
 
-AuthControllerは入力検証後に会員登録Serviceへ処理を委譲する。Serviceはemail重複確認、BCrypt保存、未認証状態と認証トークンの保存、SMTP送信を同じトランザクションで行い、送信失敗時は登録をロールバックする。登録後は確認メールの案内を表示し、SecurityContextを作成する自動ログインは行わない。SignupFormの@Size・@Utf8ByteLengthと共通Utf8InputLengthで、ハッシュ化前に8文字以上・UTF-8で72バイト以内を検証する。上限超過時は登録画面をHTTP 200で再表示し、入力欄に理由を示す。
+AuthControllerはメールアドレスを検証し、未認証レコードとトークンの保存、SMTP送信をServiceの同一トランザクションで行う。送信失敗時はロールバックする。この段階ではログインに使えるパスワードは保存しない。メールを受信した利用者が認証画面で表示名と8文字以上・UTF-8で72バイト以内のパスワードを入力し、行ロック下でBCryptハッシュを保存する。入力不正は認証画面に理由を表示する。
 
-認証トークンはSecureRandomの32バイトからURL-safe Base64の43文字を作る。DBにはSHA-256の64文字ハッシュ、有効期限、送信日時を保存し、生のトークンは保持しない。有効期間は24時間で、GET /verify-email?token=は確認画面だけを表示する。CSRF付きPOST /verify-emailで行ロック下に未使用・期限内を検証し、認証済みにしてトークン情報を消去する。認証後も自動ログインせずログイン画面へ案内する。
+認証トークンはSecureRandomの32バイトから作成する。DBにはトークンのハッシュと用途、有効期限、送信日時を保存する。有効期間は24時間で、GET /verify-email?token=は確認画面を表示する。CSRF保護付きPOST /verify-emailで行ロック下に未使用・期限内を確認する。新方式の新規登録では表示名とパスワードを確定する。メール変更と用途の記録がない旧方式の認証待ちでは、現在のパスワードを照合して既存ハッシュを維持する。認証後は使用済みのトークンを消去し、ログイン画面へ案内する。
 
 POST /verify-email/resendは前後の空白を除いたemailの形式と255文字の上限を検証し、未入力は入力エラーを案内する。255文字以内の入力値と結果を一度限りのFlash属性で保持し、URLには含めない。すべての再送POST後はGET /verify-emailへ移動する（PRG）。ページ更新では再送しない。
 
@@ -147,7 +147,7 @@ Serviceは行ロック下で未認証かつ前回送信から60秒以上経過�
 
 ログインはSecurityConfigとCustomUserDetailsServiceで処理し、CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員はパスワードが一致してもログインできない。旧既定パスワードの管理者も拒否する。既存ユーザーはメール認証移行SQLで認証済みとして保持し、明示的な初回設定で作る管理者も認証済みとする。旧機能で発行済みの仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。新規の仮パスワード発行は行わない。
 
-CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。別ブラウザに残ったセッションを変更前の権限で使い続けることを防ぐ。
+CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。表示名だけを変更した場合は、認証時点の値をセッションに保持する。同時にパスワードや権限が変更されても、古いセッションは新しい値を引き継がず次の要求で失効する。
 
 MyPageControllerは更新対象のuser_idをログイン情報から取得する。プロフィールと画像、パスワード、退会を扱う。メールアドレス変更はServiceのトランザクション内で未認証化と新しい宛先への送信を行い、未使用のパスワード再設定トークンを無効にする。送信成功後はセッションを終了して確認メールを案内し、SMTP失敗時は変更前のemailと認証状態へロールバックする。パスワード変更と退会では現在のパスワードを照合する。変更するパスワードにも同じUtf8InputLengthの72バイト検証を使い、入力不正は設定画面に説明する。パスワード変更時にも未使用の再設定トークンを無効にする。
 
@@ -155,7 +155,7 @@ MyPageControllerは更新対象のuser_idをログイン情報から取得する
 
 PasswordResetServiceは認証済み会員にだけSecureRandomの32バイトから43文字のURL-safeトークンを発行する。DBにはSHA-256の64文字ハッシュ・30分の期限・送信日時を保存し、会員行のロック下で前回送信から60秒以上あいた場合だけ送る。要求時に既存のpassword_hashを変更しない。再送成功時に旧トークンを置換し、SMTP例外時はトランザクションを戻す。送信先・トークンを含まない共通の受付案内を未登録・未認証・間隔未満・SMTP失敗にも表示し、GETへリダイレクトする。
 
-GET /reset-password?token=は形式を確認してトークンをセッションへ置き、/reset-passwordへ移動してURLから除く。このGETはパスワード変更・トークン消費を行わない。フォームにはトークンを埋め込まず、CSRF保護付きPOST /reset-passwordでセッションのトークン、新パスワードと確認入力を使う。Serviceは行ロック下で未使用・期限内・認証済みを確認してBCryptハッシュを保存し、temporary_password=falseとする。成功時は再設定ハッシュと期限を消去し、60秒制限のため送信日時は残す。セッションのトークンを除いて/login?passwordResetへ移動し、自動ログインしない。再設定関連ページはCache-Control: no-storeとReferrer-Policy: no-referrerを返す。リンクは固定app.base-urlから作り、HTTPSまたはlocalhostのHTTPだけを許可する。
+GET /reset-password?token=は形式を確認し、セッション内のフォーム別の識別子にトークンを紐付けて /reset-password?formId= へ移動する。セッションあたり直近8件を保持する。リンクを開くだけではトークンを消費しない。CSRF保護付きPOST /reset-passwordはフォームIDで対象を選び、新パスワードと確認入力を受け付ける。Serviceは行ロック下で未使用・期限内・認証済みを確認し、BCryptハッシュを保存してtemporary_passwordをfalseにする。成功時は再設定ハッシュと期限を消去し、60秒制限のため送信日時は残す。対象のフォームだけをセッションから除き、/login?passwordResetへ移動する。再設定関連ページはCache-Controlのno-storeとReferrer-Policyのno-referrerを返す。リンクは固定のapp.base-urlを使い、HTTPSまたはlocalhostのHTTPを許可する。
 
 ### 5.3 レビューと管理登録
 
@@ -167,7 +167,7 @@ AdminControllerは酒種・タグ・URL・画像を検証し、銘柄をsaveAndF
 
 ### 5.4 認証操作の回数制限
 
-AuthenticationRateLimitFilterはCSRF確認後、認証・SMTP送信より前に次のPOSTを制限する。ログイン成功・失敗にかかわらず、許可された要求を数える。
+AuthenticationRateLimitFilterはCSRF確認後、認証・SMTP送信より前に次のPOSTを制限する。ログイン成功・失敗にかかわらず、許可された要求を数える。ログインIDの管理キーと認証時の照合には、前後の空白を除いてLocale.ROOTで小文字化した値を使う。DBが同一とみなす表記でも、この比較が一致しなければ認証しない。
 
 | POSTのURL | 制限単位と回数 |
 |---|---|
@@ -208,8 +208,8 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | POST | /verify-email | CSRF付き認証確定、一度限り |
 | POST | /verify-email/resend | 再送受付、60秒間隔、GETへ移動 |
 | GETとPOST | /forgot-password | 再設定リンクの要求と共通の受付案内 |
-| GET | /reset-password | 初回tokenをセッションへ移してURLから除き、再設定フォームを表示 |
-| POST | /reset-password | CSRF付き新パスワード確定、一度限り |
+| GET | /reset-password | 初回トークンをセッション内のフォームIDに紐付け、IDだけのURLでフォームを表示 |
+| POST | /reset-password | CSRF保護付きでフォームIDに対応する新パスワードを確定 |
 | POST | /logout | セッションからログアウト |
 
 商品が存在しなければ404。診断の回答が空・重複・未回答・別経路の混入なら保存せず説明付き質問画面を表示する。結果表示はPOST /diagnosis/resultであり、旧案のPOST /diagnosis/answerとGET /diagnosis/resultは存在しない。

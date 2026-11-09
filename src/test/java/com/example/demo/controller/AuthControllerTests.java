@@ -5,6 +5,10 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.dto.SignupForm;
 import com.example.demo.service.EmailVerificationService;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.HexFormat;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +18,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.thymeleaf.extras.springsecurity6.dialect.SpringSecurityDialect;
@@ -27,10 +33,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/** DBを使わず、登録のバイト境界・入力エラー表示・成功後のメール認証案内を確認する。 */
+/** DBを使わず、登録開始・認証時のパスワード入力・入力エラー表示を確認する。 */
 class AuthControllerTests {
+    private static final String TOKEN = "signup_" + "A".repeat(43);
     private final UserRepository users = mock(UserRepository.class);
     private final EmailVerificationService verification = mock(EmailVerificationService.class);
+    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(4);
     private MockMvc mvc;
 
     @BeforeEach void setup() {
@@ -45,7 +53,10 @@ class AuthControllerTests {
         var views = new ThymeleafViewResolver();
         views.setTemplateEngine(engine);
         views.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(users, verification))
+        var confirmationService = new EmailVerificationService(users, encoder, mock(JavaMailSender.class),
+                "sender@example.invalid", "https://example.invalid");
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(users, verification),
+                        new EmailVerificationController(confirmationService))
                 .setViewResolvers(views).build();
     }
 
@@ -53,64 +64,83 @@ class AuthControllerTests {
         SecurityContextHolder.clearContext();
     }
 
-    @Test void signupExplainsPasswordLimitsAndLinksToPrivacyBeforeRegistration() throws Exception {
+    @Test void signupRequestsOnlyAnEmailAndLinksToPrivacyBeforeRegistration() throws Exception {
         String html = mvc.perform(get("/signup")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertThat(html).contains("UTF-8で72バイト以内", "日本語の多くは24文字", "href=\"/privacy\"",
-                "登録情報の利用目的", "aria-describedby=\"password-help\"");
+        assertThat(html).contains("href=\"/privacy\"", "登録情報の利用目的", "確認メールを送る")
+                .doesNotContain("name=\"password\"", "name=\"name\"");
         verifyNoInteractions(users, verification);
     }
 
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("overLimitPasswords")
-    void overLimitPasswordStaysOnSignupWithExplanationAndDoesNotSave(String label, String password) throws Exception {
-        var result = mvc.perform(post("/signup").param("name", "登録テスト").param("email", "signup@example.com")
-                .param("password", password))
-                .andExpect(status().isOk()).andExpect(view().name("auth/signup"))
-                .andExpect(model().attributeHasFieldErrors("signupForm", "password"))
-                .andReturn();
-        String html = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertThat(html).contains("パスワードはUTF-8で72バイト以内にしてください", "value=\"登録テスト\"",
-                "value=\"signup@example.com\"", "aria-invalid=\"true\"", "role=\"alert\"")
-                .doesNotContain("value=\"" + password + "\"");
-        assertThat(result.getResponse().getRedirectedUrl()).isNull();
-        assertThat(result.getRequest().getSession(false)).isNull();
-        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
-        verifyNoInteractions(users, verification);
-    }
-
-    @ParameterizedTest(name = "{0}")
-    @MethodSource("allowedPasswords")
-    void allowedPasswordRequestsVerificationWithoutLoggingIn(String label, String password) throws Exception {
-        when(users.findByEmail("signup@example.com")).thenReturn(Optional.empty());
-        var result = mvc.perform(post("/signup").param("name", "登録テスト").param("email", "signup@example.com")
-                .param("password", password))
+    @Test void signupRequestsVerificationWithoutLoggingIn() throws Exception {
+        var result = mvc.perform(post("/signup").param("email", "signup@example.com"))
                 .andExpect(redirectedUrl("/verify-email")).andReturn();
         var form = ArgumentCaptor.forClass(SignupForm.class);
         verify(verification).register(form.capture());
-        assertThat(form.getValue().getPassword()).isEqualTo(password);
         assertThat(form.getValue().getEmail()).isEqualTo("signup@example.com");
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         assertThat(result.getRequest().getSession(false)).isNull();
         verify(users, never()).save(any());
     }
 
-    @Test void shortPasswordIsStillRejectedBeforeEncoding() throws Exception {
-        mvc.perform(post("/signup").param("name", "登録テスト").param("email", "signup@example.com")
-                .param("password", "short12"))
-                .andExpect(status().isOk()).andExpect(view().name("auth/signup"))
-                .andExpect(model().attributeHasFieldErrors("signupForm", "password"));
-        verifyNoInteractions(users, verification);
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("overLimitPasswords")
+    void overLimitPasswordStaysOnConfirmationWithExplanationAndDoesNotSave(String label, String password) throws Exception {
+        User user = pendingUser();
+        var result = mvc.perform(post("/verify-email").param("token", TOKEN).param("name", "登録テスト")
+                        .param("password", password).param("confirmPassword", password))
+                .andExpect(status().isOk()).andExpect(view().name("auth/verify-email"))
+                .andExpect(model().attributeExists("error"))
+                .andReturn();
+        String html = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertThat(html).contains("UTF-8で72バイト以内", "日本語の多くは24文字", "value=\"登録テスト\"",
+                "aria-describedby=\"password-help\"", "role=\"alert\"")
+                .doesNotContain("value=\"" + password + "\"");
+        assertThat(user.isEmailVerified()).isFalse();
+        verify(users, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("allowedPasswords")
+    void allowedPasswordCompletesConfirmationWithoutLoggingIn(String label, String password) throws Exception {
+        User user = pendingUser();
+        mvc.perform(post("/verify-email").param("token", TOKEN).param("name", "登録テスト")
+                        .param("password", password).param("confirmPassword", password))
+                .andExpect(status().isOk()).andExpect(model().attribute("verified", true));
+        assertThat(user.getName()).isEqualTo("登録テスト");
+        assertThat(user.isEmailVerified()).isTrue();
+        assertThat(encoder.matches(password, user.getPasswordHash())).isTrue();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+    }
+
+    @Test void shortPasswordIsRejectedBeforeEncoding() throws Exception {
+        User user = pendingUser();
+        mvc.perform(post("/verify-email").param("token", TOKEN).param("name", "登録テスト")
+                        .param("password", "short12").param("confirmPassword", "short12"))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(user.getPasswordHash()).isNull();
+        verify(users, never()).save(any());
     }
 
     @Test void duplicateEmailStillShowsFieldErrorWithoutSaving() throws Exception {
         when(users.findByEmail("signup@example.com")).thenReturn(Optional.of(new User()));
-        mvc.perform(post("/signup").param("name", "登録テスト").param("email", "signup@example.com")
-                .param("password", "valid123"))
+        mvc.perform(post("/signup").param("email", "signup@example.com"))
                 .andExpect(status().isOk()).andExpect(view().name("auth/signup"))
                 .andExpect(model().attributeHasFieldErrors("signupForm", "email"));
         verify(users, never()).save(any());
         verifyNoInteractions(verification);
+    }
+
+    private User pendingUser() throws Exception {
+        String digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(TOKEN.getBytes(StandardCharsets.UTF_8)));
+        String hash = "h" + digest.substring(1);
+        var user = new User();
+        user.setEmailVerified(false);
+        user.setEmailVerificationHash(hash);
+        user.setEmailVerificationExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
+        when(users.findByEmailVerificationHash(hash)).thenReturn(Optional.of(user));
+        return user;
     }
 
     static Stream<Arguments> overLimitPasswords() {

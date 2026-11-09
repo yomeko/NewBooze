@@ -2,7 +2,10 @@ package com.example.demo.controller;
 
 import com.example.demo.entity.User;
 import com.example.demo.repository.*;
+import com.example.demo.security.AccountSessionValidationFilter;
 import com.example.demo.security.CustomUserDetails;
+import com.example.demo.service.EmailVerificationService;
+import jakarta.servlet.FilterChain;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
@@ -11,6 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
@@ -22,6 +29,7 @@ import static org.mockito.Mockito.*;
 class MyPagePasswordTests {
     private final UserRepository users = mock(UserRepository.class);
     private final BCryptPasswordEncoder encoder = spy(new BCryptPasswordEncoder());
+    private final EmailVerificationService verification = mock(EmailVerificationService.class);
     private final User user = new User();
     private MyPageController controller;
 
@@ -29,6 +37,7 @@ class MyPagePasswordTests {
         user.setId(42L);
         user.setName("変更テスト");
         user.setEmail("password@example.com");
+        user.setEmailVerified(true);
         user.setPasswordHash(new BCryptPasswordEncoder().encode("current123"));
         user.setTemporaryPassword(true);
         user.setPasswordResetHash("pending-reset-hash");
@@ -36,7 +45,7 @@ class MyPagePasswordTests {
         when(users.findById(42L)).thenReturn(Optional.of(user));
         when(users.findForProfileUpdateById(42L)).thenReturn(Optional.of(user));
         controller = new MyPageController(users, mock(UserPreferenceRepository.class), encoder,
-                mock(UserProfileImageRepository.class), mock(FavoriteRepository.class), mock(SakeRepository.class), mock(com.example.demo.service.EmailVerificationService.class));
+                mock(UserProfileImageRepository.class), mock(FavoriteRepository.class), mock(SakeRepository.class), verification);
     }
 
     @AfterEach void clearAuthentication() {
@@ -80,6 +89,32 @@ class MyPagePasswordTests {
         assertThat(redirect.getFlashAttributes().get("error")).isEqualTo("現在のパスワードが違います");
         verify(encoder, never()).encode(any());
         verify(users, never()).save(any());
+    }
+
+    @Test void nameChangeDoesNotRefreshCredentialsAfterConcurrentPasswordReset() throws Exception {
+        var principal = new CustomUserDetails(user);
+        var authentication = UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(verification.updateProfile(42L, "新しい表示名", user.getEmail())).thenAnswer(invocation -> {
+            user.setPasswordHash("hash-after-reset");
+            return false;
+        });
+
+        var request = new MockHttpServletRequest();
+        var session = (MockHttpSession) request.getSession();
+        controller.updateProfile("新しい表示名", user.getEmail(), principal, new RedirectAttributesModelMap(), request);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(authentication);
+
+        var nextRequest = new MockHttpServletRequest("GET", "/mypage");
+        nextRequest.setServletPath("/mypage");
+        nextRequest.setSession(session);
+        var response = new MockHttpServletResponse();
+        var chain = mock(FilterChain.class);
+        new AccountSessionValidationFilter(users, encoder).doFilter(nextRequest, response, chain);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo("/login?sessionExpired");
+        assertThat(session.isInvalid()).isTrue();
+        verifyNoInteractions(chain);
     }
 
     static Stream<Arguments> overLimitPasswords() { return AuthControllerTests.overLimitPasswords(); }

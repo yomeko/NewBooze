@@ -4,6 +4,8 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,6 +38,23 @@ class CustomUserDetailsServiceTests {
         User user = user("member@example.com", false, "admin");
         when(users.findByEmail(user.getEmail())).thenReturn(Optional.of(user));
         assertThat(service.loadUserByUsername(user.getEmail()).getUsername()).isEqualTo(user.getEmail());
+    }
+
+    @Test void registeredLoginIdStillAcceptsCaseVariants() {
+        User user = user("mémber@example.com", false, "member-password");
+        String mixedCase = "MÉmber@EXAMPLE.com";
+        when(users.findByEmail(mixedCase)).thenReturn(Optional.of(user));
+        assertThat(service.loadUserByUsername(mixedCase).getUsername()).isEqualTo(user.getEmail());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mémber@example.com", "ｍember@example.com"})
+    void databaseCollationAliasesCannotAuthenticate(String alias) {
+        User user = user("member@example.com", false, "member-password");
+        when(users.findByEmail(alias)).thenReturn(Optional.of(user));
+        assertThatThrownBy(() -> service.loadUserByUsername(alias))
+                .isInstanceOf(UsernameNotFoundException.class)
+                .hasMessage("ログインできません。");
     }
 
     @Test void detailsRetainAuthenticationSnapshotWhenOriginalUserChanges() {

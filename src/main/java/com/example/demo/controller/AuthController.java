@@ -57,7 +57,6 @@ public class AuthController {
                           BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
-            // BCryptの72バイト上限も保存・ハッシュ化より先に確認し、理由を登録画面へ返す。
             return "auth/signup";
         }
 

@@ -244,7 +244,7 @@ public class MyPageController {
 
     /**
      * 表示名とメールアドレスの形式・長さ・重複を確認してから保存する。
-     * メール変更時は確認メールを送りログアウトする。氏名だけならログイン情報を更新する。
+     * メール変更時は確認メールを送りログアウトする。表示名は画面表示時にDBから取得する。
      */
     @PostMapping("/profile")
     public String updateProfile(@RequestParam String name, @RequestParam String email,
@@ -270,7 +270,7 @@ public class MyPageController {
         } catch (DataIntegrityViolationException exception) {
             return error(redirect, "このメールアドレスは既に登録されています");
         }
-        refreshPrincipal(users.findById(user.getId()).orElseThrow());
+        // 認証情報を再取得すると、同時に変更されたパスワードや権限を古いセッションに引き継いでしまう。
         redirect.addFlashAttribute("success", "プロフィールを変更しました");
         return "redirect:/mypage/account#settings";
     }

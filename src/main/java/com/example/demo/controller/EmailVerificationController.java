@@ -24,17 +24,30 @@ public class EmailVerificationController {
     public String page(@RequestParam(required = false) String token, Model model, HttpServletResponse response) {
         preventStorage(response);
         // ここでは形式だけを確認し、有効期限・使用済みの判定は確定時にServiceで行う。
-        if (token != null && token.matches("[A-Za-z0-9_-]{43}")) model.addAttribute("token", token);
+        if (EmailVerificationService.isToken(token)) showConfirmation(model, token, "");
         return "auth/verify-email";
     }
 
     // CSRF保護されたフォームから確定し、成功後も自動ログインはしない。
     @PostMapping("/verify-email")
-    public String verify(@RequestParam String token, Model model, HttpServletResponse response) {
+    public String verify(@RequestParam String token, @RequestParam(defaultValue = "") String name,
+            @RequestParam(defaultValue = "") String password, @RequestParam(defaultValue = "") String confirmPassword,
+            Model model, HttpServletResponse response) {
         preventStorage(response);
-        if (verification.verify(token)) model.addAttribute("verified", true);
-        else model.addAttribute("error", "リンクが無効、期限切れ、または認証済みです。未認証の場合はメールを再送してください。");
+        try {
+            if (verification.verify(token, name, password, confirmPassword)) model.addAttribute("verified", true);
+            else model.addAttribute("error", "リンクが無効、期限切れ、または認証済みです。未認証の場合はメールを再送してください。");
+        } catch (IllegalArgumentException exception) {
+            showConfirmation(model, token, name.length() <= 50 ? name : "");
+            model.addAttribute("error", exception.getMessage());
+        }
         return "auth/verify-email";
+    }
+
+    private void showConfirmation(Model model, String token, String name) {
+        model.addAttribute("token", token);
+        model.addAttribute("signup", EmailVerificationService.isSignupToken(token));
+        model.addAttribute("displayName", name);
     }
 
     @PostMapping("/verify-email/resend")

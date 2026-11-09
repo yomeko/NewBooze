@@ -6,9 +6,12 @@ import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.EmailVerificationService;
 import com.example.demo.service.PasswordResetService;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,6 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -61,7 +65,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EmailVerificationIntegrationTests {
     private static final AtomicInteger CLIENT_SEQUENCE = new AtomicInteger(80);
     private static final String PASSWORD = "verification-test-password";
-    private static final Pattern TOKEN = Pattern.compile("[?&]token=([A-Za-z0-9_-]{43})");
+    private static final Pattern TOKEN = Pattern.compile("[?&]token=((?:signup_|change_)?[A-Za-z0-9_-]{43})");
     private static final Pattern RESEND_STATUS = Pattern.compile("<[^>]+\\bid=\"resend-status\"[^>]*>([^<]*)<");
 
     @Autowired private MockMvc mvc;
@@ -146,17 +150,17 @@ class EmailVerificationIntegrationTests {
         assertThat(after.getEmailVerificationExpiresAt()).isAfter(before.getEmailVerificationExpiresAt());
         assertThat(after.getEmailVerificationSentAt()).isAfter(before.getEmailVerificationSentAt());
 
-        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", oldToken))
+        mvc.perform(completeRegistration(oldToken))
                 .andExpect(status().isOk()).andExpect(model().attributeExists("error"))
                 .andExpect(model().attributeDoesNotExist("verified"));
         assertThat(readUser(email).isEmailVerified()).isFalse();
         assertThat(readUser(email).getEmailVerificationHash()).isEqualTo(after.getEmailVerificationHash());
 
-        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", newToken))
+        mvc.perform(completeRegistration(newToken))
                 .andExpect(status().isOk()).andExpect(model().attribute("verified", true))
                 .andExpect(unauthenticated());
         assertThat(readUser(email).isEmailVerified()).isTrue();
-        assertThat(verification.verify(newToken)).isFalse();
+        assertThat(verification.verify(newToken, "メール認証統合テスト", PASSWORD, PASSWORD)).isFalse();
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
@@ -184,7 +188,7 @@ class EmailVerificationIntegrationTests {
                 .andExpect(model().attributeDoesNotExist("sent"));
         verify(mail).send(any(SimpleMailMessage.class));
 
-        assertThat(verification.verify(token)).isTrue();
+        assertThat(verification.verify(token, "メール認証統合テスト", PASSWORD, PASSWORD)).isTrue();
         assertThat(resendStatus(resendPage(resend(email)))).isEqualTo(genericStatus);
         String unknown = newEmail();
         assertThat(resendStatus(resendPage(resend(unknown)))).isEqualTo(genericStatus);
@@ -243,21 +247,25 @@ class EmailVerificationIntegrationTests {
         assertThat(after.getEmailVerificationHash()).isEqualTo(before.getEmailVerificationHash());
         assertThat(after.getEmailVerificationExpiresAt()).isEqualTo(before.getEmailVerificationExpiresAt());
         assertThat(after.getEmailVerificationSentAt()).isEqualTo(before.getEmailVerificationSentAt());
-        assertThat(verification.verify(previousToken)).isTrue();
+        assertThat(verification.verify(previousToken, "メール認証統合テスト", PASSWORD, PASSWORD)).isTrue();
         verify(mail).send(any(SimpleMailMessage.class));
     }
 
     @Test
     void signupStaysLoggedOutAndOnlyAnExplicitConfirmationEnablesLogin() throws Exception {
         String email = newEmail();
-        mvc.perform(post("/signup").with(client()).with(csrf()).param("name", "メール認証統合テスト")
-                        .param("email", email).param("password", PASSWORD))
+        String attackerPassword = "attacker-chosen-password";
+        mvc.perform(post("/signup").with(client()).with(csrf()).param("email", email)
+                        .param("name", "先に登録した人").param("password", attackerPassword))
                 .andExpect(redirectedUrl("/verify-email"))
                 .andExpect(unauthenticated());
         String token = sentToken();
         User pending = readUser(email);
         assertThat(pending.isEmailVerified()).isFalse();
-        assertThat(pending.getEmailVerificationHash()).isNotEqualTo(token);
+        assertThat(token).startsWith("signup_");
+        assertThat(pending.getEmailVerificationHash()).matches("h[0-9a-f]{63}");
+        assertThat(pending.getName()).isNotEqualTo("先に登録した人");
+        assertThat(encoder.matches(attackerPassword, pending.getPasswordHash())).isFalse();
 
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"))
@@ -268,15 +276,107 @@ class EmailVerificationIntegrationTests {
         assertThat(afterGet.isEmailVerified()).isFalse();
         assertThat(afterGet.getEmailVerificationHash()).isEqualTo(pending.getEmailVerificationHash());
 
-        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", token))
-                .andExpect(status().isOk()).andExpect(unauthenticated());
+        mvc.perform(completeRegistration(token))
+                .andExpect(status().isOk()).andExpect(model().attribute("verified", true)).andExpect(unauthenticated());
         assertThat(readUser(email).isEmailVerified()).isTrue();
         assertThat(readUser(email).getEmailVerificationHash()).isNull();
-        assertThat(verification.verify(token)).isFalse();
+        assertThat(verification.verify(token, "メール認証統合テスト", PASSWORD, PASSWORD)).isFalse();
 
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", attackerPassword))
+                .andExpect(redirectedUrl("/login?error")).andExpect(unauthenticated());
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
+    }
+
+    @Test
+    void legacyPendingAddressChangeRequiresExistingPasswordAndNeverReplacesIt() throws Exception {
+        String email = newEmail();
+        String oldPassword = "legacy-existing-password";
+        String oldHash = encoder.encode(oldPassword);
+        String token = "L".repeat(43);
+        createLegacyPendingAccount(email, token, oldHash);
+
+        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", token))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(readUser(email).isEmailVerified()).isFalse();
+
+        mvc.perform(completeRegistration(token))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(readUser(email).isEmailVerified()).isFalse();
+
+        mvc.perform(post("/verify-email").with(client()).with(csrf())
+                        .param("token", token).param("password", oldPassword))
+                .andExpect(status().isOk()).andExpect(model().attribute("verified", true));
+        assertThat(readUser(email).getName()).isEqualTo("旧方式の表示名");
+        assertThat(readUser(email).getPasswordHash()).isEqualTo(oldHash);
+        mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", oldPassword))
+                .andExpect(redirectedUrl("/")).andExpect(authenticated().withUsername(email));
+    }
+
+    @Test
+    void changingAnExistingAddressRequiresBothTheLinkAndTheExistingPasswordAfterResend() throws Exception {
+        String email = newEmail();
+        String changedEmail = newEmail();
+        String passwordHash = encoder.encode(PASSWORD);
+        User existing = new User();
+        existing.setName("既存会員");
+        existing.setEmail(email);
+        existing.setPasswordHash(passwordHash);
+        Long id = users.saveAndFlush(existing).getId();
+
+        assertThat(verification.updateProfile(id, "変更後の表示名", changedEmail)).isTrue();
+        String previousToken = sentToken();
+        assertThat(previousToken).startsWith("change_");
+        allowResend(changedEmail);
+        reset(mail);
+        resend(changedEmail);
+        String newToken = sentToken();
+        assertThat(newToken).startsWith("change_").isNotEqualTo(previousToken);
+        assertThat(readUser(changedEmail).getEmailVerificationHash()).matches("g[0-9a-f]{63}");
+
+        mvc.perform(get("/verify-email").with(client()).param("token", newToken))
+                .andExpect(status().isOk()).andExpect(model().attribute("signup", false));
+        mvc.perform(post("/verify-email").with(client()).with(csrf()).param("token", newToken))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        mvc.perform(completeRegistration(newToken.substring("change_".length())))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(readUser(changedEmail).isEmailVerified()).isFalse();
+
+        mvc.perform(post("/verify-email").with(client()).with(csrf())
+                        .param("token", newToken).param("password", PASSWORD))
+                .andExpect(status().isOk()).andExpect(model().attribute("verified", true)).andExpect(unauthenticated());
+        User after = readUser(changedEmail);
+        assertThat(after.isEmailVerified()).isTrue();
+        assertThat(after.getPasswordHash()).isEqualTo(passwordHash);
+        assertThat(after.getName()).isEqualTo("変更後の表示名");
+    }
+
+    @Test
+    void resendingLegacyPendingLinkStillRequiresTheExistingPassword() throws Exception {
+        String email = newEmail();
+        String existingPassword = "existing-password";
+        String existingHash = encoder.encode(existingPassword);
+        String legacyToken = "M".repeat(43);
+        createLegacyPendingAccount(email, legacyToken, existingHash);
+
+        mvc.perform(completeRegistration(legacyToken))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(readUser(email).isEmailVerified()).isFalse();
+        allowResend(email);
+        reset(mail);
+        resend(email);
+
+        String changeToken = sentToken();
+        assertThat(changeToken).startsWith("change_");
+        mvc.perform(post("/verify-email").with(client()).with(csrf())
+                        .param("token", changeToken).param("password", PASSWORD))
+                .andExpect(status().isOk()).andExpect(model().attributeExists("error"));
+        assertThat(readUser(email).isEmailVerified()).isFalse();
+        mvc.perform(post("/verify-email").with(client()).with(csrf())
+                        .param("token", changeToken).param("password", existingPassword))
+                .andExpect(status().isOk()).andExpect(model().attribute("verified", true));
+        assertThat(readUser(email).getPasswordHash()).isEqualTo(existingHash);
     }
 
     @Test
@@ -339,7 +439,7 @@ class EmailVerificationIntegrationTests {
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/login?error"))
                 .andExpect(unauthenticated());
-        assertThat(verification.verify(token)).isTrue();
+        assertThat(verification.verify(token, "メール認証統合テスト", PASSWORD, PASSWORD)).isTrue();
         mvc.perform(post("/login").with(client()).with(csrf()).param("username", email).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"))
                 .andExpect(authenticated().withUsername(email));
@@ -357,10 +457,25 @@ class EmailVerificationIntegrationTests {
 
     private SignupForm signup(String email) {
         SignupForm form = new SignupForm();
-        form.setName("メール認証統合テスト");
         form.setEmail(email);
-        form.setPassword(PASSWORD);
         return form;
+    }
+
+    private MockHttpServletRequestBuilder completeRegistration(String token) {
+        return post("/verify-email").with(client()).with(csrf()).param("token", token)
+                .param("name", "メール認証統合テスト").param("password", PASSWORD).param("confirmPassword", PASSWORD);
+    }
+
+    private void createLegacyPendingAccount(String email, String token, String passwordHash) throws Exception {
+        User user = new User();
+        user.setName("旧方式の表示名");
+        user.setEmail(email);
+        user.setPasswordHash(passwordHash);
+        user.setEmailVerified(false);
+        user.setEmailVerificationHash(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(token.getBytes(StandardCharsets.UTF_8))));
+        user.setEmailVerificationExpiresAt(LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
+        users.saveAndFlush(user);
     }
 
     private User readUser(String email) {

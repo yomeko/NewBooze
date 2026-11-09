@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.SignupForm;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.validation.Utf8InputLength;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,6 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
 /** 認証トークンのハッシュのみを保存し、メール送信失敗時は登録・更新を戻す。 */
 @Service
 public class EmailVerificationService {
+    private static final String SIGNUP_TOKEN_PREFIX = "signup_";
+    private static final String ADDRESS_CHANGE_TOKEN_PREFIX = "change_";
+    private static final String SIGNUP_HASH_MARKER = "h";
+    private static final String ADDRESS_CHANGE_HASH_MARKER = "g";
+
     private final UserRepository users;
     private final PasswordEncoder encoder;
     private final JavaMailSender mail;
@@ -63,12 +69,13 @@ public class EmailVerificationService {
     @Transactional
     public void register(SignupForm form) {
         User user = new User();
-        user.setName(form.getName());
+        user.setName("登録手続き中");
         user.setEmail(form.getEmail().trim());
-        user.setPasswordHash(encoder.encode(form.getPassword()));
+        // NOT NULL列には誰にも通知しない乱数のハッシュを置き、本人が認証時に設定する。
+        user.setPasswordHash(encoder.encode(randomToken()));
         // 認証が済むまでCustomUserDetails.isEnabled()がログインを拒否する。
         user.setEmailVerified(false);
-        send(user);
+        send(user, true);
     }
 
     /** 登録の有無・認証済みかは呼び出し側へ公開しない。連続再送を60秒制限する。 */
@@ -78,18 +85,51 @@ public class EmailVerificationService {
         users.findForVerificationByEmail(email.trim()).filter(u -> !u.isEmailVerified())
                 .filter(u -> u.getEmailVerificationSentAt() == null
                         || !u.getEmailVerificationSentAt().isAfter(LocalDateTime.now(clock).minusSeconds(60)))
-                .ifPresent(this::send);
+                .ifPresent(user -> send(user, user.getEmailVerificationHash() != null
+                        && user.getEmailVerificationHash().startsWith(SIGNUP_HASH_MARKER)));
+    }
+
+    public static boolean isToken(String token) {
+        return token != null && token.matches("(?:signup_|change_)?[A-Za-z0-9_-]{43}");
+    }
+
+    public static boolean isSignupToken(String token) {
+        return token.length() > 43 && token.startsWith(SIGNUP_TOKEN_PREFIX);
     }
 
     @Transactional
-    public boolean verify(String token) {
-        if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) return false;
+    public boolean verify(String token, String name, String password, String confirmPassword) {
+        if (!isToken(token)) return false;
+        String tokenHash = verificationHash(token);
         // 生のトークンを保存せず、ハッシュで対象行をロックして一度だけ確定する。
-        var candidate = users.findByEmailVerificationHash(hash(token));
+        var candidate = users.findByEmailVerificationHash(tokenHash);
         if (candidate.isEmpty()) return false;
         User user = candidate.get();
-        if (user.isEmailVerified() || user.getEmailVerificationExpiresAt() == null
+        if (user.isEmailVerified() || !tokenHash.equals(user.getEmailVerificationHash())
+                || user.getEmailVerificationExpiresAt() == null
                 || !user.getEmailVerificationExpiresAt().isAfter(LocalDateTime.now(clock))) return false;
+        if (isSignupToken(token)) {
+            String displayName = name.strip();
+            if (displayName.isEmpty() || displayName.length() > 50) {
+                throw new IllegalArgumentException("表示名は1〜50文字で入力してください。");
+            }
+            if (password.isBlank() || password.length() < 8 || !Utf8InputLength.isAtMost(password, 72)) {
+                throw new IllegalArgumentException("パスワードは8文字以上、UTF-8で72バイト以内にしてください。");
+            }
+            if (!password.equals(confirmPassword)) {
+                throw new IllegalArgumentException("確認用パスワードが一致しません。");
+            }
+            user.setName(displayName);
+            user.setPasswordHash(encoder.encode(password));
+            user.setTemporaryPassword(false);
+            user.clearPasswordResetToken();
+        } else {
+            // 旧リンクは新規登録かメール変更か判別できないため、既存資格情報を変更せず照合する。
+            if (password.isEmpty() || !Utf8InputLength.isAtMost(password, 72)
+                    || !encoder.matches(password, user.getPasswordHash())) {
+                throw new IllegalArgumentException("現在のパスワードが正しくありません。");
+            }
+        }
         // 使用済みのハッシュと期限を消し、同じリンクでの再認証をできなくする。
         user.setEmailVerified(true);
         user.setEmailVerificationHash(null);
@@ -112,17 +152,14 @@ public class EmailVerificationService {
         user.clearPasswordResetToken();
         // 認証が済むまでCustomUserDetails.isEnabled()がログインを拒否する。
         user.setEmailVerified(false);
-        send(user);
+        send(user, false);
         return true;
     }
 
-    private void send(User user) {
-        // 推測しにくい256ビットの乱数を、URLに安全な43文字のトークンにする。
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    private void send(User user, boolean signup) {
+        String token = (signup ? SIGNUP_TOKEN_PREFIX : ADDRESS_CHANGE_TOKEN_PREFIX) + randomToken();
         LocalDateTime now = LocalDateTime.now(clock);
-        user.setEmailVerificationHash(hash(token));
+        user.setEmailVerificationHash(verificationHash(token));
         user.setEmailVerificationExpiresAt(now.plusHours(24));
         user.setEmailVerificationSentAt(now);
         // メール送信より先にDB制約を検査し、保存できないリンクの送信を避ける。
@@ -132,12 +169,28 @@ public class EmailVerificationService {
         message.setFrom(from);
         message.setTo(user.getEmail());
         message.setSubject("[一升の出会い] メールアドレスの認証");
-        message.setText(user.getName() + " さん\n\n新規登録を完了するには、次のリンクを開いて認証ボタンを押してください。\n"
+        String instructions = signup
+                ? "新規登録を完了するには、次のリンクを開いて表示名とパスワードを設定してください。"
+                : "以前に登録またはメールアドレスの変更を申請した場合は、次のリンクを開き、そのアカウントの現在のパスワードを入力してください。";
+        message.setText(instructions + "\n"
                 + baseUrl + "/verify-email?token=" + token
                 + "\n\nリンクは24時間有効です。再送すると以前のリンクは無効になります。\n"
                 + "心当たりがない場合は、このメールを破棄してください。");
         // 例外を握りつぶさず呼び出し元へ返すことで、DBの登録・変更も戻す。
         mail.send(message);
+    }
+
+    private String randomToken() {
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static String verificationHash(String token) {
+        String digest = hash(token);
+        if (token.length() == 43) return digest;
+        // 用途をDBで保持しながら64文字に収める。gとhは従来の16進ハッシュには現れない。
+        return (isSignupToken(token) ? SIGNUP_HASH_MARKER : ADDRESS_CHANGE_HASH_MARKER) + digest.substring(1);
     }
 
     private static String hash(String token) {

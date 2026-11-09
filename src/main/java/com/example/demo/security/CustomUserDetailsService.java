@@ -29,7 +29,10 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        String loginId = AuthenticationRateLimiter.normalizeLoginId(email);
         User user = userRepository.findByEmail(email)
+                // DBの照合順序ではアクセントなども同一視される。回数制限と同じ表記の範囲でのみログインを許可する。
+                .filter(candidate -> AuthenticationRateLimiter.normalizeLoginId(candidate.getEmail()).equals(loginId))
                 .orElseThrow(() -> new UsernameNotFoundException("ログインできません。"));
         // 過去の自動作成で残った既定パスワードの管理者は、IDを変更済みでも使用を拒否する。
         // 既存DBを自動更新せず、安全な新管理者への移行後に手動で無効化する。

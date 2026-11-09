@@ -42,40 +42,42 @@ class EmailVerificationTests {
 
     @Test void signupBlocksLoginAndSendsHashedToken() throws Exception {
         SignupForm form = new SignupForm();
-        form.setName("テスト"); form.setEmail(pending.getEmail()); form.setPassword("test-password");
+        form.setEmail(pending.getEmail());
         service.register(form);
         var user = ArgumentCaptor.forClass(User.class);
         verify(users).saveAndFlush(user.capture());
         User registered = user.getValue();
         assertThat(new CustomUserDetails(registered).isEnabled()).isFalse();
-        assertThat(new BCryptPasswordEncoder().matches("test-password", registered.getPasswordHash())).isTrue();
+        assertThat(registered.getPasswordHash()).startsWith("$2");
+        assertThat(registered.getName()).isEqualTo("登録手続き中");
         var message = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mail).send(message.capture());
         assertThat(message.getValue().getTo()).containsExactly(pending.getEmail());
         String token = message.getValue().getText().split("token=")[1].split("\n")[0];
-        assertThat(token).hasSize(43);
-        assertThat(registered.getEmailVerificationHash()).isEqualTo(hash(token));
+        assertThat(token).startsWith("signup_").hasSize(50);
+        assertThat(registered.getEmailVerificationHash()).isEqualTo(signupHash(token));
         assertThat(registered.getEmailVerificationExpiresAt()).isAfter(LocalDateTime.now(clock).plusHours(23));
     }
 
     @Test void confirmationIsSingleUseAndEnablesLogin() throws Exception {
-        String token = "A".repeat(43);
-        pending.setEmailVerificationHash(hash(token));
+        String token = "signup_" + "A".repeat(43);
+        pending.setEmailVerificationHash(signupHash(token));
         pending.setEmailVerificationExpiresAt(LocalDateTime.now(clock).plusHours(1));
-        when(users.findByEmailVerificationHash(hash(token))).thenReturn(Optional.of(pending));
-        assertThat(service.verify(token)).isTrue();
+        when(users.findByEmailVerificationHash(signupHash(token))).thenReturn(Optional.of(pending));
+        assertThat(service.verify(token, "テスト", "test-password", "test-password")).isTrue();
         assertThat(new CustomUserDetails(pending).isEnabled()).isTrue();
         assertThat(pending.getEmailVerificationHash()).isNull();
-        assertThat(service.verify(token)).isFalse();
+        assertThat(service.verify(token, "テスト", "test-password", "test-password")).isFalse();
     }
 
     @Test void expiredOrMalformedTokensNeverEnableLogin() throws Exception {
-        String token = "B".repeat(43);
+        String token = "signup_" + "B".repeat(43);
+        pending.setEmailVerificationHash(signupHash(token));
         pending.setEmailVerificationExpiresAt(LocalDateTime.now(clock).minusSeconds(1));
-        when(users.findByEmailVerificationHash(hash(token))).thenReturn(Optional.of(pending));
-        assertThat(service.verify(token)).isFalse();
-        assertThat(service.verify("bad")).isFalse();
-        assertThat(service.verify(null)).isFalse();
+        when(users.findByEmailVerificationHash(signupHash(token))).thenReturn(Optional.of(pending));
+        assertThat(service.verify(token, "テスト", "test-password", "test-password")).isFalse();
+        assertThat(service.verify("bad", "テスト", "test-password", "test-password")).isFalse();
+        assertThat(service.verify(null, "テスト", "test-password", "test-password")).isFalse();
         assertThat(new CustomUserDetails(pending).isEnabled()).isFalse();
     }
 
@@ -112,8 +114,8 @@ class EmailVerificationTests {
     }
 
     @Test void resendInvalidatesThePreviousTokenAndOnlyTheNewTokenEnablesLogin() throws Exception {
-        String previousToken = "C".repeat(43);
-        pending.setEmailVerificationHash(hash(previousToken));
+        String previousToken = "signup_" + "C".repeat(43);
+        pending.setEmailVerificationHash(signupHash(previousToken));
         pending.setEmailVerificationExpiresAt(LocalDateTime.now(clock).plusHours(1));
         when(users.findForVerificationByEmail(pending.getEmail())).thenReturn(Optional.of(pending));
         when(users.findByEmailVerificationHash(anyString())).thenAnswer(invocation ->
@@ -126,16 +128,16 @@ class EmailVerificationTests {
         String newToken = message.getValue().getText().split("token=")[1].split("\n")[0];
 
         assertThat(newToken).isNotEqualTo(previousToken);
-        assertThat(service.verify(previousToken)).isFalse();
+        assertThat(service.verify(previousToken, "テスト", "test-password", "test-password")).isFalse();
         assertThat(new CustomUserDetails(pending).isEnabled()).isFalse();
-        assertThat(service.verify(newToken)).isTrue();
+        assertThat(service.verify(newToken, "テスト", "test-password", "test-password")).isTrue();
         assertThat(new CustomUserDetails(pending).isEnabled()).isTrue();
-        assertThat(service.verify(newToken)).isFalse();
+        assertThat(service.verify(newToken, "テスト", "test-password", "test-password")).isFalse();
     }
 
     @Test void aTokenExpiresAtExactly24HoursAfterSending() {
         SignupForm form = new SignupForm();
-        form.setName("テスト"); form.setEmail(pending.getEmail()); form.setPassword("test-password");
+        form.setEmail(pending.getEmail());
         service.register(form);
         var user = ArgumentCaptor.forClass(User.class);
         verify(users).saveAndFlush(user.capture());
@@ -150,7 +152,7 @@ class EmailVerificationTests {
 
         assertThat(registered.getEmailVerificationExpiresAt())
                 .isEqualTo(LocalDateTime.now(clock).plusHours(24));
-        assertThat(atExpiry.verify(token)).isFalse();
+        assertThat(atExpiry.verify(token, "テスト", "test-password", "test-password")).isFalse();
         assertThat(new CustomUserDetails(registered).isEnabled()).isFalse();
         assertThat(registered.getEmailVerificationHash()).isNotNull();
         verify(users, never()).save(any(User.class));
@@ -165,8 +167,9 @@ class EmailVerificationTests {
         verify(users, never()).saveAndFlush(any(User.class));
     }
 
-    private String hash(String token) throws Exception {
-        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+    private String signupHash(String token) throws Exception {
+        String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                 .digest(token.getBytes(StandardCharsets.UTF_8)));
+        return "h" + hash.substring(1);
     }
 }
