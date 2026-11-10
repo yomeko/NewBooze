@@ -40,9 +40,15 @@ public class DiagnosisController {
     }
 
     @GetMapping("/mypage/diagnosis-history")
-    public String history(@RequestParam(defaultValue = "0") int page,
+    public String history(@RequestParam(name = "page", defaultValue = "0") String pageNumber,
                           @AuthenticationPrincipal CustomUserDetails principal, Model model) {
         // 古いページへのリンクや不正なページ番号からも、最初のページへ戻れるようにする。
+        int page;
+        try {
+            page = Integer.parseInt(pageNumber.strip());
+        } catch (NumberFormatException ex) {
+            return "redirect:/mypage/diagnosis-history";
+        }
         if (page < 0 || page > Integer.MAX_VALUE / HISTORY_PAGE_SIZE) return "redirect:/mypage/diagnosis-history";
 
         // /mypage/** はログイン必須。表示対象はリクエストの値ではなくログイン中の本人に固定する。

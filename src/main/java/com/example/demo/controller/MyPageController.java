@@ -225,7 +225,11 @@ public class MyPageController {
         if (favorites.existsByIdUserIdAndIdSakeId(user.getId(), sakeId)) {
             redirect.addFlashAttribute("error", "そのお酒はすでに登録済みです"); return "redirect:/mypage#favorites";
         }
-        var selected = sake.findById(sakeId).orElseThrow();
+        var selected = sake.findById(sakeId).orElse(null);
+        if (selected == null) {
+            redirect.addFlashAttribute("error", "選んだお酒が見つかりません。別のお酒を選んでください。");
+            return "redirect:/mypage#favorites";
+        }
         Favorite favorite = new Favorite(); favorite.setId(new FavoriteId(user.getId(), sakeId));
         favorite.setUser(user); favorite.setSake(selected); favorites.save(favorite);
         redirect.addFlashAttribute("success", "お気に入りに登録しました"); return "redirect:/mypage#favorites";

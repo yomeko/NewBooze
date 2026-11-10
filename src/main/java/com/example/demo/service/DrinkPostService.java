@@ -90,10 +90,13 @@ public class DrinkPostService {
 
     @Transactional
     public void create(Long userId, String sakeName, String comment) {
+        String name = sakeName.strip();
+        if (name.codePoints().allMatch(c -> Character.isWhitespace(c) || Character.isSpaceChar(c))) {
+            throw new IllegalArgumentException("お酒の名前を入力してください");
+        }
         // 同じ会員の同時投稿を直列化し、重複と投稿回数の確認から保存までを一続きに扱う。
         var user = users.findForProfileUpdateById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        String name = sakeName.strip();
         String text = comment == null ? "" : comment.strip();
         String error = moderation.validate(userId, name, text);
         if (error != null) throw new IllegalArgumentException(error);

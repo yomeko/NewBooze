@@ -101,7 +101,7 @@ class DiagnosisTests {
                 .andExpect(content().string(containsString("href=\"/mypage/diagnosis-history\"")));
         mvc.perform(get("/mypage/diagnosis-history").with(member)).andExpect(status().isOk())
                 .andExpect(content().string(containsString("まだ診断履歴がありません")));
-        for (String page : List.of("-1", "1", "2147483647")) {
+        for (String page : List.of("-1", "1", "abc", "2147483647", "2147483648")) {
             mvc.perform(get("/mypage/diagnosis-history").param("page", page).with(member))
                     .andExpect(redirectedUrl("/mypage/diagnosis-history"));
         }

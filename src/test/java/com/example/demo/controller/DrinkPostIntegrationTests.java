@@ -18,11 +18,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.endsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,6 +57,9 @@ class DrinkPostIntegrationTests {
                 .andExpect(status().isForbidden());
         mvc.perform(post("/posts").session(author.session()).with(csrf()).param("sakeName", " "))
                 .andExpect(status().isBadRequest());
+        mvc.perform(post("/posts").session(author.session()).with(csrf()).param("sakeName", "\u00A0 \u3000"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("お酒の名前を入力してください")));
         mvc.perform(post("/posts").session(author.session()).with(csrf())
                 .param("sakeName", "投稿テスト").param("comment", "死ね"))
                 .andExpect(status().isBadRequest());

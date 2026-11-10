@@ -285,4 +285,15 @@ class SakeDetailTests {
         mvc.perform(post("/mypage/sake/1/favorite").with(user(owner)).with(csrf()).param("selected", "false"));
         assertThat(interactions.isFavorite(owner.getUserId(), 1)).isFalse();
     }
+
+    @Test void missingFavoriteSakeReturnsToMyPageWithAnExplanation() throws Exception {
+        var owner = account();
+        var result = mvc.perform(post("/mypage/favorites").with(user(owner)).with(csrf())
+                .param("sakeId", Long.toString(Long.MAX_VALUE)))
+            .andExpect(redirectedUrl("/mypage#favorites"))
+            .andReturn();
+        mvc.perform(get("/mypage").with(user(owner)).flashAttrs(result.getFlashMap()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("選んだお酒が見つかりません。別のお酒を選んでください。")));
+    }
 }
