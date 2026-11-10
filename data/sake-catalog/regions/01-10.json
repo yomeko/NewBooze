@@ -1,0 +1,2243 @@
+[
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 国芳乃名取酒",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 生酛純米",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 生酛本醸造",
+    "sake_type": "特別本醸造",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 北の稲穂 大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 特別純米 北の稲穂",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 本醸造 北の稲穂",
+    "sake_type": "本醸造",
+    "source_url": "https://www.otokoyama.com/lineup/category01/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認（生酛純米は特別純米、生酛本醸造は特別本醸造）。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 寒酒",
+    "sake_type": "特別本醸造",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 木綿屋",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 つまみつつ",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 北の稲穂 大辛口",
+    "sake_type": "普通酒",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 上撰",
+    "sake_type": "普通酒",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 普通酒",
+    "sake_type": "普通酒",
+    "source_url": "https://www.otokoyama.com/lineup/category02/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式定番一覧の「造り」欄で酒種を確認。普通酒「男山」は酒種を添えて識別。所在地は同ページの北海道旭川市。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 復古酒",
+    "sake_type": "純米",
+    "source_url": "https://www.otokoyama.com/lineup/category03/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認。復古酒は純米原酒、御免酒は特別純米原酒、くーる・北海道生貯蔵は特別純米生貯蔵酒。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 御免酒",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category03/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認。復古酒は純米原酒、御免酒は特別純米原酒、くーる・北海道生貯蔵は特別純米生貯蔵酒。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 北海道限定 特別純米男山",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category03/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認。復古酒は純米原酒、御免酒は特別純米原酒、くーる・北海道生貯蔵は特別純米生貯蔵酒。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 くーる",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category03/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認。復古酒は純米原酒、御免酒は特別純米原酒、くーる・北海道生貯蔵は特別純米生貯蔵酒。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "男山株式会社",
+    "name": "男山 北海道生貯蔵 男山",
+    "sake_type": "特別純米",
+    "source_url": "https://www.otokoyama.com/lineup/category03/",
+    "checked_on": "2026-11-10",
+    "source_note": "公式一覧の「造り」欄で酒種を確認。復古酒は純米原酒、御免酒は特別純米原酒、くーる・北海道生貯蔵は特別純米生貯蔵酒。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 暑寒しずく",
+    "sake_type": "純米",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 暑寒美人",
+    "sake_type": "普通酒",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 生酛 純米",
+    "sake_type": "純米",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 北のきらめき",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 純米吟醸 ファーストムーン",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 純米吟醸 北海道限定",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 1,
+    "prefecture": "北海道",
+    "brewery": "国稀酒造株式会社",
+    "name": "国稀 純米 吟風国稀",
+    "sake_type": "純米",
+    "source_url": "https://www.kunimare.co.jp/online_shop/products/list",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名・括弧書きの酒種を確認。所在地は同サイトの北海道増毛町。容量違いは1商品。国稀／國稀の表記は国稀に統一。"
+  },
+  {
+    "prefecture_code": 2,
+    "prefecture": "青森県",
+    "brewery": "六花酒造株式会社",
+    "name": "杜來 純米酒",
+    "sake_type": "純米",
+    "source_url": "https://www.rokkashuzo.com/torai/index.html",
+    "checked_on": "2026-11-10",
+    "source_note": "六花酒造公式商品一覧で商品名と酒種を確認。公式ページタイトルは青森の地酒、所在地は弘前市宮地。青森テロワール酒は酒種未確定のため対象外。"
+  },
+  {
+    "prefecture_code": 2,
+    "prefecture": "青森県",
+    "brewery": "六花酒造株式会社",
+    "name": "杜來 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://www.rokkashuzo.com/torai/index.html",
+    "checked_on": "2026-11-10",
+    "source_note": "六花酒造公式商品一覧で商品名と酒種を確認。公式ページタイトルは青森の地酒、所在地は弘前市宮地。青森テロワール酒は酒種未確定のため対象外。"
+  },
+  {
+    "prefecture_code": 2,
+    "prefecture": "青森県",
+    "brewery": "六花酒造株式会社",
+    "name": "杜來 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.rokkashuzo.com/torai/index.html",
+    "checked_on": "2026-11-10",
+    "source_note": "六花酒造公式商品一覧で商品名と酒種を確認。公式ページタイトルは青森の地酒、所在地は弘前市宮地。青森テロワール酒は酒種未確定のため対象外。"
+  },
+  {
+    "prefecture_code": 2,
+    "prefecture": "青森県",
+    "brewery": "六花酒造株式会社",
+    "name": "杜來 純米大吟醸 華想い",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.rokkashuzo.com/torai/index.html",
+    "checked_on": "2026-11-10",
+    "source_note": "六花酒造公式商品一覧で商品名と酒種を確認。公式ページタイトルは青森の地酒、所在地は弘前市宮地。青森テロワール酒は酒種未確定のため対象外。"
+  },
+  {
+    "prefecture_code": 2,
+    "prefecture": "青森県",
+    "brewery": "六花酒造株式会社",
+    "name": "杜來 特別純米酒超辛口",
+    "sake_type": "特別純米",
+    "source_url": "https://www.rokkashuzo.com/torai/index.html",
+    "checked_on": "2026-11-10",
+    "source_note": "六花酒造公式商品一覧で商品名と酒種を確認。公式ページタイトルは青森の地酒、所在地は弘前市宮地。青森テロワール酒は酒種未確定のため対象外。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸 心白 山田錦",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸 雄町",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸 酒未来",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸 愛山",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸 結の香",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 スーパーフローズン 純米大吟醸 生原酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct6/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米大吟醸カテゴリで確認。会社所在地は同ページの岩手県二戸市。容量・箱・受賞文言違いを同一商品に統合。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct7/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米吟醸カテゴリで商品名を確認。所在地は同ページの岩手県二戸市。スパークリングの容量違い・セットは除外。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米吟醸 プリンセスミチコ",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct7/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米吟醸カテゴリで商品名を確認。所在地は同ページの岩手県二戸市。スパークリングの容量違い・セットは除外。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米吟醸 生",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct7/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米吟醸カテゴリで商品名を確認。所在地は同ページの岩手県二戸市。スパークリングの容量違い・セットは除外。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 純米吟醸 天翔る",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct7/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの純米吟醸カテゴリで商品名を確認。所在地は同ページの岩手県二戸市。スパークリングの容量違い・セットは除外。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct9/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの特別純米酒カテゴリで確認。YUICHUは特別純米酒と明記。会社所在地は同ページの岩手県二戸市。"
+  },
+  {
+    "prefecture_code": 3,
+    "prefecture": "岩手県",
+    "brewery": "株式会社南部美人",
+    "name": "南部美人 YUICHU",
+    "sake_type": "特別純米",
+    "source_url": "https://www.nanbubijin.jp/shopbrand/ct9/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元直送公式ショップの特別純米酒カテゴリで確認。YUICHUは特別純米酒と明記。会社所在地は同ページの岩手県二戸市。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米大吟醸 笙鼓",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米大吟醸 松山天",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米吟醸 蔵の華",
+    "sake_type": "純米吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 ササニシキ純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米吟醸 プリンセス・ミチコ",
+    "sake_type": "純米吟醸",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米酒超辛口 ひやおろし",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "イチからはじめるイチノクラ 純米酒 トヨニシキ",
+    "sake_type": "純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米生酒 超辛口 夏の生酒",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "イチからはじめるイチノクラ 特別純米酒 辛口 吟のいろは",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 3.11未来へつなぐバトン 特別純米原酒",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米酒 辛口",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米酒 超辛口",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 四段仕込 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 山廃仕込 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米 樽酒",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米酒 大和伝",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米生酒 ひゃっこい",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "イチからはじめるイチノクラ 吟のいろは 特別純米生原酒 にごりさけ",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米酒 人と自然が共生することについて考えてみた",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 特別純米生酒超辛口しぼりたて",
+    "sake_type": "特別純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 純米酒 掌",
+    "sake_type": "純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 熟成酒 招膳",
+    "sake_type": "純米",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 無鑑査本醸造 超辛口",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 無鑑査本醸造 辛口",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 無鑑査本醸造 甘口",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 無鑑査本醸造辛口 しぼりたて生酒",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 本醸造生酒 ひゃっこい",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 4,
+    "prefecture": "宮城県",
+    "brewery": "株式会社一ノ蔵",
+    "name": "一ノ蔵 無鑑査本醸造 辛口 夏仕立て",
+    "sake_type": "本醸造",
+    "source_url": "https://ichinokura.co.jp/product",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品紹介の見出し・酒種別区分で確認。ふりがな・容量・箱の違いは名前から除外。サイトは宮城県の蔵元と明示。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 今だけ屋0240 純米大吟醸無濾過生原酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 今だけ屋0239 純米大吟醸生原酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 米から育てた純米酒 初槽生酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 超辛口純米酒 SHI・CHI・SEI 搾りたて生酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "鳥海山 純米大吟醸 生酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 米から育てた純米酒 ひやおろし",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 燗上がり純米酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 純米大吟醸 百田25",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "鳥海山 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 大吟醸 鳥海",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 生もと純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 古酒大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 秘蔵大吟醸 2009年度醸造",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 秘蔵大吟醸 1998年度醸造",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 米から育てた純米酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 本醸造",
+    "sake_type": "本醸造",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "鳥海山 清澄辛口本醸造",
+    "sake_type": "本醸造",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 純米酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "鳥海山 生もと仕込純米酒",
+    "sake_type": "純米",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 5,
+    "prefecture": "秋田県",
+    "brewery": "天寿酒造株式会社",
+    "name": "天寿 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.tenju.co.jp/view/category/all_items",
+    "checked_on": "2026-11-10",
+    "source_note": "天寿酒造公式ショップ一覧で商品名に明示された酒種を確認。同ページに秋田県由利本荘市の所在地。容量違い・カートン違いを統合、数字は半角に正規化。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 大吟醸酒",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 山田錦 四割八分",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雪漫々",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雪漫々 氷点下五年熟成",
+    "sake_type": "大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 一路",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 一路 無濾過生原酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 愛山",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雪女神 四割八分",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雪女神 三割五分",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 亀の尾",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 純米大吟醸 原酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 生酛",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雪漫々 純米大吟醸酒",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 桜花吟醸酒 本生",
+    "sake_type": "吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 桜花吟醸酒 さらさらにごり",
+    "sake_type": "吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 出羽燦々誕生記念",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 出羽燦々誕生記念 本生",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 出羽燦々 無濾過生原酒",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 つや姫",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 雄町",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 深緑ラベル",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 夕月夜",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 プリンセス・ミチコ",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 バリ辛",
+    "sake_type": "純米吟醸",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 一耕",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 一耕 本生",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 出羽の里",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 山廃",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 honu",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 しぼりたて生原酒 出羽の里",
+    "sake_type": "純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 本醸造酒",
+    "sake_type": "本醸造",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 しぼりたて 春の淡雪",
+    "sake_type": "本醸造",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 蔵涼み 特別本醸造",
+    "sake_type": "特別本醸造",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 誠醸辛口",
+    "sake_type": "普通酒",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 誠醸",
+    "sake_type": "普通酒",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 花宝",
+    "sake_type": "普通酒",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 冷卸 蔵涼み",
+    "sake_type": "普通酒",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 6,
+    "prefecture": "山形県",
+    "brewery": "出羽桜酒造株式会社",
+    "name": "出羽桜 ML発酵",
+    "sake_type": "特別純米",
+    "source_url": "https://www.dewazakura.co.jp/item/",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式商品一覧の酒種別カテゴリを確認。所在地は同ページの山形県天童市。既存の桜花吟醸の火入商品は除外し、本生・にごりは別商品として扱う。容量違いの大吟醸、吟醸缶など包装違いは統合または除外。"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 妙花闌曲Ω",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 妙花闌曲グランド・キュヴェ Ver.7",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 玉依御前・亀鏡",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 妙花闌曲",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "宝暦大七",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 頌歌",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 箕輪門",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIDAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米大吟醸酒カテゴリで商品名と酒種を確認。容量違いは統合。会社概要の福島県二本松市で所在地を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 皆伝",
+    "sake_type": "純米吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米吟醸酒カテゴリで商品名と酒種を確認。会社概要で福島県二本松市を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 螺鈿",
+    "sake_type": "純米吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米吟醸酒カテゴリで商品名と酒種を確認。会社概要で福島県二本松市を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 真桜",
+    "sake_type": "純米吟醸",
+    "source_url": "https://secure.daishichi.com/category/JUNMAIGINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米吟醸酒カテゴリで商品名と酒種を確認。会社概要で福島県二本松市を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 極上生もと",
+    "sake_type": "吟醸",
+    "source_url": "https://secure.daishichi.com/category/GINJO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛吟醸酒カテゴリで確認。会社概要で福島県二本松市を照合。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 純米生もと 冷やおろし",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 生もと特別純米酒 西谷棚田",
+    "sake_type": "特別純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 THE GATE EDITION TWO",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 純米生もとCLASSIC",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 不倒翁",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 木桶仕込み 楽天命",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 純米生もと",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 純米生もと山田錦 2008醸造年度",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 純米生もと 爽快冷酒",
+    "sake_type": "純米",
+    "source_url": "https://secure.daishichi.com/category/JUNMAI/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛純米酒カテゴリで確認。西谷棚田は商品名で特別純米酒と明示。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 7,
+    "prefecture": "福島県",
+    "brewery": "大七酒造株式会社",
+    "name": "大七 本醸生もと",
+    "sake_type": "本醸造",
+    "source_url": "https://secure.daishichi.com/category/HONJOZO/",
+    "checked_on": "2026-11-10",
+    "source_note": "大七公式ショップの生酛本醸造酒カテゴリで確認。会社概要で福島県二本松市を照合。容量違い・家飲みセットは統合または除外。",
+    "brewery_source_url": "https://www.daishichi.com/about/company.html"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米大吟醸 FANTASTIC",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米大吟醸 超精米",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米大吟醸 別誂",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米大吟醸 愛山",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 愛山",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 山田穂",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 山田錦",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 亀の尾",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 愛船二○六号",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 なでしこの花酵母使用",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 いちごの花酵母使用",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 超辛口",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純吟生原酒 愛山",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純吟生原酒 八反",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純吟生原酒 雄町",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純吟生酒 吟風",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 特別純米酒 常豊",
+    "sake_type": "特別純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米生原酒 若水",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米酒 八反錦",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米酒 ふくまる",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米 吟吹雪",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米酒 山廃仕込み",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米酒 生酛造り",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 真向勝負 純米酒",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 真向勝負 特別純米酒",
+    "sake_type": "特別純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 真向勝負 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 真向勝負 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米吟醸 桐の華",
+    "sake_type": "純米吟醸",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 純米酒 紫煌",
+    "sake_type": "純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 8,
+    "prefecture": "茨城県",
+    "brewery": "来福酒造株式会社",
+    "name": "来福 特別純米酒 アストロプラネッツ",
+    "sake_type": "特別純米",
+    "source_url": "https://raifuku.co.jp/list/list-junmai/",
+    "checked_on": "2026-11-10",
+    "source_note": "来福酒造公式商品一覧の見出しと本文で商品名・酒種を確認。所在地は同ページの茨城県筑西市。生酒と火入れは明示された商品だけ区別し、容量違いはまとめる。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米大吟醸 夢ささら",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct6",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。山田錦の容量・桐箱違いは統合。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米大吟醸 山田錦",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct6",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。山田錦の容量・桐箱違いは統合。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 大吟醸",
+    "sake_type": "大吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct6",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。山田錦の容量・桐箱違いは統合。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 大吟醸 袋吊りしずく酒",
+    "sake_type": "大吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct6",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。山田錦の容量・桐箱違いは統合。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 大吟醸 三十年古酒",
+    "sake_type": "大吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct6",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。山田錦の容量・桐箱違いは統合。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸 夢ささら 生原酒",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸 夢ささら",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 吟醸生酒",
+    "sake_type": "吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 遠心分離酒 純米吟醸ひやおろし",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸 Lucky Swallow",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 遠心分離酒 純米吟醸生酒",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸生酒",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米吟醸しぼりたて",
+    "sake_type": "純米吟醸",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct7",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名に明示された酒種を確認。所在地は同ページの栃木県佐野市。開花／開華の表記差は開華に統一、容量・容器違いは統合。季節商品を含むが在庫は未確認。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米あらばしり",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 特純無濾過生原酒",
+    "sake_type": "特別純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 特別純米原酒 みがき",
+    "sake_type": "特別純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米 KAIKA80",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 特別純米酒 きもと",
+    "sake_type": "特別純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米ひやおろし",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 特別純米 辛口",
+    "sake_type": "特別純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米酒",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 特別純米酒 渡良瀬橋",
+    "sake_type": "特別純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米生酒",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 純米 開花宣言",
+    "sake_type": "純米",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct8",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの商品名で酒種を確認。「特純」は特別純米へ展開。開花／開華の表記差は開華に統一し、みがきの竹皮・カップ・容量違いは統合。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 本醸造",
+    "sake_type": "本醸造",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct9",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの本醸造カテゴリで確認。容量・角樽・カップ・とっくり瓶はまとめる。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 9,
+    "prefecture": "栃木県",
+    "brewery": "第一酒造株式会社",
+    "name": "開華 辛口旨酒",
+    "sake_type": "本醸造",
+    "source_url": "https://shop.sakekaika.co.jp/view/category/ct9",
+    "checked_on": "2026-11-10",
+    "source_note": "蔵元公式ショップの本醸造カテゴリで確認。容量・角樽・カップ・とっくり瓶はまとめる。所在地は同ページの栃木県佐野市。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 純米大吟醸プレミアム",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 純米大吟醸 翠",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 純米吟醸",
+    "sake_type": "純米吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 吟醸酒",
+    "sake_type": "吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 純米吟醸辛口スパークリング",
+    "sake_type": "純米吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "水芭蕉 雪ほたか 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/mizubasho/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出しで商品名と酒種を確認。所在地は同ページの群馬県川場村。甘酒は除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "谷川岳 純米大吟醸",
+    "sake_type": "純米大吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/tanigawadake/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出し・本文で酒種を確認。所在地は同ページの群馬県川場村。とび辛・心は本ページで酒種を確定できないため除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "谷川岳 源水吟醸",
+    "sake_type": "吟醸",
+    "source_url": "https://nagai-sake.co.jp/item_category/tanigawadake/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出し・本文で酒種を確認。所在地は同ページの群馬県川場村。とび辛・心は本ページで酒種を確定できないため除外。"
+  },
+  {
+    "prefecture_code": 10,
+    "prefecture": "群馬県",
+    "brewery": "永井酒造株式会社",
+    "name": "谷川岳 超辛純米",
+    "sake_type": "純米",
+    "source_url": "https://nagai-sake.co.jp/item_category/tanigawadake/",
+    "checked_on": "2026-11-10",
+    "source_note": "永井酒造公式の商品見出し・本文で酒種を確認。所在地は同ページの群馬県川場村。とび辛・心は本ページで酒種を確定できないため除外。"
+  }
+]
