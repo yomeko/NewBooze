@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.SakeInteractionService;
+import java.util.Map;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,13 +24,13 @@ public class SakeInteractionController {
 
     /** ログイン後は銘柄詳細の操作欄へ戻し、保存はフォームの送信時に行う。 */
     @GetMapping("/favorite")
-    public String openFavorite(@PathVariable long id) {
-        return "redirect:/sake/" + id + "#favorite";
+    public String openFavorite(@PathVariable long id, @RequestParam Map<String, String> request) {
+        return "redirect:/sake/" + id + SakeSearchQuery.suffix(request) + "#favorite";
     }
 
     @GetMapping("/review")
-    public String openReview(@PathVariable long id) {
-        return "redirect:/sake/" + id + "#review";
+    public String openReview(@PathVariable long id, @RequestParam Map<String, String> request) {
+        return "redirect:/sake/" + id + SakeSearchQuery.suffix(request) + "#review";
     }
 
     /**
@@ -37,10 +38,11 @@ public class SakeInteractionController {
      */
     @PostMapping("/favorite")
     public String favorite(@PathVariable long id, @RequestParam boolean selected,
-            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
+            @RequestParam Map<String, String> request, @AuthenticationPrincipal CustomUserDetails principal,
+            RedirectAttributes redirect) {
         interactions.favorite(principal.getUserId(), id, selected);
         redirect.addFlashAttribute("success", selected ? "お気に入りに登録しました。" : "お気に入りから削除しました。");
-        return "redirect:/sake/" + id;
+        return "redirect:/sake/" + id + SakeSearchQuery.suffix(request);
     }
 
     /**
@@ -51,7 +53,8 @@ public class SakeInteractionController {
     public String review(@PathVariable long id, @RequestParam int rating,
             @RequestParam(defaultValue = "") String comment,
             @RequestParam(defaultValue = "false") boolean published,
-            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
+            @RequestParam Map<String, String> request, @AuthenticationPrincipal CustomUserDetails principal,
+            RedirectAttributes redirect) {
         try {
             interactions.saveReview(principal.getUserId(), id, rating, comment, published);
             redirect.addFlashAttribute("success", "評価を保存しました。");
@@ -59,17 +62,17 @@ public class SakeInteractionController {
             redirect.addFlashAttribute("error", ex.getMessage());
             redirect.addFlashAttribute("review", new SakeInteractionService.Review(rating, comment, published));
         }
-        return "redirect:/sake/" + id + "#review";
+        return "redirect:/sake/" + id + SakeSearchQuery.suffix(request) + "#review";
     }
 
     /**
      * 本人のこの銘柄への評価とコメントを削除し、詳細画面のレビュー欄へ戻す。
      */
     @PostMapping("/review/delete")
-    public String delete(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal,
-            RedirectAttributes redirect) {
+    public String delete(@PathVariable long id, @RequestParam Map<String, String> request,
+            @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         interactions.deleteReview(principal.getUserId(), id);
         redirect.addFlashAttribute("success", "評価を削除しました。");
-        return "redirect:/sake/" + id + "#review";
+        return "redirect:/sake/" + id + SakeSearchQuery.suffix(request) + "#review";
     }
 }

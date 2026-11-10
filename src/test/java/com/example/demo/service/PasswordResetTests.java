@@ -38,6 +38,7 @@ class PasswordResetTests {
         mail = mock(JavaMailSender.class);
         service = service(clock);
         user = new User();
+        user.setId(42L);
         user.setEmail("verified@example.test");
         user.setName("再設定テスト");
         user.setPasswordHash("original-password-hash");
@@ -75,9 +76,11 @@ class PasswordResetTests {
         user.setPasswordResetSentAt(LocalDateTime.now(clock).minusSeconds(60));
         service.requestFor(user.getEmail());
         String newToken = sentToken();
-        when(users.findByPasswordResetHash(anyString())).thenAnswer(invocation ->
-                invocation.getArgument(0).equals(user.getPasswordResetHash()) ? Optional.of(user) : Optional.empty());
+        // 旧ハッシュでIDを取得した直後に再送された場合も、ロックした会員行で照合し直す。
+        when(users.findIdByPasswordResetHash(hash("A".repeat(43)))).thenReturn(Optional.of(user.getId()));
+        stubTokenLookup(newToken);
         assertThat(service.reset("A".repeat(43), "new-valid-password")).isFalse();
+        assertThat(user.getPasswordHash()).isEqualTo("original-password-hash");
         assertThat(service.reset(newToken, "new-valid-password")).isTrue();
     }
 
@@ -89,8 +92,10 @@ class PasswordResetTests {
         assertThat(user.isTemporaryPassword()).isFalse();
         assertThat(user.getPasswordResetHash()).isNull();
         assertThat(user.getPasswordResetExpiresAt()).isNull();
+        // 同時にIDを取得していたもう一方も、消費済みの行を見て変更しない。
         assertThat(service.reset(token, "another-password")).isFalse();
         assertThat(encoder.matches("new-valid-password", user.getPasswordHash())).isTrue();
+        verify(users).saveAndFlush(user);
     }
 
     @Test void tokenExpiresAtExactlyThirtyMinutesAndCannotResetAnUnverifiedAccount() throws Exception {
@@ -105,7 +110,8 @@ class PasswordResetTests {
     @Test void malformedTokensNeverQueryOrChangeAUser() {
         assertThat(service.reset(null, "new-valid-password")).isFalse();
         assertThat(service.reset("bad", "new-valid-password")).isFalse();
-        verify(users, never()).findByPasswordResetHash(anyString());
+        verify(users, never()).findIdByPasswordResetHash(anyString());
+        verify(users, never()).findForProfileUpdateById(anyLong());
     }
 
     @ParameterizedTest @MethodSource("invalidPasswords")
@@ -141,8 +147,13 @@ class PasswordResetTests {
         String token = "B".repeat(43);
         user.setPasswordResetHash(hash(token));
         user.setPasswordResetExpiresAt(LocalDateTime.now(clock).plusMinutes(30));
-        when(users.findByPasswordResetHash(hash(token))).thenReturn(Optional.of(user));
+        stubTokenLookup(token);
         return token;
+    }
+
+    private void stubTokenLookup(String token) throws Exception {
+        when(users.findIdByPasswordResetHash(hash(token))).thenReturn(Optional.of(user.getId()));
+        when(users.findForProfileUpdateById(user.getId())).thenReturn(Optional.of(user));
     }
 
     private String sentToken() {

@@ -14,8 +14,9 @@
 </head>
 <body class="sake-detail-page">
 <header th:replace="~{fragments/site-header :: siteHeader('search')}"></header>
-<main class="sake-detail">
-  <a class="back" th:href="@{/search}">← 日本酒をさがす</a>
+<main class="sake-detail" th:with="searchSuffix=${searchQuery.isEmpty() ? '' : '?' + searchQuery}, searchExtra=${searchQuery.isEmpty() ? '' : '&amp;' + searchQuery}">
+  <a class="back" th:href="@{/search} + ${searchQuery.isEmpty() ? '' : searchSuffix + '#search-results'}"
+     th:text="${searchQuery.isEmpty() ? '← 日本酒をさがす' : '← 検索結果に戻る'}">← 日本酒をさがす</a>
   <p class="sake-message" role="status" th:if="${success}" th:text="${success}"></p>
   <p class="sake-message sake-error" role="alert" th:if="${error}" th:text="${error}"></p>
   <div class="sake-product-layout">
@@ -27,11 +28,11 @@
     <!-- 写真とお気に入り・購入リンクをまとめて追従させる。 -->
       <div class="sake-header-actions">
         <!-- ログイン中だけお気に入りを変更できる。selectedには現在の登録状態を反転した値を送る。 -->
-        <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
+        <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})} + ${searchSuffix}" method="post">
           <input type="hidden" name="selected" th:value="${!favorite}">
           <button id="favorite" class="button sake-favorite" type="submit" th:attr="aria-pressed=${favorite},aria-label=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'},title=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}"><span aria-hidden="true" th:text="${favorite ? '♥' : '♡'}"></span></button>
         </form>
-        <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/mypage/sake/{id}/favorite(id=${sake.id})}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
+        <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/mypage/sake/{id}/favorite(id=${sake.id})} + ${searchSuffix}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
         <!-- 公式の購入リンクを優先し、なければ公式URLを使用する。URLがない場合は非表示。 -->
         <th:block th:with="officialLinks=${page.purchaseLinks.?[official]}, purchaseUrl=${#lists.isEmpty(officialLinks) ? page.officialUrl : officialLinks[0].url}">
           <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
@@ -114,6 +115,7 @@
     <p th:if="${publicReviews.total > 0}" th:text="|平均 ★ ${#numbers.formatDecimal(publicReviews.average, 1, 1)} / 5 · ${publicReviews.total}件|"></p>
     <p th:if="${publicReviews.total == 0}" class="sake-note">まだ公開された評価はありません。</p>
     <form class="review-sort" method="get" th:action="@{/sake/{id}#public-reviews(id=${sake.id})}">
+      <input th:each="filter : ${searchFilters}" type="hidden" th:name="${filter.key}" th:value="${filter.value}">
       <label for="review-sort">レビューの並び順</label>
       <select id="review-sort" name="reviewSort">
         <option value="newest" th:selected="${publicReviews.sort == 'newest'}">新しい順（更新日）</option>
@@ -129,9 +131,9 @@
     </article>
     <!-- 次や前のページへ移るときも並び順を保持し、#public-reviewsで一覧の位置へ戻す。 -->
     <nav class="review-pagination" aria-label="レビューのページ" th:if="${publicReviews.totalPages > 1}">
-      <a th:if="${publicReviews.hasPrevious}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber - 1})} + '#public-reviews'">← 前へ</a>
+      <a th:if="${publicReviews.hasPrevious}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber - 1})} + ${searchExtra} + '#public-reviews'">← 前へ</a>
       <span th:text="|${publicReviews.pageNumber + 1} / ${publicReviews.totalPages}ページ|"></span>
-      <a th:if="${publicReviews.hasNext}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber + 1})} + '#public-reviews'">次へ →</a>
+      <a th:if="${publicReviews.hasNext}" th:href="@{/sake/{id}(id=${sake.id},reviewSort=${publicReviews.sort},reviewPage=${publicReviews.pageNumber + 1})} + ${searchExtra} + '#public-reviews'">次へ →</a>
     </nav>
   </section>
 
@@ -139,9 +141,9 @@
   <section class="sake-panel" id="review" tabindex="-1" aria-labelledby="review-title">
     <h2 id="review-title">自分の評価・コメント</h2>
     <p class="sake-note">公開すると、表示名・星・コメント・更新日が誰でも見られるようになり、平均評価に反映されます。</p>
-    <p sec:authorize="isAnonymous()"><a th:href="@{/mypage/sake/{id}/review(id=${sake.id})}">ログインして評価する</a></p>
+    <p sec:authorize="isAnonymous()"><a th:href="@{/mypage/sake/{id}/review(id=${sake.id})} + ${searchSuffix}">ログインして評価する</a></p>
     <th:block sec:authorize="isAuthenticated()">
-      <form class="sake-review-form" th:action="@{/mypage/sake/{id}/review(id=${sake.id})}" method="post">
+      <form class="sake-review-form" th:action="@{/mypage/sake/{id}/review(id=${sake.id})} + ${searchSuffix}" method="post">
         <fieldset><legend>星の数（必須）</legend><div class="sake-rating">
           <label th:each="score : ${#numbers.sequence(1, 5)}"><input type="radio" name="rating" th:value="${score}" th:checked="${review.rating == score}" required><span th:text="|${score} ★|"></span></label>
         </div></fieldset>
@@ -151,11 +153,11 @@
         <label class="review-visibility"><input type="checkbox" name="published" value="true" th:checked="${review.published}"> みんなに公開する（外すと自分だけに表示）</label>
         <button class="button primary" type="submit" th:text="${hasReview ? '評価を更新する' : '評価を保存する'}"></button>
       </form>
-      <form class="sake-review-delete" th:if="${hasReview}" th:action="@{/mypage/sake/{id}/review/delete(id=${sake.id})}" method="post"><button class="button" type="submit">評価・コメントを削除する</button></form>
+      <form class="sake-review-delete" th:if="${hasReview}" th:action="@{/mypage/sake/{id}/review/delete(id=${sake.id})} + ${searchSuffix}" method="post"><button class="button" type="submit">評価・コメントを削除する</button></form>
     </th:block>
   </section>
   <section class="sake-related" th:if="${!#lists.isEmpty(similar)}">
-    <h2>似ている日本酒</h2><ul><li th:each="item : ${similar}"><a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}"></a></li></ul>
+    <h2>似ている日本酒</h2><ul><li th:each="item : ${similar}"><a th:href="@{/sake/{id}(id=${item.id})} + ${searchSuffix}" th:text="${item.name}"></a></li></ul>
   </section>
 </main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>

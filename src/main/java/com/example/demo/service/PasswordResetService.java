@@ -94,7 +94,8 @@ public class PasswordResetService {
         }
         if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) return false;
         String tokenHash = hash(token);
-        var candidate = users.findByPasswordResetHash(tokenHash);
+        // 消費時に変更するハッシュ索引をロックせず、会員を主キーでロックしてから状態を読み直す。
+        var candidate = users.findIdByPasswordResetHash(tokenHash).flatMap(users::findForProfileUpdateById);
         if (candidate.isEmpty()) return false;
         User user = candidate.get();
         if (!user.isEmailVerified() || !tokenHash.equals(user.getPasswordResetHash())

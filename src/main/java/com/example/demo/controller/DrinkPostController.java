@@ -59,7 +59,7 @@ public class DrinkPostController {
             @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         if (!posts.setLiked(principal.getUserId(), id, liked)) return missingPost(page, redirect);
-        return redirectToTimeline(page, redirect);
+        return redirectToTimeline(page, redirect) + "#post-" + id;
     }
 
     @PostMapping("/{id}/report")
@@ -68,7 +68,7 @@ public class DrinkPostController {
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
         if (!posts.report(principal.getUserId(), id, reason)) return missingPost(page, redirect);
         redirect.addFlashAttribute("success", "投稿の通報を受け付けました。");
-        return redirectToTimeline(page, redirect);
+        return redirectToTimeline(page, redirect) + "#post-" + id;
     }
 
     @PostMapping("/{id}/delete")

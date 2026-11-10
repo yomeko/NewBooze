@@ -70,9 +70,10 @@
       <ol><li th:each="answer : ${answers}"><p th:text="${answer.question}"></p><strong th:text="${answer.answer}"></strong><p class="muted" th:text="${#lists.isEmpty(answer.tags)} ? 'この回答では特徴の点数を加えていません。' : |この回答が示す特徴：${#strings.listJoin(answer.tags, '・')}|"></p></li></ol>
     </details>
   </section>
-  <div class="section-heading recommendation-heading">
+  <div class="section-heading recommendation-heading" id="diagnosis-recommendations" tabindex="-1">
     <h2>好みから選んだおすすめ</h2>
     <p class="muted">今回の回答の傾向と、銘柄に登録された味わいの特徴を比べて選びました。香り・甘さ・飲み口を同じ指標で比較できます。</p>
+    <p class="auth-alert" role="alert" th:if="${favoriteError}" th:text="${favoriteError}"></p>
   </div>
   <div class="card-grid recommendations">
     <!-- 類似度の高い順に届いた銘柄を表示する。state.countは1から始まる表示用の順番。 -->
@@ -87,6 +88,15 @@
       <p class="card-description" th:text="${item.sake.description}"></p>
       <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${item.sake.id})}"
          th:attr="aria-label=|${item.sake.name}の詳細を見る|">詳しく見る →</a>
+      <form class="recommendation-favorite" th:if="${saved}" th:with="favorite=${#sets.contains(favoriteSakeIds, item.sake.id)}"
+            th:action="@{/mypage/diagnosis/favorite}" method="post">
+        <input type="hidden" name="resultId" th:value="${resultId}">
+        <input type="hidden" name="sakeId" th:value="${item.sake.id}">
+        <input type="hidden" name="selected" th:value="${!favorite}">
+        <button type="submit" class="button" th:id="|diagnosis-favorite-${item.sake.id}|"
+                th:attr="aria-label=|${item.sake.name}を${favorite ? 'お気に入りから外す' : 'お気に入りに追加'}|"
+                th:text="${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}">お気に入りに追加</button>
+      </form>
     </article>
   </div>
   <p class="empty" th:if="${#lists.isEmpty(recommendations)}">おすすめの銘柄は現在準備中です。</p>

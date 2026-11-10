@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('.menu-toggle');
   const menu = document.querySelector('#site-menu');
   if (toggle && menu) {
+    const closeButton = menu.querySelector('.site-menu-close');
     let closeTimer;
     let openedByHover = false;
     const cancelClose = () => window.clearTimeout(closeTimer);
@@ -27,9 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
           previousFocus.focus({ preventScroll: true });
           if (menu.contains(document.activeElement)) document.activeElement.blur();
         }
+        openedByHover = hover;
+      } else if (!hover) {
+        // ホバーで既に開いている場合も、明示操作からメニュー内へ進めるようにする。
+        closeButton.focus({ preventScroll: true });
+        openedByHover = false;
       }
       cancelClose();
-      openedByHover = hover;
       toggle.setAttribute('aria-expanded', 'true');
     };
     const closeMenu = (restoreFocus = false) => {
@@ -57,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('keydown', event => {
       if (event.key === 'ArrowDown') { event.preventDefault(); openMenu(); }
     });
-    menu.querySelector('.site-menu-close').addEventListener('click', () => closeMenu(true));
+    closeButton.addEventListener('click', () => closeMenu(true));
     document.addEventListener('pointerdown', event => {
       if (menu.open && !menu.contains(event.target) && !toggle.contains(event.target)) closeMenu();
     });

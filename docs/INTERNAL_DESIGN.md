@@ -91,7 +91,7 @@ sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キ�
 
 商品詳細はsake_page_detailsに保存されていれば優先する。なければsake-pages.json、その銘柄も未登録ならDBの基本情報で補完する。レビューは1人・1銘柄で更新し、公開平均・件数・一覧はpublished=1だけを対象とする。
 
-DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。投稿時は認証済み会員の行をロックし、PostModerationServiceの確認と保存を直列化する。いいね・通報・削除は投稿行をロックする。対象がない会員操作は指定の一覧へ案内付きで戻す。権限不足は403、管理対象なしは404。いいねは指定状態に更新し、同じ会員の対応待ち通報は重複させない。通報を閉じると通報を削除し、投稿削除はいいねと通報も外部キーで削除する。DiagnosisService.historyは本人分を日時・IDの降順で10件ずつ取得し、回答をID順に一括取得して表示する。旧形式も表示できる。
+DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。投稿時は認証済み会員の行をロックし、PostModerationServiceの確認と保存を直列化する。いいね・通報・削除は投稿行をロックする。いいね・通報後は同じ一覧の#post-{id}へ戻り、対象投稿にフォーカスする。対象がなければ案内付きで一覧へ戻す。権限不足は403、管理対象なしは404。いいねは指定状態に更新し、同じ会員の対応待ち通報は重複させない。通報を閉じると通報を削除し、投稿削除はいいねと通報も外部キーで削除する。DiagnosisService.historyは本人分を日時・IDの降順で10件ずつ取得し、回答をID順に一括取得して表示する。旧形式も表示できる。
 
 ## 4 画面設計
 
@@ -104,7 +104,7 @@ DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。�
 | 検索 search.html | 現在の検索条件の表示・保持、条件解除、6件のページング |
 | 商品 detail.html | 基本情報と容量別価格、紹介、タグ、購入先、レビューとお気に入り |
 | 診断 diagnosis.html | 共通4問＋回答別2問、戻る・次へ、分岐変更時の不要回答破棄、離脱確認 |
-| 結果 diagnosis-result.html | 今回の傾向・回答説明・最大5件のおすすめ、保存方法の説明 |
+| 結果 diagnosis-result.html | 今回の傾向・回答説明・おすすめ最大5件、保存方法とお気に入り |
 | 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、パスワード再設定の要求・確定 |
 | マイページ mypage.html | 保存された嗜好と過去タグ保持の説明、お気に入り、プロフィール |
 | 診断履歴 diagnosis-history.html | 本人の診断日時と設問・回答 |
@@ -117,7 +117,7 @@ DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。�
 
 ### 4.2 共通UIと導線
 
-site-headerの検索、横スクロールナビ、標準dialogのその他メニューを全画面で使う。メニューは枠・文字のない2本線とし、マウスホバーで非モーダル表示する。ボタンからメニューへ移動中は180msの猶予を設け、外へ移動すると閉じる。タッチ・クリック・Enter・下矢印でも開き、閉じるボタン・Escape・外側クリックで閉じる。キーボードで閉じるとボタンへフォーカスを戻す。ナビ上部の罫線とヘッダー・メニュー・ホームカードの装飾影は表示しない。ホームのTOPICSとNEWSの見出しはゴシック体とし、NEWSの内容がない場合は「現在、お知らせはありません。」を表示する。初心者ガイドはホームと共通メニューから開き、商品詳細からbuy・store・openへ直接進める。ガイドは通常のアンカーリンクで、JSなしでも読める。
+site-headerの検索、横スクロールナビ、標準dialogのその他メニューを全画面で使う。メニューは枠・文字のない2本線とし、マウスホバーで非モーダル表示する。ボタンからメニューへ移動中は180msの猶予を設け、外へ移動すると閉じる。タッチ・クリックでも開く。Enter・Space・下矢印ではホバー表示中もメニューにフォーカスを移す。閉じるボタン・Escape・外側クリックで閉じ、キー操作ではボタンにフォーカスを戻す。ナビ上部の罫線とヘッダー・メニュー・ホームカードの装飾影は表示しない。ホームのTOPICSとNEWSの見出しはゴシック体とし、NEWSの内容がない場合は「現在、お知らせはありません。」を表示する。初心者ガイドはホームと共通メニューから開き、商品詳細からbuy・store・openへ直接進める。ガイドは通常のアンカーリンクで、JSなしでも読める。
 
 スマートフォン用の非表示・ドロップダウン指定は.site-header .main-navに限定する。検索のページ送りは全幅で表示して必要に応じ折り返し、現在ページにaria-currentを付ける。設定画面のマイページに戻るリンクも全幅で表示する。
 
@@ -129,7 +129,7 @@ home.jsは3記事を左右・ドット・キー・スワイプで切り替える
 
 entity.Sakeはsakeに対応するJPA Entity。酒蔵・酒種はManyToOneで、公開レビューの平均・件数・有無はHibernate Formulaにより読み取り時に計算する。model.Sakeは基本情報、タグMap、公開評価を持つ読み取り用record。SakePageは飲み方・料理・リンク等を持つ紹介用recordで、空項目、重複、不正なURL等を整理する。
 
-SakeCatalogService.searchは条件の空白と#タグ入力を整え、RepositoryのPageをSakePageDtoへ変換する。ページ番号は0始まり、負の指定は0、範囲超過は最終ページ。SakePageDtoは独自recordでありPageインターフェースの実装ではない。Repositoryでは実際のSpring Data Pageを使用する。search.htmlのキーワード入力を含む検索欄に現在値を戻し、条件の再送信・並べ替え・価格帯追加で維持する。すべての条件を解除するリンクも設ける。価格帯は参考価格と表示し、検索・価格帯・価格順にはDBの価格を使う。
+SakeCatalogService.searchは空白と#タグ入力を整え、RepositoryのSpring Data Pageを独自recordのSakePageDtoへ変換する。ページは0始まりで、負数は0、範囲超過は最終ページ。検索欄に現在値を表示し、再送信・並べ替え・価格帯追加でも維持する。条件は一括解除できる。詳細へのリンク、レビューのページ送り・並べ替え、類似銘柄と会員操作は検索条件を保持する。詳細の「検索結果に戻る」は/search#search-resultsへ移動する。価格帯・価格順はDBの参考価格を使い、価格帯にその旨を表示する。
 
 詳細の基本情報はmodel.Sakeの酒種・産地・度数を使う。度数が0以下なら未確認とし、登録された参考値である旨を付記する。SakePage.pricesに容量別の税込価格があれば表示し、容量または金額が空なら未確認と表示する。pricesが空ならDBの参考価格を対象容量未確認として表示する。価格の変動や一覧との相違、購入前の公式情報確認を案内する。
 
@@ -157,7 +157,7 @@ MyPageControllerは更新対象のuser_idをログイン情報から取得する
 
 PasswordResetServiceは認証済み会員にだけSecureRandomの32バイトから43文字のURL-safeトークンを発行する。DBにはSHA-256の64文字ハッシュ・30分の期限・送信日時を保存し、会員行のロック下で前回送信から60秒以上あいた場合だけ送る。要求時に既存のpassword_hashを変更しない。再送成功時に旧トークンを置換し、SMTP例外時はトランザクションを戻す。送信先・トークンを含まない共通の受付案内を未登録・未認証・間隔未満・SMTP失敗にも表示し、GETへリダイレクトする。
 
-GET /reset-password?token=は形式を確認し、セッション内のフォーム別の識別子にトークンを紐付けて /reset-password?formId= へ移動する。セッションあたり直近8件を保持する。リンクを開くだけではトークンを消費しない。CSRF保護付きPOST /reset-passwordはフォームIDで対象を選び、新パスワードと確認入力を受け付ける。Serviceは行ロック下で未使用・期限内・認証済みを確認し、BCryptハッシュを保存してtemporary_passwordをfalseにする。成功時は再設定ハッシュと期限を消去し、60秒制限のため送信日時は残す。対象のフォームだけをセッションから除き、/login?passwordResetへ移動する。再設定関連ページはCache-Controlのno-storeとReferrer-Policyのno-referrerを返す。リンクは固定のapp.base-urlを使い、HTTPSまたはlocalhostのHTTPを許可する。
+GET /reset-password?token=は形式を確認し、セッション内のフォーム別の識別子にトークンを紐付けて /reset-password?formId= へ移動する。セッションあたり直近8件を保持する。リンクを開くだけではトークンを消費しない。CSRF保護付きPOST /reset-passwordはフォームIDで対象を選び、新パスワードと確認入力を受け付ける。Serviceはトークンハッシュから会員IDを取得し、主キーで行をロックする。ハッシュ・期限・認証状態を再確認し、BCryptハッシュを保存してtemporary_passwordをfalseにする。成功時は再設定ハッシュと期限を消去し、60秒制限のため送信日時は残す。対象のフォームだけをセッションから除き、/login?passwordResetへ移動する。再設定関連ページはCache-Controlのno-storeとReferrer-Policyのno-referrerを返す。リンクは固定のapp.base-urlを使い、HTTPSまたはlocalhostのHTTPを許可する。
 
 ### 5.3 レビューと管理登録
 
@@ -223,6 +223,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 |---|---|---|
 | GET | /mypage | 本人の嗜好とお気に入り |
 | GET | /mypage/diagnosis-history | 本人の診断履歴、10件ずつ |
+| POST | /mypage/diagnosis/favorite | 会員、診断結果からお気に入り登録・解除 |
 | GET | /mypage/account | アカウント設定 |
 | GETとPOST | /mypage/profile-image | 本人画像の取得・保存 |
 | POST | /mypage/profile-image/delete | 本人画像削除 |
@@ -258,7 +259,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 
 ### 7.1 診断のデータフロー
 
-DiagnosisService.questionsは設問順と分岐元の選択肢IDを返す。main.jsは先行回答で経路を作り、分岐外の回答を除く。POSTはvalidAnswersで経路内の各問1回答を検証し、choice_tags.weightをタグ別に集計する。会員の回答はdiagnosis_sessionsとdiagnosis_answersに保存し、user_preferencesの該当タグを更新する。結果は利用者または未ログイン状態に紐付け、HTTPセッションに直近8件まで保持する。UUIDのresultIdを付けてGET /diagnosis/resultへ移動し、保存処理をせずに表示する。
+DiagnosisService.questionsは設問順と分岐元の選択肢IDを返す。main.jsは先行回答で経路を作り、分岐外の回答を除く。POSTはvalidAnswersで経路内の各問1回答を検証し、choice_tags.weightをタグ別に集計する。会員の回答はdiagnosis_sessionsとdiagnosis_answersに保存し、user_preferencesの該当タグを更新する。結果は利用者または未ログイン状態に紐付け、HTTPセッションに直近8件まで保持する。UUIDのresultIdでGET /diagnosis/resultへ移動し、表示のみ行う。会員のお気に入りPOSTはセッション内の結果IDと本人を照合し、指定状態に更新して同じカードへ戻す。
 
 recommendは今回の点数と表示時点のsake_tags.scoreを比較し、コサイン類似度の上位5件を返す。全0ベクトルの類似度は0とし、TastePresentationは正の共通タグを推薦理由に使う。quadrantは甘口と辛口、軽快と濃醇の得点比を各軸10〜90%に変換する。香り・うまみ・酸味は推薦に使う。設計根拠・計算式・追加SQLはDIAGNOSIS_DESIGN.mdを参照する。
 

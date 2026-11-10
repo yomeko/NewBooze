@@ -4,6 +4,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.DiagnosisService;
+import com.example.demo.service.SakeInteractionService;
 import jakarta.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -19,9 +20,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -37,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DiagnosisTests {
     @Autowired MockMvc mvc;
     @Autowired DiagnosisService diagnosis;
+    @Autowired SakeInteractionService interactions;
     @Autowired UserRepository users;
     @Autowired EntityManager entityManager;
     @Autowired JdbcTemplate jdbc;
@@ -63,10 +67,44 @@ class DiagnosisTests {
                 .andExpect(content().string(containsString("おすすめの理由：")))
                 .andExpect(content().string(containsString("class=\"taste-indicators\"")))
                 .andExpect(content().string(containsString("class=\"sake-card-image\"")))
+                .andExpect(content().string(not(containsString("/mypage/diagnosis/favorite"))))
                 .andExpect(content().string(not(containsString("診断履歴で回答を確認する"))));
         mvc.perform(get(submission.getResponse().getRedirectedUrl()))
                 .andExpect(redirectedUrl("/diagnosis"))
                 .andExpect(flash().attribute("diagnosisError", containsString("もう一度診断してください")));
+    }
+
+    @Test void memberUpdatesFavoriteAndReturnsToTheSameDiagnosisCard() throws Exception {
+        var owner = account();
+        var other = account();
+        var choices = firstChoiceRoute();
+        long sakeId = diagnosis.recommend(diagnosis.aggregateAndPersist(choices, null)).getFirst().sake().id();
+        var submission = mvc.perform(post("/diagnosis/result").with(user(owner)).with(csrf())
+                        .param("choice", choices.stream().map(String::valueOf).toArray(String[]::new)))
+                .andExpect(redirectedUrlPattern("/diagnosis/result?resultId=*"))
+                .andReturn();
+        String resultUrl = submission.getResponse().getRedirectedUrl();
+        String cardUrl = resultUrl + "#diagnosis-favorite-" + sakeId;
+
+        mvc.perform(openResult(submission).with(user(owner)))
+                .andExpect(content().string(containsString("お気に入りに追加")));
+        mvc.perform(favoriteFromResult(submission, sakeId, true).with(user(owner)))
+                .andExpect(status().isForbidden());
+        mvc.perform(favoriteFromResult(submission, sakeId, true).with(user(other)).with(csrf()))
+                .andExpect(redirectedUrl("/diagnosis"));
+        assertFalse(interactions.isFavorite(owner.getUserId(), sakeId));
+        assertFalse(interactions.isFavorite(other.getUserId(), sakeId));
+
+        for (boolean selected : List.of(true, true, false, false)) {
+            mvc.perform(favoriteFromResult(submission, sakeId, selected).with(user(owner)).with(csrf()))
+                    .andExpect(redirectedUrl(cardUrl));
+            assertEquals(selected, interactions.isFavorite(owner.getUserId(), sakeId));
+            mvc.perform(openResult(submission).with(user(owner)))
+                    .andExpect(content().string(containsString(selected ? "お気に入り登録済み（解除）" : "お気に入りに追加")));
+        }
+        mvc.perform(favoriteFromResult(submission, Long.MAX_VALUE, true).with(user(owner)).with(csrf()))
+                .andExpect(redirectedUrl(resultUrl + "#diagnosis-recommendations"))
+                .andExpect(flash().attribute("favoriteError", containsString("この銘柄は見つかりません")));
     }
 
     @Test void refreshingResultKeepsOneSavedDiagnosisAndChecksItsOwner() throws Exception {
@@ -191,6 +229,13 @@ class DiagnosisTests {
     private MockHttpServletRequestBuilder openResult(MvcResult submission) {
         return get(submission.getResponse().getRedirectedUrl())
                 .session((MockHttpSession) submission.getRequest().getSession(false));
+    }
+
+    private MockHttpServletRequestBuilder favoriteFromResult(MvcResult submission, long sakeId, boolean selected) {
+        var params = UriComponentsBuilder.fromUriString(submission.getResponse().getRedirectedUrl()).build().getQueryParams();
+        return post("/mypage/diagnosis/favorite").session((MockHttpSession) submission.getRequest().getSession(false))
+                .param("resultId", params.getFirst("resultId"))
+                .param("sakeId", Long.toString(sakeId)).param("selected", Boolean.toString(selected));
     }
 
     private CustomUserDetails account() {

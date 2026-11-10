@@ -82,7 +82,7 @@
   </form>
 
   <!-- 検索結果件数の表示 -->
-  <p class="result-count" id="search-results"><strong th:text="${result.totalElements}">0</strong> 件の日本酒</p>
+  <p class="result-count" id="search-results" tabindex="-1"><strong th:text="${result.totalElements}">0</strong> 件の日本酒</p>
 
   <!-- 検索結果一覧。SakePageDto.contentには、DBで取得した1ページ分の最大6件が入る。 -->
   <div class="card-grid">
@@ -97,7 +97,7 @@
       <!-- リテラル置換構文(|...|)の中に、numbers.formatIntegerでカンマ区切りの価格表示を組み込む -->
       <p class="muted" th:text="|${sake.region} ・ ${sake.abv}% ・ ${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></p>
       <p th:text="${sake.description}"></p>
-      <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}"
+      <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})} + '?' + ${searchQuery}"
          th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>
     </article>
   </div>

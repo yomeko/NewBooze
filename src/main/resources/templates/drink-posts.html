@@ -41,8 +41,9 @@
     <h2 id="recent-posts">みんなの飲酒投稿</h2>
     <p th:if="${timeline.empty}">まだ飲酒投稿がありません。</p>
     <!-- 投稿者が入力した文字列はHTMLとして扱わず、th:textで表示する。 -->
-    <article class="guide-step drink-post" th:each="post : ${timeline.content}">
-      <h3 th:text="${post.sakeName}"></h3>
+    <article class="guide-step drink-post" th:each="post : ${timeline.content}"
+             th:id="|post-${post.id}|" th:attr="aria-labelledby=|post-title-${post.id}|" tabindex="-1">
+      <h3 th:id="|post-title-${post.id}|" th:text="${post.sakeName}"></h3>
       <p class="muted">
         <span th:text="${post.author}"></span>
         <time th:attr="datetime=${post.createdAt}" th:text="${#temporals.format(post.createdAt, 'yyyy/MM/dd HH:mm')}"></time>

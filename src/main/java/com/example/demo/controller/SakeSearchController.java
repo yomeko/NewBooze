@@ -4,6 +4,7 @@ import com.example.demo.service.SakeCatalogService;
 import com.example.demo.service.SakePageService;
 import com.example.demo.service.SakeInteractionService;
 import com.example.demo.security.CustomUserDetails;
+import java.util.Map;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
@@ -66,8 +67,11 @@ public class SakeSearchController {
             default -> null;
         };
         // 検索結果本体（ページネーション情報込みのSakePageDto）
-        model.addAttribute("result", catalogService.search(
-                keyword, name, type, minPrice, maxPrice, taste, sort, page));
+        var result = catalogService.search(keyword, name, type, minPrice, maxPrice, taste, sort, page);
+        model.addAttribute("result", result);
+        model.addAttribute("searchQuery", SakeSearchQuery.encoded(SakeSearchQuery.parameters(Map.of(
+                "keyword", keyword, "name", name, "type", type, "taste", taste,
+                "priceRange", priceRange, "sort", sort, "page", Integer.toString(result.pageNumber())))));
         model.addAttribute("types", catalogService.types());
         model.addAttribute("tastes", tastes);
         // 画面再表示時に検索条件を保持するため、入力値をそのまま画面へ戻す
@@ -88,10 +92,13 @@ public class SakeSearchController {
     @GetMapping("/sake/{id}")
     public String detail(@PathVariable long id, @AuthenticationPrincipal CustomUserDetails principal,
             @RequestParam(defaultValue = "newest") String reviewSort,
-            @RequestParam(defaultValue = "0") int reviewPage, Model model) {
+            @RequestParam(defaultValue = "0") int reviewPage, @RequestParam Map<String, String> request, Model model) {
         var sake = catalogService.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         var page = pages.pageFor(sake);
+        var searchFilters = SakeSearchQuery.parameters(request);
+        model.addAttribute("searchFilters", searchFilters);
+        model.addAttribute("searchQuery", SakeSearchQuery.encoded(searchFilters));
         model.addAttribute("sake", sake);
         model.addAttribute("sakeTags", sake.tagScores().entrySet().stream()
                 .filter(tag -> tag.getValue() > 0)

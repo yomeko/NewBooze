@@ -90,9 +90,14 @@ class DrinkPostIntegrationTests {
         // 同じ要求が再送されても、すでに反映された状態を反転しないことを確認する。
         for (String liked : List.of("true", "true", "false", "false", "true")) {
             mvc.perform(post("/posts/{id}/like", postId).session(reader.session()).with(csrf())
-                    .param("liked", liked)).andExpect(redirectedUrl("/posts"));
+                    .param("liked", liked)).andExpect(redirectedUrl("/posts#post-" + postId));
             assertThat(likeCount(postId)).isEqualTo(Boolean.parseBoolean(liked) ? 1L : 0L);
         }
+        mvc.perform(post("/posts/{id}/like", postId).session(reader.session()).with(csrf())
+                .param("liked", "true").param("page", "1"))
+                .andExpect(redirectedUrl("/posts?page=1#post-" + postId));
+        mvc.perform(get("/posts").session(reader.session())).andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"post-" + postId + "\"")));
 
         mvc.perform(post("/posts/{id}/delete", postId).session(reader.session()).with(csrf()))
                 .andExpect(status().isForbidden());
@@ -128,7 +133,7 @@ class DrinkPostIntegrationTests {
         var admin = signIn(true);
         long postId = createPost(author, "通報の対象");
         mvc.perform(post("/posts/{id}/like", postId).session(reader.session()).with(csrf())
-                .param("liked", "true")).andExpect(redirectedUrl("/posts"));
+                .param("liked", "true")).andExpect(redirectedUrl("/posts#post-" + postId));
         mvc.perform(post("/posts/{id}/report", postId).session(author.session()).with(csrf())
                 .param("reason", "ABUSE")).andExpect(status().isForbidden());
         mvc.perform(post("/posts/{id}/report", postId).session(reader.session()).with(csrf())
@@ -198,7 +203,7 @@ class DrinkPostIntegrationTests {
 
     private void report(Account reader, long postId, String reason) throws Exception {
         mvc.perform(post("/posts/{id}/report", postId).session(reader.session()).with(csrf())
-                .param("reason", reason)).andExpect(redirectedUrl("/posts"));
+                .param("reason", reason)).andExpect(redirectedUrl("/posts#post-" + postId));
     }
 
     private long findReportId(User reader, long postId, String reason) {

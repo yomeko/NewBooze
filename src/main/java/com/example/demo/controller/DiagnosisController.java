@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dto.TastePresentation;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.DiagnosisService;
+import com.example.demo.service.SakeInteractionService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serial;
 import java.io.Serializable;
@@ -10,14 +11,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -32,9 +36,11 @@ public class DiagnosisController {
     private static final int MAX_RECENT_RESULTS = 8;
     private static final String RESULTS_SESSION_ATTRIBUTE = "diagnosisResults";
     private final DiagnosisService diagnosisService;
+    private final SakeInteractionService interactions;
 
-    public DiagnosisController(DiagnosisService diagnosisService) {
+    public DiagnosisController(DiagnosisService diagnosisService, SakeInteractionService interactions) {
         this.diagnosisService = diagnosisService;
+        this.interactions = interactions;
     }
 
     /**
@@ -96,22 +102,51 @@ public class DiagnosisController {
     public String result(@RequestParam(required = false) String resultId,
                          @AuthenticationPrincipal CustomUserDetails principal, HttpServletRequest request,
                          Model model, RedirectAttributes redirect) {
-        DiagnosisResults results = recentResults(request, false);
-        DiagnosisResult result = results == null ? null : results.find(resultId);
         Long loginUserId = principal != null ? principal.getUserId() : null;
-        if (result == null || !Objects.equals(result.userId(), loginUserId)) {
-            redirect.addFlashAttribute("diagnosisError", "診断結果を表示できませんでした。もう一度診断してください。");
-            return "redirect:/diagnosis";
-        }
+        DiagnosisResult result = findResult(request, resultId, loginUserId);
+        if (result == null) return resultUnavailable(redirect);
 
         var preferences = result.preferences();
+        var recommendations = diagnosisService.recommend(preferences);
         model.addAttribute("preferences", preferences);
         model.addAttribute("quadrant", TastePresentation.quadrant(preferences));
         model.addAttribute("tendencies", TastePresentation.tendencies(preferences));
         model.addAttribute("answers", result.answers());
-        model.addAttribute("recommendations", diagnosisService.recommend(preferences));
-        model.addAttribute("saved", result.userId() != null);
+        model.addAttribute("recommendations", recommendations);
+        model.addAttribute("saved", loginUserId != null);
+        model.addAttribute("resultId", resultId);
+        model.addAttribute("favoriteSakeIds", loginUserId == null ? Set.of() : interactions.favoriteSakeIds(loginUserId,
+                recommendations.stream().map(item -> item.sake().id()).toList()));
         return "diagnosis-result";
+    }
+
+    @PostMapping("/mypage/diagnosis/favorite")
+    public String favorite(@RequestParam String resultId, @RequestParam long sakeId, @RequestParam boolean selected,
+                           @AuthenticationPrincipal CustomUserDetails principal, HttpServletRequest request,
+                           RedirectAttributes redirect) {
+        long userId = principal.getUserId();
+        if (findResult(request, resultId, userId) == null) return resultUnavailable(redirect);
+
+        redirect.addAttribute("resultId", resultId);
+        try {
+            interactions.favorite(userId, sakeId, selected);
+        } catch (ResponseStatusException ex) {
+            if (ex.getStatusCode() != HttpStatus.NOT_FOUND) throw ex;
+            redirect.addFlashAttribute("favoriteError", "この銘柄は見つかりません。おすすめを選び直してください。");
+            return "redirect:/diagnosis/result#diagnosis-recommendations";
+        }
+        return "redirect:/diagnosis/result#diagnosis-favorite-" + sakeId;
+    }
+
+    private DiagnosisResult findResult(HttpServletRequest request, String resultId, Long userId) {
+        DiagnosisResults results = recentResults(request, false);
+        DiagnosisResult result = results == null ? null : results.find(resultId);
+        return result != null && Objects.equals(result.userId(), userId) ? result : null;
+    }
+
+    private String resultUnavailable(RedirectAttributes redirect) {
+        redirect.addFlashAttribute("diagnosisError", "診断結果を表示できませんでした。もう一度診断してください。");
+        return "redirect:/diagnosis";
     }
 
     // 同じセッションで複数のタブから送信しても、結果の一覧を上書きしない。

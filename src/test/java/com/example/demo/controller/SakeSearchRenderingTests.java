@@ -1,14 +1,21 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.SakePageDto;
+import com.example.demo.model.Sake;
+import com.example.demo.model.SakePage;
 import com.example.demo.service.SakeCatalogService;
 import com.example.demo.service.SakeInteractionService;
 import com.example.demo.service.SakePageService;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,6 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** DBなしで実際の検索フォームを描画し、再送信とページ送りの条件保持を確認する。 */
 class SakeSearchRenderingTests {
     private final SakeCatalogService catalog = mock(SakeCatalogService.class);
+    private final SakePageService pages = mock(SakePageService.class);
+    private final SakeInteractionService interactions = mock(SakeInteractionService.class);
     private MockMvc mvc;
 
     @BeforeEach void setup() {
@@ -41,8 +50,8 @@ class SakeSearchRenderingTests {
         var views = new ThymeleafViewResolver();
         views.setTemplateEngine(engine);
         views.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        mvc = MockMvcBuilders.standaloneSetup(new SakeSearchController(catalog,
-                mock(SakePageService.class), mock(SakeInteractionService.class)))
+        mvc = MockMvcBuilders.standaloneSetup(new SakeSearchController(catalog, pages, interactions))
+                .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver())
                 .setViewResolvers(views).build();
         when(catalog.types()).thenReturn(List.of("純米"));
         when(catalog.tastes()).thenReturn(List.of("甘口", "辛口"));
@@ -113,6 +122,42 @@ class SakeSearchRenderingTests {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(formValues(tasteHtml)).containsEntry("keyword", List.of(""))
                 .containsEntry("taste", List.of("辛口"));
+    }
+
+    @Test void detailLinksAndBackLinksKeepFiltersSortAndActualPage() throws Exception {
+        String keyword = "新潟+山&雪";
+        var sake = new Sake(1, "検証用", "", "", "純米", "新潟県", 15, 1800,
+                "", null, Map.of("辛口", 2), null, 0);
+        when(catalog.search(keyword, "山", "純米", 1500, 2999, "辛口", "priceAsc", 8))
+                .thenReturn(new SakePageDto(List.of(sake), 1, 2, 7));
+        when(catalog.findById(1)).thenReturn(Optional.of(sake));
+        when(pages.pageFor(sake)).thenReturn(new SakePage(1, sake.name(), "", "", null, null,
+                null, null, null, null, "", null, null));
+        when(interactions.publicReviews(1, "newest", 0)).thenReturn(
+                new SakeInteractionService.ReviewPage(List.of(), 11, 4, 0, 2, "newest"));
+
+        String search = mvc.perform(get("/search").param("keyword", keyword).param("name", "山")
+                .param("type", "純米").param("taste", "辛口").param("priceRange", "1500-2999")
+                .param("sort", "priceAsc").param("page", "8"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String expectedQuery = "keyword=" + URLEncoder.encode(keyword, StandardCharsets.UTF_8)
+                + "&name=%E5%B1%B1&type=%E7%B4%94%E7%B1%B3&taste=%E8%BE%9B%E5%8F%A3"
+                + "&priceRange=1500-2999&sort=priceAsc&page=1";
+        String detailLink = Pattern.compile("<a class=\"sake-card-detail-link\"[^>]*href=\"([^\"]+)\"")
+                .matcher(search).results().findFirst().orElseThrow().group(1).replace("&amp;", "&");
+        assertThat(detailLink).isEqualTo("/sake/1?" + expectedQuery);
+
+        String detail = mvc.perform(get(URI.create(detailLink)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        String htmlQuery = expectedQuery.replace("&", "&amp;");
+        assertThat(detail).contains("href=\"/search?" + htmlQuery + "#search-results\"", "検索結果に戻る",
+                "href=\"/sake/1?reviewSort=newest&amp;reviewPage=1&amp;" + htmlQuery + "#public-reviews\"",
+                "name=\"page\" value=\"1\"", "name=\"keyword\" value=\"新潟+山&amp;雪\"");
+
+        mvc.perform(get("/sake/1").param("page", "invalid").param("returnTo", "https://example.invalid/"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"back\" href=\"/search\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("https://example.invalid/"))));
     }
 
     /** ブラウザのGET送信と同じく、実際に描画されたinputと選択中のoptionを集める。 */

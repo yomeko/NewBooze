@@ -3,8 +3,11 @@ package com.example.demo.repository;
 import com.example.demo.entity.Favorite;
 import com.example.demo.entity.FavoriteId;
 import java.util.List;
+import java.util.Set;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * お気に入りを保存・削除し、登録済みかどうかやユーザーごとの一覧を調べるためのDB操作窓口。
@@ -17,6 +20,9 @@ public interface FavoriteRepository extends JpaRepository<Favorite, FavoriteId> 
     List<Favorite> findByIdUserIdOrderByCreatedAtDesc(Long userId);
 
     boolean existsByIdUserIdAndIdSakeId(Long userId, Long sakeId);
+
+    @Query("select f.id.sakeId from Favorite f where f.id.userId = :userId and f.id.sakeId in :sakeIds")
+    Set<Long> findSakeIds(@Param("userId") long userId, @Param("sakeIds") List<Long> sakeIds);
 
     void deleteByIdUserIdAndIdSakeId(Long userId, Long sakeId);
 }

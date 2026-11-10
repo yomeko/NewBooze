@@ -1150,6 +1150,8 @@ footer strong { color: #f0cc8e; font-size: 13px; margin-bottom: 4px; }
 /* おすすめカードを縦に並べる。リンクのmargin-top:autoで、説明の長さが違っても末尾をそろえる。 */
 .recommendation-card { display: flex; flex-direction: column; }
 .recommendation-card > a { margin-top: auto; padding-top: 18px; }
+/* 詳細リンクのカード全体のクリック領域より前に、お気に入りボタンを置く。 */
+.recommendation-favorite { position: relative; z-index: 2; align-self: flex-start; margin-top: 12px; }
 /* 写真の固有サイズでグリッドの行が180pxを超えないようにし、瓶全体を枠内に収める。 */
 .sake-card-image { display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; height: 180px; margin: 0 0 18px; border-radius: 6px; background: #f4f2ec; overflow: hidden; }
 .sake-card-image img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; padding: 12px; }

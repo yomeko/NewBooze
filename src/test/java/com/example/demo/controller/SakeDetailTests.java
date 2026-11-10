@@ -305,6 +305,25 @@ class SakeDetailTests {
         assertThat(interactions.review(owner.getUserId(), 1)).isEmpty();
     }
 
+    @Test void favoriteAndReviewActionsRetainSearchNavigation() throws Exception {
+        var owner = account();
+        var filters = new org.springframework.util.LinkedMultiValueMap<String, String>();
+        filters.add("keyword", "純米+A&B");
+        filters.add("sort", "priceAsc");
+        filters.add("page", "1");
+        String query = "?keyword=%E7%B4%94%E7%B1%B3%2BA%26B&sort=priceAsc&page=1";
+        mvc.perform(get("/mypage/sake/1/favorite").with(user(owner)).params(filters))
+            .andExpect(redirectedUrl("/sake/1" + query + "#favorite"));
+        mvc.perform(post("/mypage/sake/1/favorite").with(user(owner)).with(csrf()).params(filters)
+                .param("selected", "true"))
+            .andExpect(redirectedUrl("/sake/1" + query));
+        mvc.perform(post("/mypage/sake/1/review").with(user(owner)).with(csrf()).params(filters)
+                .param("rating", "4"))
+            .andExpect(redirectedUrl("/sake/1" + query + "#review"));
+        mvc.perform(post("/mypage/sake/1/review/delete").with(user(owner)).with(csrf()).params(filters))
+            .andExpect(redirectedUrl("/sake/1" + query + "#review"));
+    }
+
     @Test void missingFavoriteSakeReturnsToMyPageWithAnExplanation() throws Exception {
         var owner = account();
         var result = mvc.perform(post("/mypage/favorites").with(user(owner)).with(csrf())

@@ -1,11 +1,10 @@
 package com.example.demo.service;
 
-import com.example.demo.entity.Favorite;
-import com.example.demo.entity.FavoriteId;
 import com.example.demo.repository.FavoriteRepository;
 import com.example.demo.repository.SakeRepository;
-import com.example.demo.repository.UserRepository;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -14,21 +13,18 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * お気に入りとレビューを読み取り、保存・削除する処理。
- * お気に入りはRepository、レビューはJdbcTemplate（SQLを実行する道具）を使う。
+ * お気に入りの確認はRepository、更新とレビューの処理はJdbcTemplateを使う。
  * SQLの?には引数の値を渡し、ユーザーの入力をSQLの文章に直接つなげない。
  */
 @Service
 public class SakeInteractionService {
     private final FavoriteRepository favorites;
     private final SakeRepository sake;
-    private final UserRepository users;
     private final JdbcTemplate jdbc;
 
-    public SakeInteractionService(FavoriteRepository favorites, SakeRepository sake,
-            UserRepository users, JdbcTemplate jdbc) {
+    public SakeInteractionService(FavoriteRepository favorites, SakeRepository sake, JdbcTemplate jdbc) {
         this.favorites = favorites;
         this.sake = sake;
-        this.users = users;
         this.jdbc = jdbc;
     }
 
@@ -88,6 +84,11 @@ public class SakeInteractionService {
         return favorites.existsByIdUserIdAndIdSakeId(userId, sakeId);
     }
 
+    /** 一覧に出る銘柄のお気に入り状態をまとめて確認する。 */
+    public Set<Long> favoriteSakeIds(long userId, List<Long> sakeIds) {
+        return sakeIds.isEmpty() ? Set.of() : favorites.findSakeIds(userId, sakeIds);
+    }
+
     /**
      * 本人がこの銘柄へ保存したレビューを、公開・非公開にかかわらず取得する。
      */
@@ -103,16 +104,14 @@ public class SakeInteractionService {
      */
     @Transactional
     public void favorite(long userId, long sakeId, boolean selected) {
-        var product = sake.findById(sakeId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        FavoriteId id = new FavoriteId(userId, sakeId);
-        if (!selected) {
-            favorites.deleteById(id);
-        } else if (!favorites.existsById(id)) {
-            Favorite favorite = new Favorite();
-            favorite.setId(id);
-            favorite.setSake(product);
-            favorite.setUser(users.getReferenceById(userId));
-            favorites.save(favorite);
+        requireSake(sakeId);
+        if (selected) {
+            jdbc.update("""
+                    INSERT INTO favorites (user_id, sake_id) VALUES (?, ?)
+                    ON DUPLICATE KEY UPDATE sake_id = VALUES(sake_id)
+                    """, userId, sakeId);
+        } else {
+            jdbc.update("DELETE FROM favorites WHERE user_id = ? AND sake_id = ?", userId, sakeId);
         }
     }
 
