@@ -1,9 +1,16 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.TastePresentation;
 import com.example.demo.security.CustomUserDetails;
 import com.example.demo.service.DiagnosisService;
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -11,6 +18,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * 好み診断の質問画面、結果画面、本人の診断履歴を担当する。
@@ -21,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class DiagnosisController {
 
     private static final int HISTORY_PAGE_SIZE = 10;
+    private static final int MAX_RECENT_RESULTS = 8;
+    private static final String RESULTS_SESSION_ATTRIBUTE = "diagnosisResults";
     private final DiagnosisService diagnosisService;
 
     public DiagnosisController(DiagnosisService diagnosisService) {
@@ -59,16 +69,14 @@ public class DiagnosisController {
     }
 
     /**
-     * フォームから届いた選択肢IDの一覧を、好みの点数とおすすめ銘柄に変換する。
-     * 未ログインならユーザーIDをnullにして、保存せず結果だけを表示する。
+     * 選択肢IDを集計し、ログイン中なら診断履歴と好みの点数を保存する。
+     * 表示用の結果はセッションに置き、再読み込みでフォームを再送しないようGETへ移動する。
      * 集計結果が空なら、回答を選び直せるよう質問画面へ戻す。
      */
     @PostMapping("/diagnosis/result")
-    public String result(@RequestParam(name = "choice", required = false) List<Long> choices,
-                          // 未ログイン時、principalはnullになる（SecurityConfigで/diagnosis/**はpermitAllのため）
-                          @AuthenticationPrincipal CustomUserDetails principal,
-                          Model model) {
-
+    public String submit(@RequestParam(name = "choice", required = false) List<Long> choices,
+                         @AuthenticationPrincipal CustomUserDetails principal, HttpServletRequest request,
+                         Model model, RedirectAttributes redirect) {
         if (!diagnosisService.validAnswers(choices)) {
             model.addAttribute("diagnosisError", "回答を確認できませんでした。最初から診断してください。");
             return diagnosis(model);
@@ -78,14 +86,61 @@ public class DiagnosisController {
 
         if (preferences.isEmpty()) return "redirect:/diagnosis";
 
+        var result = new DiagnosisResult(loginUserId, Map.copyOf(preferences),
+                List.copyOf(diagnosisService.answerSummaries(choices)));
+        redirect.addAttribute("resultId", recentResults(request, true).remember(result));
+        return "redirect:/diagnosis/result";
+    }
+
+    @GetMapping("/diagnosis/result")
+    public String result(@RequestParam(required = false) String resultId,
+                         @AuthenticationPrincipal CustomUserDetails principal, HttpServletRequest request,
+                         Model model, RedirectAttributes redirect) {
+        DiagnosisResults results = recentResults(request, false);
+        DiagnosisResult result = results == null ? null : results.find(resultId);
+        Long loginUserId = principal != null ? principal.getUserId() : null;
+        if (result == null || !Objects.equals(result.userId(), loginUserId)) {
+            redirect.addFlashAttribute("diagnosisError", "診断結果を表示できませんでした。もう一度診断してください。");
+            return "redirect:/diagnosis";
+        }
+
+        var preferences = result.preferences();
         model.addAttribute("preferences", preferences);
-        model.addAttribute("quadrant", com.example.demo.dto.TastePresentation.quadrant(preferences));
-        model.addAttribute("tendencies", com.example.demo.dto.TastePresentation.tendencies(preferences));
-        model.addAttribute("answers", diagnosisService.answerSummaries(choices));
+        model.addAttribute("quadrant", TastePresentation.quadrant(preferences));
+        model.addAttribute("tendencies", TastePresentation.tendencies(preferences));
+        model.addAttribute("answers", result.answers());
         model.addAttribute("recommendations", diagnosisService.recommend(preferences));
-        // 画面側で「診断結果を保存しました」等の案内を出し分けたい場合に使えるよう、
-        // ログイン状態も合わせて渡しておく
-        model.addAttribute("saved", loginUserId != null);
+        model.addAttribute("saved", result.userId() != null);
         return "diagnosis-result";
+    }
+
+    // 同じセッションで複数のタブから送信しても、結果の一覧を上書きしない。
+    private synchronized DiagnosisResults recentResults(HttpServletRequest request, boolean create) {
+        var session = request.getSession(create);
+        if (session == null) return null;
+        if (session.getAttribute(RESULTS_SESSION_ATTRIBUTE) instanceof DiagnosisResults results) return results;
+        if (!create) return null;
+        var results = new DiagnosisResults();
+        session.setAttribute(RESULTS_SESSION_ATTRIBUTE, results);
+        return results;
+    }
+
+    private record DiagnosisResult(Long userId, Map<String, Integer> preferences,
+                                   List<DiagnosisService.AnswerSummary> answers) implements Serializable {}
+
+    private static final class DiagnosisResults implements Serializable {
+        @Serial private static final long serialVersionUID = 1L;
+        private final LinkedHashMap<String, DiagnosisResult> results = new LinkedHashMap<>();
+
+        synchronized String remember(DiagnosisResult result) {
+            if (results.size() >= MAX_RECENT_RESULTS) results.pollFirstEntry();
+            String resultId = UUID.randomUUID().toString();
+            results.put(resultId, result);
+            return resultId;
+        }
+
+        synchronized DiagnosisResult find(String resultId) {
+            return results.get(resultId);
+        }
     }
 }

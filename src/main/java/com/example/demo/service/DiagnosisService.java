@@ -17,6 +17,7 @@ import com.example.demo.repository.DiagnosisQuestionRepository;
 import com.example.demo.repository.DiagnosisSessionRepository;
 import com.example.demo.repository.UserPreferenceRepository;
 import com.example.demo.repository.UserRepository;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -161,7 +162,11 @@ public class DiagnosisService {
     }
 
     // 質問・回答・特徴の一覧を、結果画面の説明欄へ渡すためのデータ。
-    public record AnswerSummary(String question, String answer, List<String> tags) {}
+    public record AnswerSummary(String question, String answer, List<String> tags) implements Serializable {
+        public AnswerSummary {
+            tags = List.copyOf(tags);
+        }
+    }
 
     /**
      * 本人の診断をページ単位で取得し、各回の回答を記録された順番で表示用データに変換する。

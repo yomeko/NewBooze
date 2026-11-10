@@ -25,7 +25,7 @@
     <p>保存済みの好みは、今回出た特徴の点数だけを更新し、今回出なかった過去の特徴は残します。そのため、<a th:href="@{/mypage#taste}">マイページの保存された傾向</a>には、この結果にない特徴も表示されます。</p>
     <p><a th:href="@{/mypage/diagnosis-history}">診断履歴で回答を確認する</a></p>
   </div>
-  <p class="muted" th:unless="${saved}">ログインしていないため、今回の回答や好みの点数は保存されていません。</p>
+  <p class="muted" th:unless="${saved}">ログインしていないため、今回の回答や好みの点数はアカウントに保存されていません。</p>
   <section class="quadrant-result" aria-labelledby="quadrant-title">
     <h2 id="quadrant-title" th:text="|あなたの好みは「${quadrant.name}」寄り|">あなたの好みの位置</h2>
     <p th:text="${quadrant.description}"></p>

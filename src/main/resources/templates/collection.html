@@ -105,7 +105,11 @@
       </ul>
     </section>
 
-    <div class="actions collection-actions"><a class="button primary" th:href="@{/search}">日本酒をさがす</a></div>
+    <div class="actions collection-actions">
+      <a class="button primary" th:href="@{/search}">日本酒をさがす</a>
+      <a th:if="${currentPage == 'ranking' and #lists.isEmpty(ranking.content)}" class="button"
+         th:href="@{/diagnosis}">好み診断で銘柄を探す</a>
+    </div>
   </div>
 </main>
 <footer><strong>20歳未満の飲酒は禁止されています。</strong><span>一升の出会い — 日本酒との新しい出会い</span></footer>

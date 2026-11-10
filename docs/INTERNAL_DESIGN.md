@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数 第1.7版　更新日 2026年11月9日
+版数 第1.7版　更新日 2026年11月10日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
 
@@ -34,7 +34,7 @@
 
 Spring SecurityがURL権限とCSRFを確認し、Controllerが入力を受け付け、ServiceとRepositoryでDBから取得・保存した情報をThymeleafへ渡す。主要な関連データはServiceのトランザクション内で表示用recordへ変換する。open-in-view=falseにより、Viewでの暗黙の遅延取得に頼らない。
 
-JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計で、評価対象の銘柄に限定する。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
+JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計で、評価対象の銘柄に限定する。空表示には/diagnosisと/searchへのリンクを出す。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
 
 ### 2.3 パッケージ構成
 
@@ -147,7 +147,7 @@ POST /verify-email/resendは前後の空白を除いたemailの形式と255文�
 
 Serviceは行ロック下で未認証かつ前回送信から60秒以上経過した場合だけ送る。未登録・認証済み・間隔未満・送信成功には同じ条件付きの受付案内を表示し、送信例外は共通のメールエラーを案内する。再送成功時だけトークンの置換が確定して旧リンクが無効になり、失敗時はハッシュ・期限・送信日時を戻す。リンクは受信したHostヘッダーに依存させず、固定設定app.base-urlから構築する。
 
-ログインはSecurityConfigとCustomUserDetailsServiceで処理し、CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員はパスワードが一致してもログインできない。旧既定パスワードの管理者も拒否する。既存ユーザーはメール認証移行SQLで認証済みとして保持し、明示的な初回設定で作る管理者も認証済みとする。旧機能で発行済みの仮パスワード使用中は変更案内付きマイページ、管理者は管理トップ、一般会員はホームへ移動する。新規の仮パスワード発行は行わない。
+SecurityConfigとCustomUserDetailsServiceでログインを処理する。CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員と旧既定パスワードの管理者は拒否する。移行済みの既存ユーザーと初回設定で作成した管理者は認証済みとする。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップへ移動する。一般会員は飲酒投稿・会員向け特集・マイページ・設定・診断履歴の保存済みGETへパスとクエリで戻り、戻り先がなければホームへ進む。仮パスワードの新規発行は行わない。
 
 CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。表示名だけを変更した場合は、認証時点の値をセッションに保持する。同時にパスワードや権限が変更されても、古いセッションは新しい値を引き継がず次の要求で失効する。
 
@@ -203,7 +203,8 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /sake/images/{filename} | 商品画像 |
 | GET | /sake/reviewers/{userId}/profile-image | 公開レビュー投稿者のプロフィール画像 |
 | GET | /diagnosis | 診断設問 |
-| POST | /diagnosis/result | choiceの一覧から集計・推薦、会員のみ保存 |
+| POST | /diagnosis/result | 回答を集計・会員分を保存しGETへ移動 |
+| GET | /diagnosis/result | セッション内の結果をresultIdで表示 |
 | GETとPOST | /login | フォームとSpring Security認証 |
 | GETとPOST | /signup | 会員登録と確認メール案内 |
 | GET | /verify-email | tokenを検証し確認画面を表示、未消費 |
@@ -214,7 +215,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | POST | /reset-password | CSRF保護付きでフォームIDに対応する新パスワードを確定 |
 | POST | /logout | セッションからログアウト |
 
-商品が存在しなければ404。診断の回答が空・重複・未回答・別経路の混入なら保存せず説明付き質問画面を表示する。結果表示はPOST /diagnosis/resultであり、旧案のPOST /diagnosis/answerとGET /diagnosis/resultは存在しない。
+商品が存在しなければ404。診断の回答が空・重複・未回答・別経路の混入なら保存せず説明付き質問画面を表示する。結果のIDが無効か、セッションまたは利用者が一致しない場合は説明付き質問画面へ戻す。
 
 ### 6.2 本人の操作
 
@@ -257,7 +258,9 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 
 ### 7.1 診断のデータフロー
 
-DiagnosisService.questionsは設問の表示順と分岐元選択肢IDを返す。main.jsは先行回答で経路を組み立て、不要な分岐の選択を消して送信対象から外す。validAnswersでサーバー側でも有効経路の各問1回答を検証する。DiagnosisServiceはchoice_tags.weightをタグ別に加算する。会員の回答をdiagnosis_sessionsとdiagnosis_answersへ保存し、user_preferencesの該当タグを更新する。recommendは今回の集計とcatalog.allのsake_tags.scoreを比較し、コサイン類似度の降順で5件を返す。TastePresentationが正の共通タグをおすすめ理由に使う。全0のベクトルは類似度0となる。TastePresentation.quadrantは甘口と辛口、軽快と濃醇の得点比を各軸10〜90%に変換する。香り・うまみ・酸味は推薦には使うが4象限の軸には混ぜない。設計根拠・計算式・追加SQLはDIAGNOSIS_DESIGN.mdを参照する。
+DiagnosisService.questionsは設問順と分岐元の選択肢IDを返す。main.jsは先行回答で経路を作り、分岐外の回答を除く。POSTはvalidAnswersで経路内の各問1回答を検証し、choice_tags.weightをタグ別に集計する。会員の回答はdiagnosis_sessionsとdiagnosis_answersに保存し、user_preferencesの該当タグを更新する。結果は利用者または未ログイン状態に紐付け、HTTPセッションに直近8件まで保持する。UUIDのresultIdを付けてGET /diagnosis/resultへ移動し、保存処理をせずに表示する。
+
+recommendは今回の点数と表示時点のsake_tags.scoreを比較し、コサイン類似度の上位5件を返す。全0ベクトルの類似度は0とし、TastePresentationは正の共通タグを推薦理由に使う。quadrantは甘口と辛口、軽快と濃醇の得点比を各軸10〜90%に変換する。香り・うまみ・酸味は推薦に使う。設計根拠・計算式・追加SQLはDIAGNOSIS_DESIGN.mdを参照する。
 
 ### 7.2 ホームの抽選とメジャー候補
 

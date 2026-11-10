@@ -14,10 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -48,7 +52,10 @@ class DiagnosisTests {
     // 各質問の最小IDの選択肢を送り、加点結果・回答説明・おすすめ理由・比較カードを確認する。
     @Test void resultRendersWeightedTendenciesAnswerLinksAndComparableCards() throws Exception {
         String[] choices = firstChoiceRoute().stream().map(String::valueOf).toArray(String[]::new);
-        mvc.perform(post("/diagnosis/result").with(csrf()).param("choice", choices))
+        var submission = mvc.perform(post("/diagnosis/result").with(csrf()).param("choice", choices))
+                .andExpect(redirectedUrlPattern("/diagnosis/result?resultId=*"))
+                .andReturn();
+        mvc.perform(openResult(submission))
                 .andExpect(status().isOk())
                 .andExpect(view().name("diagnosis-result"))
                 .andExpect(content().string(containsString("味わい4象限")))
@@ -57,6 +64,29 @@ class DiagnosisTests {
                 .andExpect(content().string(containsString("class=\"taste-indicators\"")))
                 .andExpect(content().string(containsString("class=\"sake-card-image\"")))
                 .andExpect(content().string(not(containsString("診断履歴で回答を確認する"))));
+        mvc.perform(get(submission.getResponse().getRedirectedUrl()))
+                .andExpect(redirectedUrl("/diagnosis"))
+                .andExpect(flash().attribute("diagnosisError", containsString("もう一度診断してください")));
+    }
+
+    @Test void refreshingResultKeepsOneSavedDiagnosisAndChecksItsOwner() throws Exception {
+        var owner = account();
+        String[] choices = firstChoiceRoute().stream().map(String::valueOf).toArray(String[]::new);
+        var submission = mvc.perform(post("/diagnosis/result").with(user(owner)).with(csrf())
+                        .param("choice", choices))
+                .andExpect(redirectedUrlPattern("/diagnosis/result?resultId=*"))
+                .andReturn();
+
+        for (int visit = 0; visit < 2; visit++) {
+            mvc.perform(openResult(submission).with(user(owner)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("診断履歴で回答を確認する")));
+        }
+        entityManager.flush();
+        assertEquals(1L, jdbc.queryForObject("SELECT COUNT(*) FROM diagnosis_sessions WHERE user_id = ?",
+                Long.class, owner.getUserId()));
+        mvc.perform(openResult(submission).with(user(account())))
+                .andExpect(redirectedUrl("/diagnosis"));
     }
 
     @Test void allNineBranchCombinationsHaveSixValidAnswers() {
@@ -117,8 +147,11 @@ class DiagnosisTests {
                 .map(question -> question.choices().getFirst().id()).toList();
         diagnosis.aggregateAndPersist(legacy, owner.getUserId());
         for (int i = 0; i < 9; i++) diagnosis.aggregateAndPersist(current, owner.getUserId());
-        mvc.perform(post("/diagnosis/result").with(user(owner)).with(csrf())
+        var submission = mvc.perform(post("/diagnosis/result").with(user(owner)).with(csrf())
                         .param("choice", current.stream().map(String::valueOf).toArray(String[]::new)))
+                .andExpect(redirectedUrlPattern("/diagnosis/result?resultId=*"))
+                .andReturn();
+        mvc.perform(openResult(submission).with(user(owner)))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("診断履歴で回答を確認する")));
 
@@ -153,6 +186,11 @@ class DiagnosisTests {
                 selected.add(question.choices().getFirst().id());
         });
         return selected;
+    }
+
+    private MockHttpServletRequestBuilder openResult(MvcResult submission) {
+        return get(submission.getResponse().getRedirectedUrl())
+                .session((MockHttpSession) submission.getRequest().getSession(false));
     }
 
     private CustomUserDetails account() {

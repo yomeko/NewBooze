@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +17,8 @@ import com.example.demo.validation.Utf8InputLength;
 import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.savedrequest.DefaultSavedRequest;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 
 /**
  * どのページを誰が使えるか、ログイン・ログアウトをどう処理するかを決める。
@@ -24,6 +27,9 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private static final List<String> MEMBER_RETURN_PAGES = List.of(
+            "/posts", "/ranking", "/pairings", "/goods", "/mypage", "/mypage/account", "/mypage/diagnosis-history");
 
     /**
      * パスワードをBCryptでハッシュ化し、ログイン時に照合する道具を用意する。
@@ -47,9 +53,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationRateLimiter limiter,
             UserRepository users, PasswordEncoder encoder) throws Exception {
+        var requestCache = new HttpSessionRequestCache();
+        // ログイン後に開き直せる会員画面のGETだけを、セッションに保持する。
+        requestCache.setRequestMatcher(request -> "GET".equals(request.getMethod())
+                && isMemberPage(request.getContextPath(), request.getRequestURI()));
+
         http
             .addFilterAfter(new AuthenticationRateLimitFilter(limiter), CsrfFilter.class)
             .addFilterBefore(new AccountSessionValidationFilter(users, encoder), AuthorizationFilter.class)
+            .requestCache(cache -> cache.requestCache(requestCache))
             .headers(headers -> headers.referrerPolicy(policy ->
                 policy.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)))
             .authorizeHttpRequests(auth -> auth
@@ -72,12 +84,22 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")           // 独自のログイン画面を使用
                 .loginProcessingUrl("/login")  // フォームのPOST先。Spring Securityが自動で処理する
-                // ログイン成功後の移動先をここで決める。
-                // 仮パスワードなら変更案内のあるマイページ、管理者なら管理画面、一般ユーザーならホーム。
-                // 新規登録後はメール認証を終えてからログインする。
                 .successHandler((request, response, authentication) -> {
-                    CustomUserDetails user = (CustomUserDetails) authentication.getPrincipal();
-                    response.sendRedirect(user.isTemporaryPassword() ? "/mypage?passwordChangeRequired" : (user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")) ? "/admin" : "/"));
+                    var saved = requestCache.getRequest(request, response);
+                    requestCache.removeRequest(request, response);
+                    String contextPath = request.getContextPath();
+                    var user = (CustomUserDetails) authentication.getPrincipal();
+                    if (user.isTemporaryPassword()) {
+                        response.sendRedirect(contextPath + "/mypage?passwordChangeRequired");
+                    } else if (user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                        response.sendRedirect(contextPath + "/admin");
+                    } else if (saved instanceof DefaultSavedRequest page && isMemberPage(contextPath, page.getRequestURI())) {
+                        // 保存されたホスト名を使わず、同じアプリ内のパスと検索条件だけで移動する。
+                        String query = page.getQueryString();
+                        response.sendRedirect(query == null ? page.getRequestURI() : page.getRequestURI() + "?" + query);
+                    } else {
+                        response.sendRedirect(contextPath + "/");
+                    }
                 })
                 .failureUrl("/login?error")
                 .permitAll()
@@ -91,5 +113,9 @@ public class SecurityConfig {
             // th:actionを使うPOSTフォームには、送信元を確認するためのトークンが自動で入る。
 
         return http.build();
+    }
+
+    private static boolean isMemberPage(String contextPath, String requestUri) {
+        return MEMBER_RETURN_PAGES.stream().anyMatch(page -> (contextPath + page).equals(requestUri));
     }
 }

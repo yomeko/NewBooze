@@ -13,13 +13,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.Page;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -30,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SakeCollectionTests {
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
-    @Autowired SakeCatalogService catalog;
+    @MockitoSpyBean SakeCatalogService catalog;
     @Autowired SakePageService pages;
     private final String suffix = UUID.randomUUID().toString().substring(0, 8);
 
@@ -84,9 +87,19 @@ class SakeCollectionTests {
         mvc.perform(get("/ranking").with(user("reader"))).andExpect(status().isOk())
                 .andExpect(content().string(containsString("公開レビューランキング")))
                 .andExpect(content().string(containsString("平均 5.00 / 5")))
+                .andExpect(content().string(not(containsString("好み診断で銘柄を探す"))))
                 .andExpect(content().string(not(containsString("非公開のみ" + suffix))));
         mvc.perform(get("/ranking").with(user("reader")).param("page", Integer.toString(Integer.MAX_VALUE)))
                 .andExpect(status().isOk());
+    }
+
+    @Test void emptyRankingLinksToSearchAndDiagnosis() throws Exception {
+        doReturn(Page.<Sake>empty()).when(catalog).ranking(0);
+
+        mvc.perform(get("/ranking").with(user("reader"))).andExpect(status().isOk())
+                .andExpect(content().string(containsString("公開レビューが登録されると、ここに順位が表示されます。")))
+                .andExpect(content().string(containsString("class=\"button primary\" href=\"/search\">日本酒をさがす")))
+                .andExpect(content().string(containsString("href=\"/diagnosis\">好み診断で銘柄を探す")));
     }
 
     @Test void pairingPageUsesSavedFoodAndGoodsLinksToManufacturer() throws Exception {
