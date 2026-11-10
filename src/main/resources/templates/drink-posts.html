@@ -14,6 +14,7 @@
   <h1>飲酒投稿</h1>
   <p class="lead">飲んだ日本酒や感想を、ログイン中の会員に共有できます。</p>
   <p class="auth-alert success" role="status" th:if="${success}" th:text="${success}"></p>
+  <p class="auth-alert" role="alert" th:if="${error}" th:text="${error}"></p>
 
   <section class="guide-step" aria-labelledby="new-post">
     <h2 id="new-post">飲んだお酒を投稿</h2>

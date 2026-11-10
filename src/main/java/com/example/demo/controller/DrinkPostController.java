@@ -58,7 +58,7 @@ public class DrinkPostController {
     public String like(@PathVariable Long id, @RequestParam boolean liked,
             @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
-        posts.setLiked(principal.getUserId(), id, liked);
+        if (!posts.setLiked(principal.getUserId(), id, liked)) return missingPost(page, redirect);
         return redirectToTimeline(page, redirect);
     }
 
@@ -66,7 +66,7 @@ public class DrinkPostController {
     public String report(@PathVariable Long id, @RequestParam ReportReason reason,
             @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal CustomUserDetails principal, RedirectAttributes redirect) {
-        posts.report(principal.getUserId(), id, reason);
+        if (!posts.report(principal.getUserId(), id, reason)) return missingPost(page, redirect);
         redirect.addFlashAttribute("success", "投稿の通報を受け付けました。");
         return redirectToTimeline(page, redirect);
     }
@@ -75,8 +75,13 @@ public class DrinkPostController {
     public String delete(@PathVariable Long id, @RequestParam(defaultValue = "0") int page,
             @AuthenticationPrincipal CustomUserDetails principal,
             RedirectAttributes redirect) {
-        posts.deleteOwnPost(principal.getUserId(), id);
+        if (!posts.deleteOwnPost(principal.getUserId(), id)) return missingPost(page, redirect);
         redirect.addFlashAttribute("success", "飲酒投稿を削除しました。");
+        return redirectToTimeline(page, redirect);
+    }
+
+    private static String missingPost(int page, RedirectAttributes redirect) {
+        redirect.addFlashAttribute("error", "この投稿は見つかりません。削除された可能性があります。");
         return redirectToTimeline(page, redirect);
     }
 

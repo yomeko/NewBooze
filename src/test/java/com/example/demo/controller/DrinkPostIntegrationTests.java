@@ -25,6 +25,7 @@ import static org.springframework.security.test.web.servlet.response.SecurityMoc
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -100,8 +101,24 @@ class DrinkPostIntegrationTests {
                 .andExpect(redirectedUrl("/posts"));
         assertThat(postCount(postId)).isZero();
         assertThat(likeCount(postId)).isZero();
+
+        String missingPost = "この投稿は見つかりません。削除された可能性があります。";
         mvc.perform(post("/posts/{id}/like", postId).session(reader.session()).with(csrf())
-                .param("liked", "true")).andExpect(status().isNotFound());
+                .param("liked", "true").param("page", "1"))
+                .andExpect(redirectedUrl("/posts?page=1"))
+                .andExpect(flash().attribute("error", missingPost));
+        mvc.perform(get("/posts?page=1").session(reader.session())).andExpect(status().isOk())
+                .andExpect(content().string(containsString(missingPost)));
+        mvc.perform(post("/posts/{id}/report", postId).session(reader.session()).with(csrf())
+                .param("reason", "ABUSE"))
+                .andExpect(redirectedUrl("/posts"))
+                .andExpect(flash().attribute("error", missingPost));
+        mvc.perform(post("/posts/{id}/delete", postId).session(author.session()).with(csrf())
+                .param("page", "1"))
+                .andExpect(redirectedUrl("/posts?page=1"))
+                .andExpect(flash().attribute("error", missingPost));
+        assertThat(likeCount(postId)).isZero();
+        assertThat(reportCount(postId)).isZero();
     }
 
     @Test void adminCanDismissOneReportOrDeleteItsPostAndAllRelatedActivity() throws Exception {

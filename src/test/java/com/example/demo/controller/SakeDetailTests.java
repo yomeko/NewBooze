@@ -286,6 +286,25 @@ class SakeDetailTests {
         assertThat(interactions.isFavorite(owner.getUserId(), 1)).isFalse();
     }
 
+    @Test void guestActionsRequireLoginAndContinueOnTheSameSakeWithoutSaving() throws Exception {
+        var owner = account();
+        mvc.perform(get("/sake/1")).andExpect(status().isOk())
+            .andExpect(content().string(containsString("href=\"/mypage/sake/1/favorite\"")))
+            .andExpect(content().string(containsString("href=\"/mypage/sake/1/review\"")));
+
+        for (String action : java.util.List.of("favorite", "review")) {
+            String path = "/mypage/sake/1/" + action;
+            mvc.perform(get(path)).andExpect(redirectedUrl("/login"));
+            mvc.perform(get(path).with(user(owner))).andExpect(redirectedUrl("/sake/1#" + action));
+        }
+
+        mvc.perform(get("/sake/1").with(user(owner))).andExpect(status().isOk())
+            .andExpect(content().string(containsString("id=\"favorite\"")))
+            .andExpect(content().string(containsString("id=\"review\"")));
+        assertThat(interactions.isFavorite(owner.getUserId(), 1)).isFalse();
+        assertThat(interactions.review(owner.getUserId(), 1)).isEmpty();
+    }
+
     @Test void missingFavoriteSakeReturnsToMyPageWithAnExplanation() throws Exception {
         var owner = account();
         var result = mvc.perform(post("/mypage/favorites").with(user(owner)).with(csrf())

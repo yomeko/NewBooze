@@ -109,8 +109,9 @@ public class DrinkPostService {
     }
 
     @Transactional
-    public void setLiked(Long userId, Long postId, boolean selected) {
-        DrinkPost post = lockPost(postId);
+    public boolean setLiked(Long userId, Long postId, boolean selected) {
+        DrinkPost post = posts.findForUpdate(postId).orElse(null);
+        if (post == null) return false;
         var id = new DrinkPostLikeId(userId, postId);
         // 反転操作にせず、再送しても画面で選んだ状態になるようにする。
         if (!selected) {
@@ -122,30 +123,35 @@ public class DrinkPostService {
             like.setPost(post);
             likes.save(like);
         }
+        return true;
     }
 
     @Transactional
-    public void report(Long userId, Long postId, ReportReason reason) {
-        DrinkPost post = lockPost(postId);
+    public boolean report(Long userId, Long postId, ReportReason reason) {
+        DrinkPost post = posts.findForUpdate(postId).orElse(null);
+        if (post == null) return false;
         if (userId.equals(post.getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "自分の投稿は通報できません。");
         }
-        if (reports.existsByReporterIdAndPostId(userId, postId)) return;
+        if (reports.existsByReporterIdAndPostId(userId, postId)) return true;
         var report = new DrinkPostReport();
         report.setReporter(users.getReferenceById(userId));
         report.setPost(post);
         report.setReason(reason.name());
         reports.save(report);
+        return true;
     }
 
     @Transactional
-    public void deleteOwnPost(Long userId, Long postId) {
-        DrinkPost post = lockPost(postId);
+    public boolean deleteOwnPost(Long userId, Long postId) {
+        DrinkPost post = posts.findForUpdate(postId).orElse(null);
+        if (post == null) return false;
         if (!userId.equals(post.getUser().getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "本人の投稿だけを削除できます。");
         }
         // いいねと通報は既存の外部キーにより投稿と一緒に削除される。
         posts.deleteWithActivity(post.getId());
+        return true;
     }
 
     @Transactional(readOnly = true)
@@ -165,17 +171,13 @@ public class DrinkPostService {
     public void resolveReport(Long reportId, boolean deletePost) {
         Long postId = reports.findPostId(reportId).orElseThrow(() -> notFound("通報"));
         // どの操作でも投稿を先にロックする。取得後に通報を読み直して、処理済みなら削除しない。
-        DrinkPost post = lockPost(postId);
+        DrinkPost post = posts.findForUpdate(postId).orElseThrow(() -> notFound("投稿"));
         DrinkPostReport report = reports.findForUpdate(reportId).orElseThrow(() -> notFound("通報"));
         if (deletePost) {
             posts.deleteWithActivity(post.getId());
         } else {
             reports.delete(report);
         }
-    }
-
-    private DrinkPost lockPost(Long postId) {
-        return posts.findForUpdate(postId).orElseThrow(() -> notFound("投稿"));
     }
 
     private static ResponseStatusException notFound(String item) {

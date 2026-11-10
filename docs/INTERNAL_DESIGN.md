@@ -34,7 +34,7 @@
 
 Spring SecurityがURL権限とCSRFを確認し、Controllerが入力を受け付け、ServiceとRepositoryでDBから取得・保存した情報をThymeleafへ渡す。主要な関連データはServiceのトランザクション内で表示用recordへ変換する。open-in-view=falseにより、Viewでの暗黙の遅延取得に頼らない。
 
-JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計で、評価対象の銘柄に限定する。空表示には/diagnosisと/searchへのリンクを出す。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
+JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計を使い、1〜2件の銘柄に「参考評価」を表示する。空表示には/diagnosisと/searchへのリンクを出す。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
 
 ### 2.3 パッケージ構成
 
@@ -91,7 +91,7 @@ sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キ�
 
 商品詳細はsake_page_detailsに保存されていれば優先する。なければsake-pages.json、その銘柄も未登録ならDBの基本情報で補完する。レビューは1人・1銘柄で更新し、公開平均・件数・一覧はpublished=1だけを対象とする。
 
-DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceに処理を委ねる。Serviceは認証済みのIDを使い、投稿者行をロックしてPostModerationServiceの確認と投稿保存を直列化する。いいね・通報・削除は投稿行をロックする。いいねは要求された状態へ更新し、通報は同一会員・同一投稿の対応待ちを重複させない。通報を閉じると該当の通報を削除する。投稿を削除すると既存の外部キーにより関連するいいね・通報も消える。DiagnosisService.historyは本人のセッションを日時とIDの降順で10件ずつ取得し、対象回の回答をID順に一括取得して表示用に変換する。保存済みの旧形式の回答も表示できる。
+DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。投稿時は認証済み会員の行をロックし、PostModerationServiceの確認と保存を直列化する。いいね・通報・削除は投稿行をロックする。対象がない会員操作は指定の一覧へ案内付きで戻す。権限不足は403、管理対象なしは404。いいねは指定状態に更新し、同じ会員の対応待ち通報は重複させない。通報を閉じると通報を削除し、投稿削除はいいねと通報も外部キーで削除する。DiagnosisService.historyは本人分を日時・IDの降順で10件ずつ取得し、回答をID順に一括取得して表示する。旧形式も表示できる。
 
 ## 4 画面設計
 
@@ -147,7 +147,7 @@ POST /verify-email/resendは前後の空白を除いたemailの形式と255文�
 
 Serviceは行ロック下で未認証かつ前回送信から60秒以上経過した場合だけ送る。未登録・認証済み・間隔未満・送信成功には同じ条件付きの受付案内を表示し、送信例外は共通のメールエラーを案内する。再送成功時だけトークンの置換が確定して旧リンクが無効になり、失敗時はハッシュ・期限・送信日時を戻す。リンクは受信したHostヘッダーに依存させず、固定設定app.base-urlから構築する。
 
-SecurityConfigとCustomUserDetailsServiceでログインを処理する。CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員と旧既定パスワードの管理者は拒否する。移行済みの既存ユーザーと初回設定で作成した管理者は認証済みとする。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップへ移動する。一般会員は飲酒投稿・会員向け特集・マイページ・設定・診断履歴の保存済みGETへパスとクエリで戻り、戻り先がなければホームへ進む。仮パスワードの新規発行は行わない。
+SecurityConfigとCustomUserDetailsServiceでログインを処理する。CustomUserDetails.isEnabledはemailVerifiedを返す。未認証会員と旧既定パスワードの管理者は拒否する。移行済み会員と初回設定の管理者は認証済みとする。仮パスワード使用中は変更案内付きマイページ、管理者は管理トップへ進む。一般会員は飲酒投稿・会員向け特集・マイページ・設定・診断履歴・銘柄操作の保存済みGETへパスとクエリで戻る。戻り先がなければホームへ進む。仮パスワードは新規発行しない。
 
 CustomUserDetailsはログイン時点のユーザーID・メールアドレス・ハッシュ・認証状態・権限を保持する。AccountSessionValidationFilterは静的ファイルを除く認証済みリクエストでDBを参照し、会員の削除、パスワードハッシュ・メールアドレス・認証状態・権限の変更を確認するとセッションとSecurityContextを破棄し、/login?sessionExpiredへ移す。旧既定パスワードの管理者セッションも拒否する。表示名だけを変更した場合は、認証時点の値をセッションに保持する。同時にパスワードや権限が変更されても、古いセッションは新しい値を引き継がず次の要求で失効する。
 
@@ -229,8 +229,8 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | POST | /mypage/profile-image/position | 表示位置と拡大率 |
 | POST | /mypage/favorites | カタログからお気に入り追加 |
 | POST | /mypage/favorites/{sakeId}/delete | お気に入り削除 |
-| POST | /mypage/sake/{id}/favorite | selectedで登録・解除 |
-| POST | /mypage/sake/{id}/review | rating、comment、publishedを保存 |
+| GETとPOST | /mypage/sake/{id}/favorite | GETで#favoriteへ、POSTで登録・解除 |
+| GETとPOST | /mypage/sake/{id}/review | GETで#reviewへ、POSTで評価を保存 |
 | POST | /mypage/sake/{id}/review/delete | 本人レビュー削除 |
 | POST | /mypage/profile | プロフィール変更、メール変更時は未認証化・送信後ログアウト |
 | POST | /mypage/password | パスワード変更 |

@@ -22,12 +22,16 @@
   <div class="collection-content" th:switch="${currentPage}">
     <section th:case="'ranking'" aria-label="公開レビューの順位">
       <p th:if="${#lists.isEmpty(ranking.content)}" class="collection-status">公開レビューが登録されると、ここに順位が表示されます。</p>
+      <p th:unless="${#lists.isEmpty(ranking.content)}" class="muted">公開レビューが1〜2件の銘柄には「参考評価」と表示します。</p>
       <!-- 並べ替えと対象の絞り込みはDBで済ませ、次のページでも順位が続くようにする。 -->
       <ol th:unless="${#lists.isEmpty(ranking.content)}" class="collection-list"
           th:start="${ranking.number * ranking.size + 1}">
         <li th:each="item : ${ranking.content}">
           <a th:href="@{/sake/{id}(id=${item.id})}" th:text="${item.name}">銘柄</a>
-          <p th:text="|平均 ${#numbers.formatDecimal(item.averageRating, 1, 2)} / 5・${item.reviewCount} 件|">平均 4.00 / 5・1 件</p>
+          <p>
+            <span th:text="|平均 ${#numbers.formatDecimal(item.averageRating, 1, 2)} / 5・${item.reviewCount} 件|">平均 4.00 / 5・1 件</span>
+            <span class="badge" th:if="${item.reviewCount < 3}">参考評価</span>
+          </p>
         </li>
       </ol>
       <nav th:if="${ranking.totalPages > 1}" class="pagination" aria-label="ランキングのページ送り">

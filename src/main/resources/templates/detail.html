@@ -29,9 +29,9 @@
         <!-- ログイン中だけお気に入りを変更できる。selectedには現在の登録状態を反転した値を送る。 -->
         <form sec:authorize="isAuthenticated()" th:action="@{/mypage/sake/{id}/favorite(id=${sake.id})}" method="post">
           <input type="hidden" name="selected" th:value="${!favorite}">
-          <button class="button sake-favorite" type="submit" th:attr="aria-pressed=${favorite},aria-label=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'},title=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}"><span aria-hidden="true" th:text="${favorite ? '♥' : '♡'}"></span></button>
+          <button id="favorite" class="button sake-favorite" type="submit" th:attr="aria-pressed=${favorite},aria-label=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'},title=${favorite ? 'お気に入り登録済み（解除）' : 'お気に入りに追加'}"><span aria-hidden="true" th:text="${favorite ? '♥' : '♡'}"></span></button>
         </form>
-        <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/login}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
+        <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/mypage/sake/{id}/favorite(id=${sake.id})}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
         <!-- 公式の購入リンクを優先し、なければ公式URLを使用する。URLがない場合は非表示。 -->
         <th:block th:with="officialLinks=${page.purchaseLinks.?[official]}, purchaseUrl=${#lists.isEmpty(officialLinks) ? page.officialUrl : officialLinks[0].url}">
           <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
@@ -136,10 +136,10 @@
   </section>
 
   <!-- 自分の保存済みレビューを編集する欄。公開しないレビューは本人だけがこの欄で確認できる。 -->
-  <section class="sake-panel" id="review" aria-labelledby="review-title">
+  <section class="sake-panel" id="review" tabindex="-1" aria-labelledby="review-title">
     <h2 id="review-title">自分の評価・コメント</h2>
     <p class="sake-note">公開すると、表示名・星・コメント・更新日が誰でも見られるようになり、平均評価に反映されます。</p>
-    <p sec:authorize="isAnonymous()"><a th:href="@{/login}">ログインして評価する</a></p>
+    <p sec:authorize="isAnonymous()"><a th:href="@{/mypage/sake/{id}/review(id=${sake.id})}">ログインして評価する</a></p>
     <th:block sec:authorize="isAuthenticated()">
       <form class="sake-review-form" th:action="@{/mypage/sake/{id}/review(id=${sake.id})}" method="post">
         <fieldset><legend>星の数（必須）</legend><div class="sake-rating">

@@ -128,10 +128,25 @@ class AuthenticationSecurityChainTests {
         var account = prepareAccount(false, false);
         var session = new MockHttpSession(context.getServletContext());
         mvc.perform(post("/posts").session(session).with(csrf())).andExpect(status().is3xxRedirection());
+        mvc.perform(post("/mypage/sake/12/favorite").session(session).with(csrf()))
+                .andExpect(status().is3xxRedirection());
         mvc.perform(get("/admin").session(session)).andExpect(status().is3xxRedirection());
         mvc.perform(post("/login").session(session).with(csrf())
                 .param("username", account.getEmail()).param("password", PASSWORD))
                 .andExpect(redirectedUrl("/"));
+    }
+
+    @Test void memberReturnsToTheRequestedSakeActionAfterLogin() throws Exception {
+        var account = prepareAccount(false, false);
+        for (String action : java.util.List.of("favorite", "review")) {
+            String path = "/app/mypage/sake/12/" + action;
+            var visit = mvc.perform(get(path).contextPath("/app"))
+                    .andExpect(redirectedUrl("/app/login")).andReturn();
+            var session = (MockHttpSession) visit.getRequest().getSession(false);
+            mvc.perform(post("/app/login").contextPath("/app").session(session).with(csrf())
+                    .param("username", account.getEmail()).param("password", PASSWORD))
+                    .andExpect(redirectedUrl(path));
+        }
     }
 
     @Test void adminAndTemporaryPasswordDestinationsTakePrecedence() throws Exception {

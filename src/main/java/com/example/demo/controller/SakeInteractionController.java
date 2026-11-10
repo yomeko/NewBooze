@@ -21,6 +21,17 @@ public class SakeInteractionController {
         this.interactions = interactions;
     }
 
+    /** ログイン後は銘柄詳細の操作欄へ戻し、保存はフォームの送信時に行う。 */
+    @GetMapping("/favorite")
+    public String openFavorite(@PathVariable long id) {
+        return "redirect:/sake/" + id + "#favorite";
+    }
+
+    @GetMapping("/review")
+    public String openReview(@PathVariable long id) {
+        return "redirect:/sake/" + id + "#review";
+    }
+
     /**
      * selected=trueでお気に入りに登録し、falseで解除する。操作結果は次の画面に表示する。
      */

@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import java.util.List;
+import java.util.regex.Pattern;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -30,6 +31,8 @@ public class SecurityConfig {
 
     private static final List<String> MEMBER_RETURN_PAGES = List.of(
             "/posts", "/ranking", "/pairings", "/goods", "/mypage", "/mypage/account", "/mypage/diagnosis-history");
+    private static final Pattern SAKE_ACTION_RETURN_PATH =
+            Pattern.compile("/mypage/sake/[1-9][0-9]{0,18}/(?:favorite|review)");
 
     /**
      * パスワードをBCryptでハッシュ化し、ログイン時に照合する道具を用意する。
@@ -54,7 +57,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationRateLimiter limiter,
             UserRepository users, PasswordEncoder encoder) throws Exception {
         var requestCache = new HttpSessionRequestCache();
-        // ログイン後に開き直せる会員画面のGETだけを、セッションに保持する。
+        // ログイン後に開く会員画面と銘柄詳細への復帰用GETだけをセッションに保持する。
         requestCache.setRequestMatcher(request -> "GET".equals(request.getMethod())
                 && isMemberPage(request.getContextPath(), request.getRequestURI()));
 
@@ -116,6 +119,8 @@ public class SecurityConfig {
     }
 
     private static boolean isMemberPage(String contextPath, String requestUri) {
-        return MEMBER_RETURN_PAGES.stream().anyMatch(page -> (contextPath + page).equals(requestUri));
+        if (!requestUri.startsWith(contextPath)) return false;
+        String path = requestUri.substring(contextPath.length());
+        return MEMBER_RETURN_PAGES.contains(path) || SAKE_ACTION_RETURN_PATH.matcher(path).matches();
     }
 }

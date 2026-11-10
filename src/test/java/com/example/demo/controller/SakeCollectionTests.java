@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -67,28 +68,40 @@ class SakeCollectionTests {
         long typeId = type("テスト酒種" + suffix);
         long onePublic = sake("公開1件" + suffix, typeId, null);
         long twoPublic = sake("公開2件" + suffix, typeId, null);
+        long threePublic = sake("公開3件" + suffix, typeId, null);
         long privateOnly = sake("非公開のみ" + suffix, typeId, null);
         long firstUser = insertUser("first");
         long secondUser = insertUser("second");
+        long thirdUser = insertUser("third");
         review(firstUser, onePublic, 5, true);
         review(secondUser, onePublic, 1, false);
         review(firstUser, twoPublic, 5, true);
         review(secondUser, twoPublic, 5, true);
+        review(firstUser, threePublic, 4, true);
+        review(secondUser, threePublic, 4, true);
+        review(thirdUser, threePublic, 4, true);
         review(firstUser, privateOnly, 5, false);
 
         var firstPage = catalog.ranking(0);
         // 他のテストや開発用レビューの順位に依存せず、今回の銘柄同士を比較する。
         var items = IntStream.range(0, firstPage.getTotalPages()).boxed()
                 .flatMap(page -> (page == 0 ? firstPage : catalog.ranking(page)).stream()).toList();
-        assertThat(items).extracting(Sake::id).containsSubsequence(twoPublic, onePublic).doesNotContain(privateOnly);
+        assertThat(items).extracting(Sake::id).containsSubsequence(twoPublic, onePublic, threePublic).doesNotContain(privateOnly);
         var item = items.stream().filter(sake -> sake.id() == onePublic).findFirst().orElseThrow();
         assertThat(item.averageRating()).isEqualTo(5.0);
         assertThat(item.reviewCount()).isEqualTo(1);
-        mvc.perform(get("/ranking").with(user("reader"))).andExpect(status().isOk())
+        var fixtureIds = List.of(onePublic, twoPublic, threePublic);
+        doReturn(new PageImpl<>(items.stream().filter(sake -> fixtureIds.contains(sake.id())).toList()))
+                .when(catalog).ranking(0);
+        String html = mvc.perform(get("/ranking").with(user("reader"))).andExpect(status().isOk())
                 .andExpect(content().string(containsString("公開レビューランキング")))
                 .andExpect(content().string(containsString("平均 5.00 / 5")))
                 .andExpect(content().string(not(containsString("好み診断で銘柄を探す"))))
-                .andExpect(content().string(not(containsString("非公開のみ" + suffix))));
+                .andExpect(content().string(not(containsString("非公開のみ" + suffix))))
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertThat(html).containsPattern("平均 5\\.00 / 5・1 件</span>\\s*<span class=\"badge\">参考評価</span>")
+                .containsPattern("平均 5\\.00 / 5・2 件</span>\\s*<span class=\"badge\">参考評価</span>")
+                .containsPattern("平均 4\\.00 / 5・3 件</span>\\s*</p>");
         mvc.perform(get("/ranking").with(user("reader")).param("page", Integer.toString(Integer.MAX_VALUE)))
                 .andExpect(status().isOk());
     }
