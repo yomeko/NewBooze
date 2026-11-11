@@ -51,7 +51,7 @@ def sql_literal(value):
     return "CONVERT(X'" + value.encode("utf-8").hex() + "' USING utf8mb4)"
 
 
-def fixture_sql(**overrides):
+def fixture_sql(attributes=None, attributes_only=False, **overrides):
     """Exercise the real generator with small independent, temporary source data."""
     record = {
         "prefecture_code": 1, "prefecture": "北海道", "brewery": "検証酒造株式会社",
@@ -59,18 +59,29 @@ def fixture_sql(**overrides):
         "source_url": "https://example.invalid/catalog-test", "source_note": "隔離DB専用の検証データ",
     }
     record.update(overrides)
-    return fixture_catalog_sql([record])
+    return fixture_catalog_sql([record], attributes, attributes_only)
 
 
-def fixture_catalog_sql(records):
-    """Generate a temporary catalog without changing the checked-in source files."""
+def builder_module():
     spec = importlib.util.spec_from_file_location("sake_catalog_builder", ROOT / "scripts/build-sake-catalog.py")
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
+    return builder
+
+
+def fixture_catalog_sql(records, attributes=None, attributes_only=False):
+    """Generate a temporary catalog without changing the checked-in source files."""
+    builder = builder_module()
     with tempfile.TemporaryDirectory(prefix="newbooze-catalog-fixture-") as temporary:
         directory = Path(temporary)
         (directory / "fixture.json").write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
-        return builder.make_sql(builder.load_records(directory))
+        loaded = builder.load_records(directory)
+        if attributes is not None:
+            enrichment = directory / "enrichment"
+            enrichment.mkdir()
+            (enrichment / "fixture.json").write_text(json.dumps(attributes, ensure_ascii=False), encoding="utf-8")
+            builder.apply_enrichment(loaded, enrichment)
+        return builder.make_sql(loaded, attributes_only=attributes_only)
 
 
 class MysqlSandbox:
@@ -194,22 +205,32 @@ def test_catalog(sandbox, catalog_sql, records):
     assert len(after) == len(before) + len(additions), (len(after), len(before), len(additions))
     assert seed_snapshot(sandbox, database) == original, "Existing products or diagnosis tags changed"
     new_rows = {product_key(row[1]): row for row in after if row[0] > 10}
+    price_details = {page["id"]: page for page in sandbox.json_rows(database, "SELECT detail_json FROM sake_page_details;")}
     for record in additions:
         row = new_rows[product_key(record["name"])]
         assert row[2] == record["prefecture"], ("Wrong prefecture", row)
         assert brewery_key(row[3]) == brewery_key(record["brewery"]), ("Wrong brewery", row)
         assert row[4] == record["prefecture"], ("Wrong brewery prefecture", row)
         assert row[5] == TYPE_NAMES.get(record["sake_type"], record["sake_type"]), ("Wrong sake type", row)
-        assert row[6:10] == [None] * 4, ("Unverified product attributes were populated", row)
+        attributes = record.get("_attributes", {})
+        assert row[6:10] == [attributes.get("abv"), attributes.get("price"), None, attributes.get("image_url")], \
+            ("Verified product attributes do not match their sources", row)
+        if attributes.get("price") is not None:
+            assert row[0] in price_details, ("Verified price is missing capacity metadata", record["name"], row[0])
+            assert price_details[row[0]]["prices"] == [{"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}], \
+                ("Price capacity or tax-inclusive value was not recorded", row)
     codes = {product_key(record["name"]): int(record["prefecture_code"]) for record in additions}
     inserted_codes = [codes[product_key(row[1])] for row in after if row[0] > 10]
     assert inserted_codes == sorted(inserted_codes), "New records are not in prefecture-code order"
     assert_foreign_keys(sandbox, database)
     second_before = sandbox.mysql("SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types;", database).stdout
+    details_before = sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout
     sandbox.mysql(catalog_sql, database)
     assert catalog_rows(sandbox, database) == after, "A second application added or changed products"
     second_after = sandbox.mysql("SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types;", database).stdout
     assert second_before == second_after, "A second application duplicated master data"
+    assert sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout == details_before, \
+        "A second application changed saved price details"
     assert seed_snapshot(sandbox, database) == original, "A second application changed existing records"
     print(f"PASS: {len(additions)} new products; existing 10 unchanged; rerun unchanged; order and foreign keys correct")
 
@@ -243,11 +264,81 @@ def test_catalog_upgrade(sandbox, catalog_sql, records):
     expanded_by_id = {row[0]: row for row in expanded_rows}
     assert len(expanded_rows) == len(initial_rows) + len(expected_new_records(records, initial_rows)), \
         "Expanding an earlier catalog duplicated or missed products"
-    assert all(expanded_by_id.get(row[0]) == row for row in earlier_rows), \
-        "Expanding the catalog changed an earlier product, ID, or foreign key"
+    for row in earlier_rows:
+        expanded = expanded_by_id[row[0]]
+        assert expanded[:6] == row[:6] and expanded[8] == row[8] and expanded[10] == row[10], \
+            "Expanding the catalog changed a product identity, description, ID, or foreign key"
+        for index in (6, 7, 9):
+            if row[index] is not None:
+                assert expanded[index] == row[index], "Expanding the catalog overwrote an existing attribute"
     assert seed_snapshot(sandbox, database) == original, "Catalog upgrade changed initial products or diagnosis tags"
     assert_foreign_keys(sandbox, database)
-    print(f"PASS: catalog upgrade preserves {len(earlier_rows)} existing products and adds only missing products")
+    print(f"PASS: catalog upgrade preserves {len(earlier_rows)} product identities and existing attribute values")
+
+
+def test_catalog_attribute_upgrade(sandbox, attributes_sql, records):
+    database = sandbox.fresh_database()
+    initial_rows = catalog_rows(sandbox, database)
+    original = seed_snapshot(sandbox, database)
+    additions = expected_new_records(records, initial_rows)
+    # Reloading through the public fixture path removes private enrichment fields,
+    # reproducing the previously imported catalog with all added attributes NULL.
+    sandbox.mysql(fixture_catalog_sql(records), database)
+    before = catalog_rows(sandbox, database)
+    assert len(before) == len(initial_rows) + len(additions), "The earlier catalog fixture missed products"
+    initial_ids = {row[0] for row in initial_rows}
+    assert all(row[6:10] == [None] * 4 for row in before if row[0] not in initial_ids), \
+        "The earlier catalog fixture already contains enriched attributes"
+    identity_sql = """
+        SELECT JSON_ARRAY(id, brewery_id, sake_type_id, name, region, description,
+                          DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s'))
+        FROM sake ORDER BY id;
+    """
+    master_sql = """
+        SELECT JSON_ARRAY(id, name, prefecture) FROM breweries ORDER BY id;
+        SELECT JSON_ARRAY(id, name) FROM sake_types ORDER BY id;
+    """
+    identities_before = sandbox.mysql(identity_sql, database).stdout
+    masters_before = sandbox.mysql(master_sql, database).stdout
+    sandbox.mysql(attributes_sql, database)
+    after = catalog_rows(sandbox, database)
+    assert len(after) == len(before), "The real attributes-only file inserted or deleted products"
+    assert sandbox.mysql(identity_sql, database).stdout == identities_before, \
+        "The real attributes-only file changed product identities or foreign keys"
+    assert sandbox.mysql(master_sql, database).stdout == masters_before, \
+        "The real attributes-only file changed brewery or sake-type master records"
+    assert seed_snapshot(sandbox, database) == original, "The real attributes-only file changed initial products or tags"
+    new_rows = {product_key(row[1]): row for row in after if row[0] not in initial_ids}
+    price_details = {
+        value[0]: json.loads(value[1])
+        for value in sandbox.json_rows(database, "SELECT JSON_ARRAY(sake_id, detail_json) FROM sake_page_details;")
+    }
+    expected_price_ids = set()
+    for record in additions:
+        row = new_rows[product_key(record["name"])]
+        attributes = record.get("_attributes", {})
+        assert row[6:10] == [attributes.get("abv"), attributes.get("price"), None, attributes.get("image_url")], \
+            ("The real attributes-only file does not match verified source values", record["name"], row)
+        if attributes.get("price") is not None:
+            expected_price_ids.add(row[0])
+            assert attributes["price_tax_included"] is True, ("The source price is not verified tax-inclusive", record["name"])
+            assert row[0] in price_details, ("The real attributes-only file missed price capacity metadata", record["name"])
+            page = price_details[row[0]]
+            assert page["id"] == row[0] and page["prices"] == [
+                {"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}
+            ], ("The real attributes-only file changed tax-inclusive price or capacity", record["name"], page)
+    assert set(price_details) == expected_price_ids, "The real attributes-only file created unexpected price details"
+    details_before = sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout
+    sandbox.mysql(attributes_sql, database)
+    assert catalog_rows(sandbox, database) == after, "Reapplying the real attributes-only file changed products or attributes"
+    assert sandbox.mysql(identity_sql, database).stdout == identities_before, "Reapplying attributes changed product foreign keys"
+    assert sandbox.mysql(master_sql, database).stdout == masters_before, "Reapplying attributes changed master records"
+    assert sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout == details_before, \
+        "Reapplying the real attributes-only file changed price details"
+    assert seed_snapshot(sandbox, database) == original, "Reapplying attributes changed initial products or tags"
+    assert_foreign_keys(sandbox, database)
+    print(f"PASS: real attributes-only file enriches {len(additions)} earlier catalog products; "
+          f"{len(expected_price_ids)} price capacities match; identities, masters, initial products, tags and rerun are preserved")
 
 
 def test_registered_alias(sandbox, catalog_sql, records):
@@ -304,15 +395,21 @@ def test_width_variants_and_brewery_reuse(sandbox):
     print("PASS: fullwidth Latin/digits, case and halfwidth kana deduplicate; corporate-name variant reuses the brewery")
 
 
-def test_unavailable_named_lock(sandbox):
+def test_unavailable_named_lock(sandbox, attributes_only=False):
     database = sandbox.fresh_database()
     lock_name = "CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256), 48))"
-    sql = fixture_sql()
+    if attributes_only:
+        sandbox.mysql(fixture_sql(), database)
+        sql = fixture_sql(attributes=[verified_fixture_attributes()], attributes_only=True)
+    else:
+        sql = fixture_sql()
     wait_expression = "GET_LOCK(@sake_catalog_lock_name, 30)"
     assert sql.count(wait_expression) == 1, "Review the fixture when the catalog's lock expression changes"
     sql = sql.replace(wait_expression, "GET_LOCK(@sake_catalog_lock_name, 0)")
-    counts_sql = "SELECT COUNT(*) FROM sake; SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types;"
+    counts_sql = "SELECT COUNT(*) FROM sake; SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types; SELECT COUNT(*) FROM sake_page_details;"
     before_counts = sandbox.mysql(counts_sql, database).stdout
+    before_rows = catalog_rows(sandbox, database)
+    before_details = sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout
     original = seed_snapshot(sandbox, database)
     holder = subprocess.Popen(
         ["docker", "--host=unix:///var/run/docker.sock", "exec", "-i", sandbox.container,
@@ -337,6 +434,9 @@ def test_unavailable_named_lock(sandbox):
         result = sandbox.mysql(sql, database)
         assert "not_applied_lock_unavailable" in result.stdout, "Lock contention was not reported"
         assert sandbox.mysql(counts_sql, database).stdout == before_counts, "Lock contention changed catalog/master counts"
+        assert catalog_rows(sandbox, database) == before_rows, "Lock contention changed existing attributes"
+        assert sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout == before_details, \
+            "Lock contention inserted or changed price details"
         assert seed_snapshot(sandbox, database) == original, "Lock contention changed existing products or tags"
     finally:
         try:
@@ -344,7 +444,8 @@ def test_unavailable_named_lock(sandbox):
         except (BrokenPipeError, subprocess.TimeoutExpired):
             holder.kill()
             holder.communicate(timeout=5)
-    print("PASS: unavailable named lock reports not_applied and leaves all three catalog tables unchanged")
+    operation = "attribute backfill" if attributes_only else "catalog insertion"
+    print(f"PASS: unavailable named lock blocks {operation} and preserves products, masters and price details")
 
 
 def test_brewery_collision(sandbox, catalog_sql, records, ambiguous=False):
@@ -374,27 +475,199 @@ def test_brewery_collision(sandbox, catalog_sql, records, ambiguous=False):
     print(f"PASS: {reason} is reported as pending; existing products and tags are preserved")
 
 
+def verified_fixture_attributes():
+    return {
+        "name": "検証酒 純米", "prefecture_code": 1, "brewery": "検証酒造株式会社",
+        "abv": 15.5, "abv_text": "15.5%", "abv_source_url": "https://example.invalid/product",
+        "price": 1650, "volume_ml": 720, "price_tax_included": True,
+        "price_source_url": "https://example.invalid/product", "image_url": "https://example.invalid/bottle.jpg",
+        "image_source_url": "https://example.invalid/product", "image_http_status": 200,
+        "image_content_type": "image/jpeg", "checked_on": "2026-11-11", "notes": "隔離DBの検証用出典",
+    }
+
+
+def test_attribute_backfill(sandbox):
+    attributes = verified_fixture_attributes()
+    update_sql = fixture_sql(attributes=[attributes], attributes_only=True)
+    database = sandbox.fresh_database()
+    original = seed_snapshot(sandbox, database)
+    empty_counts = sandbox.mysql("SELECT COUNT(*) FROM sake; SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types;", database).stdout
+    sandbox.mysql(update_sql, database)
+    assert sandbox.mysql("SELECT COUNT(*) FROM sake; SELECT COUNT(*) FROM breweries; SELECT COUNT(*) FROM sake_types;", database).stdout == empty_counts, \
+        "The attributes-only file inserted catalog or master records"
+    sandbox.mysql(fixture_sql(), database)
+    sandbox.mysql("UPDATE sake SET image_url = '' WHERE name = '検証酒 純米';", database)
+    before = catalog_rows(sandbox, database)[-1]
+    sandbox.mysql(update_sql, database)
+    after = catalog_rows(sandbox, database)[-1]
+    assert before[0] == after[0] and after[6:10] == [15.5, 1650, None, attributes["image_url"]], \
+        "Verified attributes did not fill the existing blank fields"
+    page = sandbox.json_rows(database, f"SELECT detail_json FROM sake_page_details WHERE sake_id = {after[0]};")[0]
+    assert page["prices"] == [{"volume": "720ml", "yen": 1650}] and page["id"] == after[0]
+    manual_page = json.dumps({"id": after[0], "name": after[1], "introduction": "管理者の編集", "prices": [{"volume": "300ml", "yen": 700}]}, ensure_ascii=False)
+    sandbox.mysql(
+        f"UPDATE sake SET abv = 16.7, price = 2500, image_url = '/images/sake/manual.jpg' WHERE id = {after[0]};"
+        f"UPDATE sake_page_details SET detail_json = {sql_literal(manual_page)} WHERE sake_id = {after[0]};", database,
+    )
+    sandbox.mysql(update_sql, database)
+    manual = catalog_rows(sandbox, database)[-1]
+    assert manual[6:10] == [16.7, 2500, None, "/images/sake/manual.jpg"], "Backfill overwrote existing nonblank attributes"
+    assert sandbox.mysql(f"SELECT detail_json FROM sake_page_details WHERE sake_id = {after[0]};", database).stdout.strip() == manual_page, \
+        "Backfill overwrote a manually saved detail page"
+    sandbox.mysql(f"UPDATE sake SET abv = NULL, price = NULL, image_url = NULL, region = '沖縄県' WHERE id = {after[0]};", database)
+    sandbox.mysql(update_sql, database)
+    assert catalog_rows(sandbox, database)[-1][6:10] == [None] * 4, "Attributes crossed a mismatched product region"
+    assert seed_snapshot(sandbox, database) == original, "Attribute backfill changed initial products or tags"
+    assert_foreign_keys(sandbox, database)
+    print("PASS: attributes-only import fills blanks with capacity metadata, preserves saved values/details, and rejects identity mismatches")
+
+
+def test_attribute_identity_variants(sandbox):
+    cases = [
+        ({"name": "検証 にこり 純米"}, {"name": "検証 にごり 純米"}, False),
+        ({"name": "検証 さけ 純米"}, {"name": "検証 サケ 純米"}, False),
+        ({"name": "検証 E 純米"}, {"name": "検証 É 純米"}, False),
+        ({"brewery": "にこり酒造株式会社"}, {"brewery": "にごり酒造株式会社"}, False),
+        ({"brewery": "さけ酒造株式会社"}, {"brewery": "サケ酒造株式会社"}, False),
+        ({"brewery": "E酒造株式会社"}, {"brewery": "É酒造株式会社"}, False),
+        ({"name": "検証 abc123 サケ 純米", "brewery": "株式会社 検証 abc123 サケ 酒造"},
+         {"name": "検証 ＡＢＣ１２３ ｻｹ 純米", "brewery": "㈱ 検証 ＡＢＣ１２３ ｻｹ 酒造"}, True),
+        ({"name": "検証 神心 純米", "brewery": "神酒造株式会社"},
+         {"name": "検証 神心 純米", "brewery": "神酒造株式会社"}, True),
+    ]
+    for existing, source, should_match in cases:
+        database = sandbox.fresh_database()
+        sandbox.mysql(fixture_sql(**existing), database)
+        before = catalog_rows(sandbox, database)
+        attributes = {**verified_fixture_attributes(), **source}
+        sandbox.mysql(fixture_sql(attributes=[attributes], attributes_only=True, **source), database)
+        after = catalog_rows(sandbox, database)
+        if should_match:
+            assert after[-1][0] == before[-1][0] and after[-1][6:10] == [15.5, 1650, None, attributes["image_url"]], \
+                ("Width, case, compatibility-kanji or corporate-name variants failed to match", existing, source, after[-1])
+            assert sandbox.mysql("SELECT COUNT(*) FROM sake_page_details;", database).stdout.strip() == "1"
+        else:
+            assert after == before, ("Attributes crossed a different product or brewery name", existing, source)
+            assert sandbox.mysql("SELECT COUNT(*) FROM sake_page_details;", database).stdout.strip() == "0", \
+                ("Price details crossed a different product or brewery name", existing, source)
+    print("PASS: attribute identities distinguish voicing, kana script and accents while preserving width, case and compatibility kanji")
+
+
+def test_attribute_ambiguous_alias(sandbox):
+    database = sandbox.fresh_database()
+    alias = "検証酒 手仕込み 純米"
+    sandbox.mysql(fixture_sql(aliases=[alias]), database)
+    sandbox.mysql(
+        "INSERT INTO sake (brewery_id, sake_type_id, name, region) "
+        "SELECT brewery_id, sake_type_id, " + sql_literal(alias)
+        + ", region FROM sake WHERE name = '検証酒 純米';", database,
+    )
+    before = catalog_rows(sandbox, database)
+    result = sandbox.mysql(fixture_sql(attributes=[verified_fixture_attributes()], attributes_only=True, aliases=[alias]), database)
+    assert catalog_rows(sandbox, database) == before, "An ambiguous canonical/alias match changed existing attributes"
+    assert sandbox.mysql("SELECT COUNT(*) FROM sake_page_details;", database).stdout.strip() == "0", \
+        "An ambiguous canonical/alias match created price details"
+    assert "product_identity_not_unique_or_mismatched" in result.stdout, "An ambiguous alias was not reported"
+    print("PASS: canonical and alias names matching two existing products leave both products unchanged")
+
+
+def test_attribute_abv_range(sandbox):
+    attributes = {**verified_fixture_attributes(), "abv": None, "abv_text": "15度以上16度未満"}
+    for attributes_only in (False, True):
+        database = sandbox.fresh_database()
+        if attributes_only:
+            sandbox.mysql(fixture_sql(), database)
+        sandbox.mysql(fixture_sql(attributes=[attributes], attributes_only=attributes_only), database)
+        row = catalog_rows(sandbox, database)[-1]
+        assert row[6:10] == [None, 1650, None, attributes["image_url"]], \
+            ("An ABV range became a numeric value or blocked other verified attributes", row)
+    print("PASS: ABV ranges remain numeric NULL during insertion and backfill while other verified attributes are imported")
+
+
+def test_attribute_classpath_detail_preserved(sandbox):
+    source_path = ROOT / "src/main/resources/data/sake-pages.json"
+    original_source = source_path.read_bytes()
+    page = next(page for page in json.loads(original_source) if page.get("introduction"))
+    database = sandbox.fresh_database()
+    row = next(row for row in catalog_rows(sandbox, database) if row[0] == page["id"])
+    brewery = page["brewery"]
+    prefecture = row[2]
+    sandbox.mysql(
+        "INSERT INTO breweries (name, prefecture) VALUES (" + sql_literal(brewery)
+        + ", " + sql_literal(prefecture) + ");"
+        f"UPDATE sake SET brewery_id = LAST_INSERT_ID(), price = NULL WHERE id = {page['id']};", database,
+    )
+    attributes = {**verified_fixture_attributes(), "name": row[1], "brewery": brewery,
+                  "prefecture_code": builder_module().PREFECTURES.index(prefecture) + 1,
+                  "abv": None, "abv_text": None, "image_url": None}
+    before = catalog_rows(sandbox, database)
+    sandbox.mysql(fixture_sql(
+        attributes=[attributes], attributes_only=True, name=row[1], brewery=brewery,
+        prefecture=prefecture, prefecture_code=attributes["prefecture_code"], sake_type=row[5],
+    ), database)
+    expected = [row.copy() for row in before]
+    next(row for row in expected if row[0] == page["id"])[7] = attributes["price"]
+    assert catalog_rows(sandbox, database) == expected, "The classpath product's blank price was not filled independently"
+    assert sandbox.mysql(f"SELECT COUNT(*) FROM sake_page_details WHERE sake_id = {page['id']};", database).stdout.strip() == "0", \
+        "A minimal price detail shadowed an existing classpath introduction"
+    assert source_path.read_bytes() == original_source, "The existing classpath detail was changed"
+    print("PASS: filling a classpath product's blank price preserves its existing introduction fallback")
+
+
+def test_attribute_source_validation():
+    valid = verified_fixture_attributes()
+    invalid = [
+        {"abv": "15-16"}, {"abv": 15.55}, {"abv_text": "15度以上16度未満"},
+        {"price": 0}, {"volume_ml": None},
+        {"price_tax_included": False}, {"price_source_url": None},
+        {"image_url": "http://example.invalid/bottle.jpg"}, {"image_http_status": 404},
+        {"image_content_type": "text/html"}, {"brewery": "別の酒造"}, {"prefecture_code": 2},
+    ]
+    for changes in invalid:
+        try:
+            fixture_sql(attributes=[{**valid, **changes}])
+        except (ValueError, TypeError):
+            continue
+        raise AssertionError(f"Invalid attribute evidence was accepted: {changes}")
+    try:
+        fixture_sql(attributes=[valid, valid])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Duplicate attribute sources were accepted")
+    fixture_sql(attributes=[{**valid, "abv": None, "abv_text": "15度以上16度未満"}])
+    print("PASS: attribute sources require exact numeric ABV, tax-inclusive capacity prices and verified HTTPS images; ranges remain text")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--container", help="Existing disposable MySQL container with the catalog-test label")
     args = parser.parse_args()
     catalog_sql = (ROOT / "data/sake_catalog_prefecture_order.sql").read_text(encoding="utf-8")
-    records = []
-    for path in sorted((ROOT / "data/sake-catalog/regions").glob("*.json")):
-        records.extend(json.loads(path.read_text(encoding="utf-8")))
+    attributes_sql = (ROOT / "data/sake_catalog_attributes.sql").read_text(encoding="utf-8")
+    builder = builder_module()
+    records = builder.apply_enrichment(builder.load_records(ROOT / "data/sake-catalog/regions"), ROOT / "data/sake-catalog/enrichment")
     if not records:
         raise SystemExit("No source records exist; generate the catalog before the integration test")
     records.sort(key=lambda record: (int(record["prefecture_code"]), product_key(record["name"])))
+    test_attribute_source_validation()
     with MysqlSandbox(args.container) as sandbox:
         print("MySQL version:", sandbox.mysql("SELECT VERSION();").stdout.strip())
         test_catalog(sandbox, catalog_sql, records)
         test_catalog_upgrade(sandbox, catalog_sql, records)
+        test_catalog_attribute_upgrade(sandbox, attributes_sql, records)
         test_spacing_variant(sandbox, catalog_sql, records)
         test_registered_alias(sandbox, catalog_sql, records)
         test_width_variants_and_brewery_reuse(sandbox)
         test_unavailable_named_lock(sandbox)
+        test_unavailable_named_lock(sandbox, attributes_only=True)
         test_brewery_collision(sandbox, catalog_sql, records)
         test_brewery_collision(sandbox, catalog_sql, records, ambiguous=True)
+        test_attribute_backfill(sandbox)
+        test_attribute_identity_variants(sandbox)
+        test_attribute_ambiguous_alias(sandbox)
+        test_attribute_abv_range(sandbox)
+        test_attribute_classpath_detail_preserved(sandbox)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,14 @@
 
 ## URLの登録手順
 
+### カタログ追加商品の画像候補（2026年11月12日）
+
+`data/sake_catalog_prefecture_order.sql` と、以前の版を取り込み済みの場合の `data/sake_catalog_attributes.sql` に、公式商品ページとの対応・HTTPS・HTTP200・画像形式を確認した1,914件の商品画像URL候補を収録しました。出典・項目別確認日・HTTP/MIME確認は [sake-catalog/attribute-sources.csv](sake-catalog/attribute-sources.csv) にあります。
+
+既存の入力済み画像URLは上書きせず、NULLまたは空文字の項目だけを補完します。`product-image-publication.json` の承認状態は変更していないため、画像URLを取り込んだだけでは公開画面には表示されません。公開利用の根拠確認は [PRODUCT_IMAGE_PUBLICATION.md](PRODUCT_IMAGE_PUBLICATION.md) の既存手順で行います。インポート手順と確認範囲は [カタログREADME](sake-catalog/README.md) を参照してください。
+
+### 初期商品の画像SQL
+
 `data/sake_images.sql` を、phpMyAdminでアプリの接続先DB（`newbooze` または `issho_no_deai`）を選択して実行します。テーブルや銘柄を作り直さず、`sake.image_url` だけを更新します。画像本体はDBに保存しません。
 
 初期データのIDと銘柄名が両方一致する7銘柄が対象です。IDや名前を変更している場合はSQLの対応表も修正してください。指定済みURLは既存URLを上書きするため、変更前のSELECT結果を保存しておくと戻せます。NULL・空文字・255文字超のURLは更新しません。同じ内容で再実行できます。
