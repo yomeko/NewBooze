@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 import time
 import unicodedata
@@ -58,12 +59,17 @@ def fixture_sql(**overrides):
         "source_url": "https://example.invalid/catalog-test", "source_note": "隔離DB専用の検証データ",
     }
     record.update(overrides)
+    return fixture_catalog_sql([record])
+
+
+def fixture_catalog_sql(records):
+    """Generate a temporary catalog without changing the checked-in source files."""
     spec = importlib.util.spec_from_file_location("sake_catalog_builder", ROOT / "scripts/build-sake-catalog.py")
     builder = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(builder)
     with tempfile.TemporaryDirectory(prefix="newbooze-catalog-fixture-") as temporary:
         directory = Path(temporary)
-        (directory / "fixture.json").write_text(json.dumps([record], ensure_ascii=False), encoding="utf-8")
+        (directory / "fixture.json").write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
         return builder.make_sql(builder.load_records(directory))
 
 
@@ -98,8 +104,11 @@ class MysqlSandbox:
             raise RuntimeError("Refusing to use a container without the disposable catalog-test label")
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
+            # The image's initialization server accepts socket connections but
+            # disables TCP. Wait for the final server before executing fixtures.
             ready = self.docker(
-                "exec", self.container, "mysqladmin", "ping", "--silent", check=False,
+                "exec", self.container, "mysqladmin", "--protocol=tcp", "--host=127.0.0.1",
+                "ping", "--silent", check=False,
             )
             if ready.returncode == 0:
                 return self
@@ -208,7 +217,7 @@ def test_catalog(sandbox, catalog_sql, records):
 def test_spacing_variant(sandbox, catalog_sql, records):
     database = sandbox.fresh_database()
     existing = catalog_rows(sandbox, database)
-    record = expected_new_records(records, existing)[0]
+    record = next(record for record in expected_new_records(records, existing) if len(record["name"]) <= 33)
     spaced_name = "\u3000" + " \t".join(record["name"]) + "\u3000"
     assert len(spaced_name) <= 100, "Select a shorter product for the spacing fixture"
     sandbox.mysql(
@@ -220,6 +229,25 @@ def test_spacing_variant(sandbox, catalog_sql, records):
     matching = [row for row in catalog_rows(sandbox, database) if product_key(row[1]) == product_key(record["name"])]
     assert len(matching) == 1 and matching[0][1] == spaced_name, "Spacing variants were duplicated or overwritten"
     print("PASS: existing ASCII/fullwidth-space and tab variant is preserved without duplication")
+
+
+def test_catalog_upgrade(sandbox, catalog_sql, records):
+    database = sandbox.fresh_database()
+    initial_rows = catalog_rows(sandbox, database)
+    original = seed_snapshot(sandbox, database)
+    earlier_records = records[::5]
+    sandbox.mysql(fixture_catalog_sql(earlier_records), database)
+    earlier_rows = catalog_rows(sandbox, database)
+    sandbox.mysql(catalog_sql, database)
+    expanded_rows = catalog_rows(sandbox, database)
+    expanded_by_id = {row[0]: row for row in expanded_rows}
+    assert len(expanded_rows) == len(initial_rows) + len(expected_new_records(records, initial_rows)), \
+        "Expanding an earlier catalog duplicated or missed products"
+    assert all(expanded_by_id.get(row[0]) == row for row in earlier_rows), \
+        "Expanding the catalog changed an earlier product, ID, or foreign key"
+    assert seed_snapshot(sandbox, database) == original, "Catalog upgrade changed initial products or diagnosis tags"
+    assert_foreign_keys(sandbox, database)
+    print(f"PASS: catalog upgrade preserves {len(earlier_rows)} existing products and adds only missing products")
 
 
 def test_registered_alias(sandbox, catalog_sql, records):
@@ -360,6 +388,7 @@ def main():
     with MysqlSandbox(args.container) as sandbox:
         print("MySQL version:", sandbox.mysql("SELECT VERSION();").stdout.strip())
         test_catalog(sandbox, catalog_sql, records)
+        test_catalog_upgrade(sandbox, catalog_sql, records)
         test_spacing_variant(sandbox, catalog_sql, records)
         test_registered_alias(sandbox, catalog_sql, records)
         test_width_variants_and_brewery_reuse(sandbox)
@@ -369,4 +398,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        print(error.stderr.strip() if error.stderr else str(error), file=sys.stderr)
+        raise SystemExit(error.returncode)
