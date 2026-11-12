@@ -27,7 +27,15 @@ created_at
 
 SQLは `USE` を含めないため、選択したDBに適用されます。MariaDBの匿名複合文 `BEGIN NOT ATOMIC` と `DELIMITER` を使用します。MySQLへこの再構築版を実行しないでください。通常の追加版・属性補完版は引き続き両DB向けです。
 
-クライアントから実行する場合：
+## 旧版でphpMyAdminの #2014 が出た場合
+
+旧版は再登録をCOMMITした後、匿名複合文から複数の結果を返していました。phpMyAdminが結果を読み切らないまま自動の `SET FOREIGN_KEY_CHECKS = ON;` を実行し、`Commands out of sync` になる不具合を再現しました。`ON` を `1` に変えるだけではこの接続状態は解消しません。
+
+**エラー表示だけを理由に再構築SQLを再実行しないでください。** phpMyAdminを開き直して対象DBを選び、[読み取り専用の確認SQL](../sake_catalog_verify.sql) を実行します。再構築直後の期待値は商品2,296件・ID1〜2296・詳細2,296件・度数1,521件・価格919件・画像URL1,914件です。登録済みなら再インポートは不要です。
+
+現在の再構築SQLは、結果を返す処理を匿名複合文の外へ移しています。列一覧も `SHOW COLUMNS FROM sake` で表示し、phpMyAdminによる参照DBの切替を避けています。
+
+## クライアントから初回実行する場合
 
 ```bash
 mariadb --default-character-set=utf8mb4 --host=127.0.0.1 --user=DBユーザー \
@@ -47,4 +55,4 @@ mariadb --default-character-set=utf8mb4 --host=127.0.0.1 --user=DBユーザー \
 
 再実行のたびに、その時点の商品・お気に入り等を初期化し直します。空欄を埋めるだけの通常作業には [属性補完SQL](../sake_catalog_attributes.sql) を使います。
 
-このチャットで実行したのは隔離DBでの検証です。利用者の実DBはまだ変更していません。
+当作業環境から利用者の実DBへは接続していません。利用者からは、取り込み後の件数確認として2,296件・ID1〜2296の結果が報告されています。属性や列順の実DB確認結果はまだ受け取っていません。

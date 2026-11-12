@@ -508,6 +508,7 @@ def make_rebuild_sql(records):
         "DECLARE v_old_products BIGINT DEFAULT 0;",
         "DECLARE EXIT HANDLER FOR SQLEXCEPTION",
         "BEGIN",
+        "  SET @sake_catalog_rebuild_status = 'failed';",
         "  IF v_transaction_active THEN ROLLBACK; END IF;",
         *["  " + line for line in cleanup],
         "  IF v_lock_held THEN DO RELEASE_LOCK(@sake_catalog_lock_name); END IF;",
@@ -625,14 +626,12 @@ def make_rebuild_sql(records):
         "SET v_transaction_active = FALSE;",
         "-- 明示IDの再投入成功後にだけ、次の自動採番をmax(id)+1に揃える。",
         "ALTER TABLE sake AUTO_INCREMENT = 1;",
-        "SELECT 'rebuilt' AS status, DATABASE() AS target_database, v_old_products AS removed_products,",
-        f"  {total} AS inserted_products, 1 AS first_id, {total} AS last_id;",
-        "SELECT ORDINAL_POSITION, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS",
-        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY ORDINAL_POSITION;",
         *cleanup,
         "DO RELEASE_LOCK(@sake_catalog_lock_name);",
         "SET v_lock_held = FALSE;",
         "SET @sake_catalog_lock_acquired = 0;",
+        "SET @sake_catalog_removed_products = v_old_products;",
+        "SET @sake_catalog_rebuild_status = 'rebuilt';",
     ]
     sql = "\n".join([
         "-- 危険: sakeの全商品と、連鎖するお気に入り・レビュー・タグ付け・詳細を削除して再登録する。",
@@ -643,15 +642,46 @@ def make_rebuild_sql(records):
         "-- 列順補正と採番DDLはtransactionの外側。mysql/mariadb --forceは禁止。",
         "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
         "SET time_zone = '+09:00';",
+        "SET @sake_catalog_rebuild_status = 'not_started';",
+        "SET @sake_catalog_removed_products = NULL;",
         "SELECT DATABASE() AS target_database;",
         "DELIMITER $$",
         "BEGIN NOT ATOMIC",
         *["  " + line for line in body],
         "END$$",
         "DELIMITER ;",
+        "-- phpMyAdminが未読の複数結果を残さないよう、結果表示は匿名blockの外側で個別に行う。",
+        "SELECT @sake_catalog_rebuild_status AS status, DATABASE() AS target_database,",
+        "  @sake_catalog_removed_products AS removed_products,",
+        f"  IF(@sake_catalog_rebuild_status = 'rebuilt', {total}, NULL) AS inserted_products,",
+        "  IF(@sake_catalog_rebuild_status = 'rebuilt', 1, NULL) AS first_id,",
+        f"  IF(@sake_catalog_rebuild_status = 'rebuilt', {total}, NULL) AS last_id;",
+        "SHOW COLUMNS FROM sake;",
         "",
     ])
     return "\n".join(line.rstrip() for line in sql.split("\n"))
+
+
+def make_verify_sql(records):
+    """登録後の状態だけを確認し、永続データや接続設定を変更しない。"""
+    expected = {field: sum(row.get("_attributes", {}).get(field) is not None for row in records)
+                for field in ("abv", "price", "image_url")}
+    return "\n".join([
+        "-- 読み取り専用。phpMyAdminで対象アプリDBを選択して実行。再構築・削除・更新は行わない。",
+        "SELECT DATABASE() AS target_database, VERSION() AS server_version, @@foreign_key_checks AS foreign_key_checks;",
+        f"-- 再構築直後の期待値: total_rows={len(records)}, first_id=1, last_id={len(records)}。",
+        "SELECT COUNT(*) AS total_rows, MIN(id) AS first_id, MAX(id) AS last_id FROM sake;",
+        f"-- 確認済み属性の期待値: abv={expected['abv']}, price={expected['price']}, image_url={expected['image_url']}。未確認値はNULL。",
+        "SELECT COUNT(abv) AS abv_rows, COUNT(price) AS price_rows,",
+        "  COUNT(NULLIF(image_url, '')) AS image_url_rows FROM sake;",
+        f"-- 再構築直後の期待値: detail_rows={len(records)}。",
+        "SELECT COUNT(*) AS detail_rows FROM sake_page_details;",
+        "-- id, brewery_id, sake_type_id, name, region, abv, price, image_url, description, created_atの順。",
+        "SHOW COLUMNS FROM sake;",
+        "-- 先頭は北海道の商品。",
+        "SELECT id, name, region, abv, price, image_url FROM sake ORDER BY id LIMIT 10;",
+        "",
+    ])
 
 
 def make_sources(records):
@@ -734,6 +764,7 @@ def main():
         ROOT / "data/sake_catalog_prefecture_order.sql": catalog_sql,
         ROOT / "data/sake_catalog_attributes.sql": attributes_sql,
         ROOT / "data/sake_catalog_rebuild.sql": rebuild_sql,
+        ROOT / "data/sake_catalog_verify.sql": make_verify_sql(records),
         ROOT / "data/sake-catalog/sources.csv": make_sources(records),
         ROOT / "data/sake-catalog/prefecture-counts.csv": make_counts(records),
         ROOT / "data/sake-catalog/attribute-sources.csv": make_attribute_sources(records),

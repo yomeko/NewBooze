@@ -6,6 +6,8 @@
 -- 列順補正と採番DDLはtransactionの外側。mysql/mariadb --forceは禁止。
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SET time_zone = '+09:00';
+SET @sake_catalog_rebuild_status = 'not_started';
+SET @sake_catalog_removed_products = NULL;
 SELECT DATABASE() AS target_database;
 DELIMITER $$
 BEGIN NOT ATOMIC
@@ -15,6 +17,7 @@ BEGIN NOT ATOMIC
   DECLARE v_old_products BIGINT DEFAULT 0;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
   BEGIN
+    SET @sake_catalog_rebuild_status = 'failed';
     IF v_transaction_active THEN ROLLBACK; END IF;
     DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_type_ids;
     DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_brewery_ids;
@@ -5203,10 +5206,6 @@ INSERT INTO sake_types (name)
   SET v_transaction_active = FALSE;
   -- 明示IDの再投入成功後にだけ、次の自動採番をmax(id)+1に揃える。
   ALTER TABLE sake AUTO_INCREMENT = 1;
-  SELECT 'rebuilt' AS status, DATABASE() AS target_database, v_old_products AS removed_products,
-    2296 AS inserted_products, 1 AS first_id, 2296 AS last_id;
-  SELECT ORDINAL_POSITION, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY ORDINAL_POSITION;
   DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_type_ids;
   DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_brewery_ids;
   DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_candidates;
@@ -5215,5 +5214,14 @@ INSERT INTO sake_types (name)
   DO RELEASE_LOCK(@sake_catalog_lock_name);
   SET v_lock_held = FALSE;
   SET @sake_catalog_lock_acquired = 0;
+  SET @sake_catalog_removed_products = v_old_products;
+  SET @sake_catalog_rebuild_status = 'rebuilt';
 END$$
 DELIMITER ;
+-- phpMyAdminが未読の複数結果を残さないよう、結果表示は匿名blockの外側で個別に行う。
+SELECT @sake_catalog_rebuild_status AS status, DATABASE() AS target_database,
+  @sake_catalog_removed_products AS removed_products,
+  IF(@sake_catalog_rebuild_status = 'rebuilt', 2296, NULL) AS inserted_products,
+  IF(@sake_catalog_rebuild_status = 'rebuilt', 1, NULL) AS first_id,
+  IF(@sake_catalog_rebuild_status = 'rebuilt', 2296, NULL) AS last_id;
+SHOW COLUMNS FROM sake;
