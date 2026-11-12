@@ -326,22 +326,8 @@ def attribute_statements():
     return statements
 
 
-def make_sql(records, attributes_only=False):
-    if not records:
-        return "-- 確認済み属性なし。永続テーブルを変更しない。\nSELECT 'no_verified_attributes' AS status;\n"
-    lines = [
-        "-- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。" if attributes_only else
-        "-- 一升の出会い：公式確認済み日本酒を都道府県コード01→47順で追加し、確認済み属性を補完。",
-        "-- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。",
-        "-- 既存の度数・価格・画像URLは空欄だけを補完。既存値・詳細JSONを上書きしない。",
-        "-- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。",
-        "-- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。",
-        "-- 出典・確認日: data/sake-catalog/sources.csv / attribute-sources.csv",
-        f"-- 収録商品数: {len(records)}。容量違いは統合。日本全国の全商品の網羅ではない。",
-        "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
-        "SELECT DATABASE() AS target_database;",
-    ]
-    tables = ("source", "aliases", "existing_keys", "source_keys", "matches") + (() if attributes_only else ("candidates", "brewery_ids", "type_ids", "inserted"))
+def source_staging_statements(records, tables):
+    lines = []
     lines += [f"DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_{table};" for table in tables]
     lines += [
         "CREATE TEMPORARY TABLE tmp_sake_catalog_source (",
@@ -377,20 +363,12 @@ def make_sql(records, attributes_only=False):
                                   for key in (normalized(name), re.sub(r"\s+", "", name))})]
     lines += ["\nINSERT INTO tmp_sake_catalog_aliases (seq, alias_key) VALUES",
               ",\n".join(f"  ({seq}, {sql_string(key)})" for seq, key in aliases) + ";",
-              "\n-- 同一DBに対するこのSQLの並行実行を直列化する。取得失敗時は永続テーブルを変更しない。",
-              "SET @sake_catalog_lock_name = CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256), 48));",
-              "SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);",
-              "START TRANSACTION;",
-              "SET @sake_catalog_inserted_rows = 0;",
               ]
-    if not attributes_only:
-        lines += [
-              "CREATE TEMPORARY TABLE tmp_sake_catalog_candidates AS",
-              "SELECT src.* FROM tmp_sake_catalog_source src",
-              "WHERE NOT EXISTS (",
-              "  SELECT 1 FROM tmp_sake_catalog_aliases a JOIN sake s",
-              f"    ON {sql_key('s.name')} = a.alias_key WHERE a.seq = src.seq",
-              ");",
+    return lines
+
+
+def catalog_master_statements():
+    return [
               "\n-- 法人格・空白の表記違いを同じ酒蔵として扱い、既存の酒蔵は更新しない。",
               "INSERT INTO breweries (name, prefecture)",
               "SELECT c.brewery, c.prefecture FROM tmp_sake_catalog_candidates c",
@@ -415,6 +393,48 @@ def make_sql(records, attributes_only=False):
               "FROM (SELECT DISTINCT sake_type FROM tmp_sake_catalog_candidates) c",
               f"JOIN sake_types t ON {sql_type('t.name')} = c.sake_type",
               "GROUP BY c.sake_type;",
+    ]
+
+
+def make_sql(records, attributes_only=False, rebuild=False):
+    if rebuild:
+        if attributes_only:
+            raise ValueError("再構築と属性補完専用は同時に指定できません")
+        return make_rebuild_sql(records)
+    if not records:
+        return "-- 確認済み属性なし。永続テーブルを変更しない。\nSELECT 'no_verified_attributes' AS status;\n"
+    lines = [
+        "-- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。" if attributes_only else
+        "-- 一升の出会い：公式確認済み日本酒を都道府県コード01→47順で追加し、確認済み属性を補完。",
+        "-- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。",
+        "-- 既存の度数・価格・画像URLは空欄だけを補完。既存値・詳細JSONを上書きしない。",
+        "-- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。",
+        "-- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。",
+        "-- 出典・確認日: data/sake-catalog/sources.csv / attribute-sources.csv",
+        f"-- 収録商品数: {len(records)}。容量違いは統合。日本全国の全商品の網羅ではない。",
+        "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
+        "SELECT DATABASE() AS target_database;",
+    ]
+    tables = ("source", "aliases", "existing_keys", "source_keys", "matches") + (() if attributes_only else ("candidates", "brewery_ids", "type_ids", "inserted"))
+    lines += source_staging_statements(records, tables)
+    lines += [
+              "\n-- 同一DBに対するこのSQLの並行実行を直列化する。取得失敗時は永続テーブルを変更しない。",
+              "SET @sake_catalog_lock_name = CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256), 48));",
+              "SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);",
+              "START TRANSACTION;",
+              "SET @sake_catalog_inserted_rows = 0;",
+              ]
+    if not attributes_only:
+        lines += [
+              "CREATE TEMPORARY TABLE tmp_sake_catalog_candidates AS",
+              "SELECT src.* FROM tmp_sake_catalog_source src",
+              "WHERE NOT EXISTS (",
+              "  SELECT 1 FROM tmp_sake_catalog_aliases a JOIN sake s",
+              f"    ON {sql_key('s.name')} = a.alias_key WHERE a.seq = src.seq",
+              ");",
+              ]
+        lines += catalog_master_statements()
+        lines += [
               "\n-- ORDER BY seqで北海道から都道府県コード順に採番。IDの固定値は使わない。",
               "-- 未確認の価格・度数・紹介文・画像はNULL。根拠のない診断タグは追加しない。",
               "INSERT INTO sake (brewery_id, sake_type_id, name, region, abv, price, description, image_url)",
@@ -468,6 +488,170 @@ def make_sql(records, attributes_only=False):
               "",
               ]
     return "\n".join(lines)
+
+
+def make_rebuild_sql(records):
+    """MariaDB匿名blockで、FKを維持してsakeの全行を入れ直す。"""
+    if not records:
+        raise ValueError("再構築対象の商品がありません")
+    total = len(records)
+    columns = ("id", "brewery_id", "sake_type_id", "name", "region", "abv", "price", "image_url", "description", "created_at")
+    children = ("favorites", "sake_tags", "sake_reviews", "sake_page_details")
+    child_names = ", ".join(map(sql_string, children))
+    table_names = ", ".join(map(sql_string, ("sake", "breweries", "sake_types", *children)))
+    tables = ("source", "aliases", "candidates", "brewery_ids", "type_ids")
+    cleanup = [f"DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_{table};" for table in reversed(tables)]
+    body = [
+        "DECLARE v_lock_held BOOLEAN DEFAULT FALSE;",
+        "DECLARE v_transaction_active BOOLEAN DEFAULT FALSE;",
+        "DECLARE v_count BIGINT DEFAULT 0;",
+        "DECLARE v_old_products BIGINT DEFAULT 0;",
+        "DECLARE EXIT HANDLER FOR SQLEXCEPTION",
+        "BEGIN",
+        "  IF v_transaction_active THEN ROLLBACK; END IF;",
+        *["  " + line for line in cleanup],
+        "  IF v_lock_held THEN DO RELEASE_LOCK(@sake_catalog_lock_name); END IF;",
+        "  SET @sake_catalog_lock_acquired = 0;",
+        "  RESIGNAL;",
+        "END;",
+        "IF DATABASE() IS NULL THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Select the application database first'; END IF;",
+        "IF @@foreign_key_checks <> 1 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Rebuild requires FOREIGN_KEY_CHECKS=1'; END IF;",
+        "SET @sake_catalog_lock_name = CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256), 48));",
+        "SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);",
+        "IF COALESCE(@sake_catalog_lock_acquired, 0) <> 1 THEN",
+        "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Catalog lock unavailable: nothing rebuilt';",
+        "END IF;",
+        "SET v_lock_held = TRUE;",
+        "\n-- 親表はDROPせず、既存の参照外部キーを維持する。欠落時のみ作成。",
+        "CREATE TABLE IF NOT EXISTS sake (",
+        "  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, brewery_id BIGINT UNSIGNED DEFAULT NULL,",
+        "  sake_type_id BIGINT UNSIGNED NOT NULL, name VARCHAR(100) NOT NULL, region VARCHAR(50) DEFAULT NULL,",
+        "  abv DECIMAL(4,1) DEFAULT NULL COMMENT 'アルコール度数(%)',",
+        "  price INT UNSIGNED DEFAULT NULL COMMENT '価格(円)', image_url VARCHAR(255) DEFAULT NULL,",
+        "  description TEXT DEFAULT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,",
+        "  PRIMARY KEY (id), UNIQUE KEY uk_sake_name (name), KEY idx_sake_brewery (brewery_id), KEY idx_sake_type (sake_type_id),",
+        "  CONSTRAINT fk_sake_brewery FOREIGN KEY (brewery_id) REFERENCES breweries(id) ON DELETE SET NULL,",
+        "  CONSTRAINT fk_sake_type FOREIGN KEY (sake_type_id) REFERENCES sake_types(id)",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "CREATE TABLE IF NOT EXISTS sake_page_details (",
+        "  sake_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, detail_json LONGTEXT NOT NULL,",
+        "  CONSTRAINT fk_sake_page_details FOREIGN KEY (sake_id) REFERENCES sake(id) ON DELETE CASCADE",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        "SELECT COUNT(*) INTO v_count FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()",
+        f"  AND TABLE_NAME IN ({table_names}) AND ENGINE = 'InnoDB';",
+        "IF v_count <> 7 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Expected application tables must exist and use InnoDB'; END IF;",
+        "SELECT COUNT(*) INTO v_count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake';",
+        "IF v_count <> 10 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Unexpected sake columns: no data deleted'; END IF;",
+        "SELECT COUNT(*) INTO v_count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake'",
+        "  AND COLUMN_NAME IN (" + ", ".join(map(sql_string, columns)) + ");",
+        "IF v_count <> 10 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Required sake columns are missing: no data deleted'; END IF;",
+        "SELECT COUNT(*) INTO v_count FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake'",
+        "  AND COLUMN_NAME IN ('id', 'brewery_id', 'sake_type_id') AND DATA_TYPE = 'bigint' AND COLUMN_TYPE LIKE '%unsigned%';",
+        "IF v_count <> 3 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Unexpected sake FK column types: no data deleted'; END IF;",
+        "SELECT COUNT(*) INTO v_count FROM information_schema.REFERENTIAL_CONSTRAINTS",
+        "WHERE UNIQUE_CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'sake'",
+        f"  AND (CONSTRAINT_SCHEMA <> DATABASE() OR TABLE_NAME NOT IN ({child_names}) OR DELETE_RULE <> 'CASCADE');",
+        "IF v_count <> 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Unexpected dependent table or non-CASCADE FK: no data deleted'; END IF;",
+        "SELECT COUNT(DISTINCT k.TABLE_NAME) INTO v_count FROM information_schema.KEY_COLUMN_USAGE k",
+        "JOIN information_schema.REFERENTIAL_CONSTRAINTS r ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA",
+        "  AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME AND r.TABLE_NAME = k.TABLE_NAME",
+        "WHERE k.TABLE_SCHEMA = DATABASE() AND k.REFERENCED_TABLE_SCHEMA = DATABASE()",
+        "  AND k.REFERENCED_TABLE_NAME = 'sake' AND k.REFERENCED_COLUMN_NAME = 'id' AND k.COLUMN_NAME = 'sake_id'",
+        f"  AND k.TABLE_NAME IN ({child_names}) AND r.DELETE_RULE = 'CASCADE';",
+        "IF v_count <> 4 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Expected four sake CASCADE relations are missing'; END IF;",
+    ]
+    for child in children:
+        body += [
+            f"SELECT COUNT(*) INTO v_count FROM {child} c LEFT JOIN sake s ON s.id = c.sake_id WHERE s.id IS NULL;",
+            f"IF v_count <> 0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Orphan rows in {child}: no data deleted'; END IF;",
+        ]
+    body += [
+        "\n-- 列定義・順序のDDLは削除前。削除後の暗黙COMMITを避ける。",
+        "ALTER TABLE sake",
+        "  MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT FIRST,",
+        "  MODIFY COLUMN brewery_id BIGINT UNSIGNED DEFAULT NULL AFTER id,",
+        "  MODIFY COLUMN sake_type_id BIGINT UNSIGNED NOT NULL AFTER brewery_id,",
+        "  MODIFY COLUMN name VARCHAR(100) NOT NULL AFTER sake_type_id,",
+        "  MODIFY COLUMN region VARCHAR(50) DEFAULT NULL AFTER name,",
+        "  MODIFY COLUMN abv DECIMAL(4,1) DEFAULT NULL COMMENT 'アルコール度数(%)' AFTER region,",
+        "  MODIFY COLUMN price INT UNSIGNED DEFAULT NULL COMMENT '価格(円)' AFTER abv,",
+        "  MODIFY COLUMN image_url VARCHAR(255) DEFAULT NULL AFTER price,",
+        "  MODIFY COLUMN description TEXT DEFAULT NULL AFTER image_url,",
+        "  MODIFY COLUMN created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER description;",
+    ]
+    body += source_staging_statements(records, tables)
+    body += [
+        f"IF (SELECT COUNT(*) FROM tmp_sake_catalog_source) <> {total} THEN",
+        "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Incomplete source catalog: no data deleted';",
+        "END IF;",
+        "START TRANSACTION;",
+        "SET v_transaction_active = TRUE;",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_candidates AS SELECT * FROM tmp_sake_catalog_source;",
+    ]
+    body += catalog_master_statements()
+    body += [
+        "SELECT COUNT(*) INTO v_count FROM tmp_sake_catalog_candidates c",
+        "JOIN tmp_sake_catalog_brewery_ids b ON b.brewery_key = c.brewery_key AND b.prefecture = c.prefecture",
+        "JOIN tmp_sake_catalog_type_ids t ON t.sake_type = c.sake_type;",
+        f"IF v_count <> {total} THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Brewery/type conflict: original sake data preserved'; END IF;",
+        "SELECT COUNT(*) INTO v_old_products FROM sake;",
+        "DELETE FROM sake;",
+        "INSERT INTO sake (id, brewery_id, sake_type_id, name, region, abv, price, image_url, description, created_at)",
+        "SELECT c.seq, b.brewery_id, t.sake_type_id, c.name, c.prefecture, c.abv, c.price, c.image_url, NULL, CURRENT_TIMESTAMP",
+        "FROM tmp_sake_catalog_candidates c",
+        "JOIN tmp_sake_catalog_brewery_ids b ON b.brewery_key = c.brewery_key AND b.prefecture = c.prefecture",
+        "JOIN tmp_sake_catalog_type_ids t ON t.sake_type = c.sake_type ORDER BY c.seq;",
+        f"IF (SELECT COUNT(*) FROM sake) <> {total} OR (SELECT MIN(id) FROM sake) <> 1 OR (SELECT MAX(id) FROM sake) <> {total} THEN",
+        "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Rebuild row count/ID validation failed';",
+        "END IF;",
+        "\n-- 新しいIDに古い同梱紹介を結び付けないよう、全新商品の詳細を作成する。",
+    ]
+    for with_price in (True, False):
+        prices = "JSON_ARRAY(JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price))" if with_price else "JSON_ARRAY()"
+        body += [
+            "INSERT INTO sake_page_details (sake_id, detail_json)",
+            "SELECT s.id, JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery, 'introduction', '',",
+            f"  'prices', {prices},",
+            "  'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url",
+            "                      WHEN src.source_url LIKE 'https://%' THEN src.source_url ELSE '' END)",
+            "FROM sake s JOIN tmp_sake_catalog_candidates src ON src.seq = s.id",
+            "WHERE src.price IS " + ("NOT NULL;" if with_price else "NULL;"),
+        ]
+    body += [
+        f"IF (SELECT COUNT(*) FROM sake_page_details) <> {total} THEN",
+        "  SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Rebuild detail count validation failed';",
+        "END IF;",
+        "COMMIT;",
+        "SET v_transaction_active = FALSE;",
+        "-- 明示IDの再投入成功後にだけ、次の自動採番をmax(id)+1に揃える。",
+        "ALTER TABLE sake AUTO_INCREMENT = 1;",
+        "SELECT 'rebuilt' AS status, DATABASE() AS target_database, v_old_products AS removed_products,",
+        f"  {total} AS inserted_products, 1 AS first_id, {total} AS last_id;",
+        "SELECT ORDINAL_POSITION, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS",
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY ORDINAL_POSITION;",
+        *cleanup,
+        "DO RELEASE_LOCK(@sake_catalog_lock_name);",
+        "SET v_lock_held = FALSE;",
+        "SET @sake_catalog_lock_acquired = 0;",
+    ]
+    sql = "\n".join([
+        "-- 危険: sakeの全商品と、連鎖するお気に入り・レビュー・タグ付け・詳細を削除して再登録する。",
+        "-- MariaDB 10.11専用（BEGIN NOT ATOMIC）。phpMyAdminで対象アプリDBを選択して全体をインポート。",
+        "-- 実行前に対象DBをバックアップし、アプリの登録・投稿操作を停止する。",
+        "-- 会員・酒蔵/酒種/タグの既存マスタ・投稿・診断履歴は削除しない。IDは1から振り直す。",
+        "-- FOREIGN_KEY_CHECKSは無効化しない。再投入の例外時はDELETEと連鎖削除をROLLBACKする。",
+        "-- 列順補正と採番DDLはtransactionの外側。mysql/mariadb --forceは禁止。",
+        "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
+        "SET time_zone = '+09:00';",
+        "SELECT DATABASE() AS target_database;",
+        "DELIMITER $$",
+        "BEGIN NOT ATOMIC",
+        *["  " + line for line in body],
+        "END$$",
+        "DELIMITER ;",
+        "",
+    ])
+    return "\n".join(line.rstrip() for line in sql.split("\n"))
 
 
 def make_sources(records):
@@ -542,12 +726,14 @@ def main():
                                                      for field in ("abv", "price", "image_url"))]
     catalog_sql = make_sql(records)
     attributes_sql = make_sql(attribute_records, attributes_only=True)
+    rebuild_sql = make_sql(records, rebuild=True)
     checked_on = max([row["checked_on"] for row in records]
                      + [row["_attributes"][field] for row in records if row.get("_attributes")
                         for field in ("checked_on", "abv_checked_on", "price_checked_on", "image_checked_on")])
     outputs = {
         ROOT / "data/sake_catalog_prefecture_order.sql": catalog_sql,
         ROOT / "data/sake_catalog_attributes.sql": attributes_sql,
+        ROOT / "data/sake_catalog_rebuild.sql": rebuild_sql,
         ROOT / "data/sake-catalog/sources.csv": make_sources(records),
         ROOT / "data/sake-catalog/prefecture-counts.csv": make_counts(records),
         ROOT / "data/sake-catalog/attribute-sources.csv": make_attribute_sources(records),
@@ -556,6 +742,8 @@ def main():
             make_import_zip(catalog_sql, f"sake_import_{len(records)}.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_attributes_{len(records)}.sql.zip":
             make_import_zip(attributes_sql, f"sake_attributes_{len(records)}.sql", checked_on),
+        ROOT / f"data/sake-catalog/import/sake_rebuild_{len(records)}.sql.zip":
+            make_import_zip(rebuild_sql, f"sake_rebuild_{len(records)}.sql", checked_on),
     }
     for path, contents in outputs.items():
         payload = contents if isinstance(contents, bytes) else contents.encode("utf-8")

@@ -1,4 +1,4 @@
-"""Validate the additive sake catalog against an isolated MySQL or MariaDB container.
+"""Validate the additive and explicit rebuild catalogs in isolated database containers.
 
 Run from the repository root:
     python3 scripts/tests/test_sake_catalog_mysql.py
@@ -7,7 +7,8 @@ Run from the repository root:
 The default run starts and removes its own container without publishing a port.
 An existing disposable container can be supplied with --container and its --image;
 it must have the label codex.purpose=sake-catalog-test. No application database is
-contacted.
+contacted. The explicit rebuild uses MariaDB anonymous blocks and is exercised
+only with --image mariadb:10.11; MySQL still runs all additive/backfill cases.
 """
 
 import argparse
@@ -203,6 +204,219 @@ def assert_foreign_keys(sandbox, database):
         WHERE t.id IS NULL OR (s.brewery_id IS NOT NULL AND b.id IS NULL);
     """, database).stdout.strip()
     assert orphans == "0", "Catalog insertion left an orphan foreign key"
+
+
+def test_catalog_rebuild(sandbox, rebuild_sql, catalog_sql, records):
+    """Reassigning IDs must clear old associations and preserve unrelated data."""
+    database = sandbox.fresh_database()
+    # Reproduce a previously imported catalog, including a manual product and
+    # the old description/image order, even after the initial DDL is updated.
+    sandbox.mysql(catalog_sql, database)
+    sandbox.mysql("""
+        ALTER TABLE sake MODIFY COLUMN description TEXT DEFAULT NULL AFTER price;
+        INSERT INTO sake (id, sake_type_id, name, region, created_at)
+          VALUES (90001, 7, '検証旧カタログ専用銘柄', '北海道', '2020-01-01 00:00:00');
+        INSERT INTO users (id, name, email, password_hash, created_at) VALUES
+          (901, '隔離検証利用者', 'catalog-901@example.invalid', 'test-only', '2020-01-01 00:00:00'),
+          (902, '隔離検証管理者', 'catalog-902@example.invalid', 'test-only', '2020-01-01 00:00:00');
+        INSERT INTO favorites (user_id, sake_id) VALUES (901, 1), (902, 90001);
+        INSERT INTO sake_reviews (user_id, sake_id, published, rating, comment)
+          VALUES (901, 1, TRUE, 4, '旧IDのレビュー'), (902, 90001, FALSE, 3, '手動銘柄のレビュー');
+        INSERT INTO sake_tags (sake_id, tag_id, score) VALUES (90001, 1, 5);
+        INSERT INTO sake_page_details (sake_id, detail_json)
+          VALUES (1, '{"id":1,"name":"旧銘柄","introduction":"旧IDの紹介文"}'),
+                 (90001, '{"id":90001,"name":"旧手動銘柄","introduction":"旧IDの紹介文"}')
+          ON DUPLICATE KEY UPDATE detail_json = VALUES(detail_json);
+        INSERT INTO breweries (id, name, prefecture) VALUES (90001, '検証用保存酒造', '北海道');
+        INSERT INTO sake_types (id, name) VALUES (90001, '検証用保存酒種');
+        INSERT INTO tags (id, name, category) VALUES (90001, '検証用保存タグ', '検証');
+        INSERT INTO diagnosis_sessions (id, user_id, taken_at) VALUES (901, 901, '2020-01-01 00:00:00');
+        INSERT INTO diagnosis_answers (session_id, question_id, choice_id) VALUES (901, 1, 1);
+        INSERT INTO user_preferences (user_id, tag_id, score) VALUES (901, 90001, 8);
+        INSERT INTO user_profile_images (user_id, image_data, content_type) VALUES (901, X'74657374', 'image/png');
+        INSERT INTO drink_posts (id, user_id, sake_name, comment, created_at)
+          VALUES (901, 901, '記録に保存された銘柄名', 'カタログ外の活動を保持', '2020-01-01 00:00:00');
+        INSERT INTO drink_post_likes (user_id, post_id) VALUES (902, 901);
+        INSERT INTO drink_post_reports (reporter_id, post_id, reason) VALUES (902, 901, '検証用記録');
+    """, database)
+    preserved_tables = (
+        "users", "tags", "diagnosis_questions", "diagnosis_choices", "choice_tags",
+        "diagnosis_sessions", "diagnosis_answers", "user_preferences", "user_profile_images",
+        "drink_posts", "drink_post_likes", "drink_post_reports",
+    )
+
+    def preserved_snapshot():
+        return {table: sandbox.mysql(f"SELECT * FROM `{table}` ORDER BY 1, 2;", database).stdout
+                for table in preserved_tables}
+
+    def master_rows(table):
+        columns = "id, name, prefecture" if table == "breweries" else "id, name"
+        return {row[0]: row for row in sandbox.json_rows(
+            database, f"SELECT JSON_ARRAY({columns}) FROM `{table}` ORDER BY id;")}
+
+    def schema_snapshot():
+        columns = sandbox.json_rows(database, """
+            SELECT JSON_ARRAY(COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT,
+                              EXTRA, COLUMN_COMMENT, CHARACTER_SET_NAME, COLLATION_NAME)
+            FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY COLUMN_NAME;
+        """)
+        constraints = sandbox.mysql("""
+            SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, ORDINAL_POSITION,
+                   REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME, CONSTRAINT_NAME, ORDINAL_POSITION;
+            SELECT TABLE_NAME, CONSTRAINT_NAME, UPDATE_RULE, DELETE_RULE
+            FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+            WHERE CONSTRAINT_SCHEMA = DATABASE() ORDER BY TABLE_NAME, CONSTRAINT_NAME;
+            SELECT INDEX_NAME, NON_UNIQUE, SEQ_IN_INDEX, COLUMN_NAME, INDEX_TYPE
+            FROM INFORMATION_SCHEMA.STATISTICS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY INDEX_NAME, SEQ_IN_INDEX;
+        """, database).stdout
+        return columns, constraints
+
+    preserved = preserved_snapshot()
+    masters = {table: master_rows(table) for table in ("breweries", "sake_types")}
+    schema_before = schema_snapshot()
+    source_path = ROOT / "src/main/resources/data/sake-pages.json"
+    classpath_source = source_path.read_bytes()
+    classpath_pages = {page["id"]: page for page in json.loads(classpath_source)}
+    expected = sorted(records, key=lambda record: record["_seq"])
+    assert len(expected) == 2296, "Review the explicit rebuild expectation when source coverage changes"
+
+    def check_rebuilt():
+        columns = sandbox.mysql("""
+            SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sake' ORDER BY ORDINAL_POSITION;
+        """, database).stdout.splitlines()
+        assert columns == ["id", "brewery_id", "sake_type_id", "name", "region", "abv", "price",
+                           "image_url", "description", "created_at"], ("Wrong rebuilt column order", columns)
+        assert schema_snapshot() == schema_before, "Rebuild changed column types, defaults, indexes, or foreign keys"
+        after = catalog_rows(sandbox, database)
+        assert [row[0] for row in after] == list(range(1, len(expected) + 1)), "Rebuild did not reset contiguous product IDs"
+        for record, row in zip(expected, after):
+            assert row[1] == record["name"] and row[2] == record["prefecture"], \
+                ("Rebuild changed source order or product identity", record["name"], row)
+            assert brewery_key(row[3]) == brewery_key(record["brewery"]) and row[4] == record["prefecture"], \
+                ("Rebuild linked the wrong brewery", record["name"], row)
+            assert row[5] == TYPE_NAMES.get(record["sake_type"], record["sake_type"]), \
+                ("Rebuild linked the wrong sake type", record["name"], row)
+            attributes = record.get("_attributes", {})
+            assert row[6:10] == [attributes.get("abv"), attributes.get("price"), None, attributes.get("image_url")], \
+                ("Rebuild did not use only verified product attributes", record["name"], row)
+        assert [record["prefecture_code"] for record in expected] == sorted(
+            record["prefecture_code"] for record in expected), "Rebuild source order is not prefecture order"
+        assert sandbox.mysql("SELECT COUNT(*) FROM favorites; SELECT COUNT(*) FROM sake_reviews; SELECT COUNT(*) FROM sake_tags;",
+                             database).stdout.splitlines() == ["0", "0", "0"], \
+            "Old favorites, reviews, or tags became associated with reassigned product IDs"
+        details = {row[0]: json.loads(row[1]) for row in sandbox.json_rows(
+            database, "SELECT JSON_ARRAY(sake_id, detail_json) FROM sake_page_details ORDER BY sake_id;")}
+        by_id = {row[0]: row for row in after}
+        assert set(details) == set(by_id), "Rebuild did not create matching detail JSON for every new product"
+        for sake_id, page in details.items():
+            assert sake_id in by_id, ("An obsolete detail survived the rebuild", sake_id)
+            row = by_id[sake_id]
+            assert page["id"] == sake_id and page["name"] == row[1] \
+                and brewery_key(page["brewery"]) == brewery_key(row[3]), \
+                ("A detail page belongs to a different product", sake_id, page)
+            assert page.get("introduction", "") != "旧IDの紹介文", "A manual old-ID introduction survived"
+            if sake_id in classpath_pages:
+                assert page.get("introduction", "") != classpath_pages[sake_id].get("introduction"), \
+                    ("A seed introduction is now attached to a different product", sake_id)
+            attributes = expected[sake_id - 1].get("_attributes", {})
+            prices = ([{"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}]
+                      if attributes.get("price") is not None else [])
+            assert page.get("prices", []) == prices, ("Rebuilt price capacity differs from verified evidence", sake_id, page)
+        assert_foreign_keys(sandbox, database)
+        assert preserved_snapshot() == preserved, "Rebuild changed users, diagnosis data, or unrelated activity"
+        for table, original_rows in masters.items():
+            current = master_rows(table)
+            assert all(current.get(key) == row for key, row in original_rows.items()), \
+                ("Rebuild modified or deleted existing master rows", table)
+        assert source_path.read_bytes() == classpath_source, "Rebuild changed the classpath detail source"
+        assert sandbox.mysql("""
+            SELECT COUNT(*) FROM sake WHERE created_at IS NULL
+              OR created_at < UTC_TIMESTAMP() - INTERVAL 1 DAY
+              OR created_at > UTC_TIMESTAMP() + INTERVAL 1 DAY;
+        """, database).stdout.strip() == "0", "Rebuild did not give products a valid execution-time creation date"
+        assert sandbox.mysql("SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='sake';",
+                             database).stdout.strip() == str(len(expected) + 1), "Rebuild did not reset the next product ID"
+        return after, details
+
+    old_catalog = sandbox.mysql("""
+        SELECT JSON_ARRAY(id, brewery_id, sake_type_id, name, region, abv, price,
+                          image_url, description, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s'))
+        FROM sake ORDER BY id;
+    """, database).stdout
+    old_children = {table: sandbox.mysql(f"SELECT * FROM `{table}` ORDER BY 1, 2;", database).stdout
+                    for table in ("favorites", "sake_reviews", "sake_tags", "sake_page_details")}
+    sandbox.mysql("""
+        CREATE TRIGGER reject_catalog_rebuild BEFORE INSERT ON sake FOR EACH ROW
+          SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'integration-rebuild-reject';
+    """, database)
+    try:
+        rejected = sandbox.mysql(rebuild_sql, database, check=False)
+        assert rejected.returncode != 0 and "integration-rebuild-reject" in rejected.stderr, \
+            ("The failure fixture did not reject reloading the catalog", rejected.stderr)
+        current_catalog = sandbox.mysql("""
+            SELECT JSON_ARRAY(id, brewery_id, sake_type_id, name, region, abv, price,
+                              image_url, description, DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s'))
+            FROM sake ORDER BY id;
+        """, database).stdout
+        assert current_catalog == old_catalog, "A failed rebuild did not roll back the old catalog"
+        assert {table: sandbox.mysql(f"SELECT * FROM `{table}` ORDER BY 1, 2;", database).stdout
+                for table in old_children} == old_children, "A failed rebuild lost old cascade associations or details"
+        assert preserved_snapshot() == preserved, "A failed rebuild changed users or unrelated activity"
+        assert {table: master_rows(table) for table in masters} == masters, "A failed rebuild changed master rows"
+    finally:
+        sandbox.mysql("DROP TRIGGER reject_catalog_rebuild;", database)
+    result = sandbox.mysql(rebuild_sql + "\nSELECT @@FOREIGN_KEY_CHECKS;\n", database)
+    assert result.stdout.splitlines()[-1] == "1", "Rebuild left foreign key checks disabled in its session"
+    first = check_rebuilt()
+    first_masters = {table: master_rows(table) for table in masters}
+    sandbox.mysql(rebuild_sql, database)
+    assert check_rebuilt() == first, "A second explicit rebuild changed catalog identities, attributes, or details"
+    assert {table: master_rows(table) for table in masters} == first_masters, "A second rebuild duplicated master records"
+    print("PASS: explicit rebuild imports 2296 ordered products with IDs 1..2296 and the exact 10 columns; "
+          "failure rolls back; old associations cleared; details, users, masters, activity, foreign keys and rerun are correct")
+
+
+def test_rebuild_dependency_guards(sandbox, rebuild_sql):
+    for dependency in ("unknown_local", "unknown_external", "missing_cascade"):
+        database = sandbox.fresh_database()
+        if dependency != "missing_cascade":
+            child_database = database
+            if dependency == "unknown_external":
+                child_database = "catalog_test_external_" + uuid.uuid4().hex[:12]
+                sandbox.mysql(f"CREATE DATABASE `{child_database}`;")
+            sandbox.mysql(f"""
+                CREATE TABLE `{child_database}`.unrelated_sake_activity (
+                  sake_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, note VARCHAR(50) NOT NULL,
+                  CONSTRAINT fk_unrelated_sake_activity FOREIGN KEY (sake_id) REFERENCES `{database}`.sake(id) ON DELETE CASCADE
+                ) ENGINE=InnoDB;
+                INSERT INTO `{child_database}`.unrelated_sake_activity VALUES (1, '未知の活動を削除しない');
+            """, database)
+            guarded_rows = f"SELECT * FROM `{child_database}`.unrelated_sake_activity;"
+            expected_error = "Unexpected dependent table"
+        else:
+            sandbox.mysql("""
+                INSERT INTO users (id, name, email, password_hash)
+                  VALUES (901, '隔離検証利用者', 'guard@example.invalid', 'test-only');
+                INSERT INTO favorites (user_id, sake_id) VALUES (901, 1);
+                ALTER TABLE favorites DROP FOREIGN KEY fk_favorite_sake;
+            """, database)
+            guarded_rows = "SELECT * FROM favorites;"
+            expected_error = "Expected four sake CASCADE relations"
+        before = seed_snapshot(sandbox, database)
+        guarded_before = sandbox.mysql(guarded_rows, database).stdout
+        result = sandbox.mysql(rebuild_sql, database, check=False)
+        assert result.returncode != 0 and expected_error in result.stderr, \
+            ("An unsafe dependency layout did not stop the rebuild", result.stderr)
+        assert seed_snapshot(sandbox, database) == before, "Dependency rejection changed the old catalog or tags"
+        assert sandbox.mysql(guarded_rows, database).stdout == guarded_before, \
+            "Dependency rejection changed unrelated activity or old favorites"
+    print("PASS: explicit rebuild rejects unknown cascade activity in the same or another database, "
+          "and a missing required FK, before deleting old data")
 
 
 def test_catalog(sandbox, catalog_sql, records):
@@ -405,10 +619,12 @@ def test_width_variants_and_brewery_reuse(sandbox):
     print("PASS: fullwidth Latin/digits, case and halfwidth kana deduplicate; corporate-name variant reuses the brewery")
 
 
-def test_unavailable_named_lock(sandbox, attributes_only=False):
+def test_unavailable_named_lock(sandbox, attributes_only=False, rebuild_sql=None):
     database = sandbox.fresh_database()
     lock_name = "CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256), 48))"
-    if attributes_only:
+    if rebuild_sql is not None:
+        sql = rebuild_sql
+    elif attributes_only:
         sandbox.mysql(fixture_sql(), database)
         sql = fixture_sql(attributes=[verified_fixture_attributes()], attributes_only=True)
     else:
@@ -441,8 +657,12 @@ def test_unavailable_named_lock(sandbox, attributes_only=False):
             time.sleep(0.1)
         else:
             raise AssertionError("The separate MySQL session did not acquire the named lock")
-        result = sandbox.mysql(sql, database)
-        assert "not_applied_lock_unavailable" in result.stdout, "Lock contention was not reported"
+        result = sandbox.mysql(sql, database, check=rebuild_sql is None)
+        if rebuild_sql is not None:
+            assert result.returncode != 0 and "Catalog lock unavailable" in result.stderr, \
+                ("Rebuild lock contention was not reported as an error", result.stderr)
+        else:
+            assert "not_applied_lock_unavailable" in result.stdout, "Lock contention was not reported"
         assert sandbox.mysql(counts_sql, database).stdout == before_counts, "Lock contention changed catalog/master counts"
         assert catalog_rows(sandbox, database) == before_rows, "Lock contention changed existing attributes"
         assert sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout == before_details, \
@@ -454,7 +674,7 @@ def test_unavailable_named_lock(sandbox, attributes_only=False):
         except (BrokenPipeError, subprocess.TimeoutExpired):
             holder.kill()
             holder.communicate(timeout=5)
-    operation = "attribute backfill" if attributes_only else "catalog insertion"
+    operation = "explicit rebuild" if rebuild_sql is not None else "attribute backfill" if attributes_only else "catalog insertion"
     print(f"PASS: unavailable named lock blocks {operation} and preserves products, masters and price details")
 
 
@@ -666,12 +886,15 @@ def test_attribute_source_validation():
     print("PASS: attribute sources require exact numeric ABV, tax-inclusive capacity prices and verified HTTPS images; ranges remain text")
 
 
-def test_generated_sql_portability(catalog_sql, attributes_sql):
+def test_generated_sql_portability(catalog_sql, attributes_sql, rebuild_sql):
     for name, sql in (("sake_catalog_prefecture_order.sql", catalog_sql),
-                      ("sake_catalog_attributes.sql", attributes_sql)):
+                      ("sake_catalog_attributes.sql", attributes_sql),
+                      ("sake_catalog_rebuild.sql", rebuild_sql)):
         assert re.search(r"\butf8mb4_[a-z0-9_]*0900[a-z0-9_]*\b", sql, re.IGNORECASE) is None, \
             f"{name} contains a MySQL-only 0900 collation unsupported by MariaDB 10.11"
-    print("PASS: both generated SQL files avoid MySQL-only 0900 collations")
+    assert re.search(r"\bFOREIGN_KEY_CHECKS\s*=\s*0\b", rebuild_sql, re.IGNORECASE) is None, \
+        "The rebuild disables foreign key protection while reassigning product IDs"
+    print("PASS: all three generated SQL files avoid MySQL-only 0900 collations; rebuild keeps foreign key checks enabled")
 
 
 def main():
@@ -682,15 +905,22 @@ def main():
     args = parser.parse_args()
     catalog_sql = (ROOT / "data/sake_catalog_prefecture_order.sql").read_text(encoding="utf-8")
     attributes_sql = (ROOT / "data/sake_catalog_attributes.sql").read_text(encoding="utf-8")
+    rebuild_sql = (ROOT / "data/sake_catalog_rebuild.sql").read_text(encoding="utf-8")
     builder = builder_module()
     records = builder.apply_enrichment(builder.load_records(ROOT / "data/sake-catalog/regions"), ROOT / "data/sake-catalog/enrichment")
     if not records:
         raise SystemExit("No source records exist; generate the catalog before the integration test")
     records.sort(key=lambda record: (int(record["prefecture_code"]), product_key(record["name"])))
-    test_generated_sql_portability(catalog_sql, attributes_sql)
+    test_generated_sql_portability(catalog_sql, attributes_sql, rebuild_sql)
     test_attribute_source_validation()
     with MysqlSandbox(args.container, args.image) as sandbox:
         print("Database version:", sandbox.mysql("SELECT VERSION();").stdout.strip())
+        if args.image.startswith("mariadb:"):
+            test_catalog_rebuild(sandbox, rebuild_sql, catalog_sql, records)
+            test_rebuild_dependency_guards(sandbox, rebuild_sql)
+            test_unavailable_named_lock(sandbox, rebuild_sql=rebuild_sql)
+        else:
+            print("SKIP: explicit rebuild requires MariaDB 10.11 anonymous blocks; additive/backfill cases follow")
         test_catalog(sandbox, catalog_sql, records)
         test_catalog_upgrade(sandbox, catalog_sql, records)
         test_catalog_attribute_upgrade(sandbox, attributes_sql, records)

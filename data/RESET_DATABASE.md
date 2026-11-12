@@ -1,5 +1,7 @@
 # 既存DBを残して作り直す
 
+`sake` だけを空にして指定10カラム・2,296商品へ入れ直す今回の手順は、[sake再構築SQLの説明](sake-catalog/REBUILD.md) を参照してください。以下はDB全体を別名で新規作成する従来の手順です。
+
 `create_issho_no_deai.sql` は、新しい `issho_no_deai` DBに全19テーブルと初期データを作成します。既存の `newbooze` DBは削除・変更しません。
 
 XAMPP付属のMySQLクライアントでこのファイルを読み込んでください。`--force` は指定しないでください。同名DBがすでにある場合は停止するため、別の未使用DB名に `CREATE DATABASE` と `USE` の両方を変更してから実行します。

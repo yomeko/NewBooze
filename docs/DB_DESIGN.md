@@ -161,8 +161,8 @@ erDiagram
 | `region` | VARCHAR(50) | — | NULL | — |
 | `abv` | DECIMAL(4,1) | — | NULL | — |
 | `price` | INT(10) UNSIGNED | — | NULL | — |
-| `description` | TEXT | — | NULL | — |
 | `image_url` | VARCHAR(255) | — | NULL | — |
+| `description` | TEXT | — | NULL | — |
 | `created_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
 
 一意制約・索引・値制約：
