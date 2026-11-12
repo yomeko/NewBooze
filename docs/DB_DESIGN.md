@@ -1,16 +1,16 @@
 # 一升の出会い DB設計書
 
-作成日：2026年10月3日　実DB確認日：2026年10月5日　メール認証仕様更新日：2026年10月19日　安全対策のコード・DDL更新日：2026年10月21日
+作成日：2026年10月3日　実DB確認日：2026年10月5日　メール認証仕様更新日：2026年10月19日　安全対策のコード・DDL更新日：2026年10月21日　クリック記録のコード・DDL更新日：2026年11月12日
 
 ## 1. 対象と前提
 
-本書は NewBooze（日本酒紹介・好み診断アプリ）のDB構造を示す設計書です。2026年10月5日に指定のphpMyAdminへログインし、`issho_no_deai` と `newbooze` の全18テーブルのCREATE定義を確認しました。その後の現行DDLには `sake_page_details` が追加され、19テーブル・外部キー24本となっています。2026年10月19日のメール認証仕様ではusersに4列と一意索引、2026年10月21日のパスワード再設定仕様ではNULL許容3列と一意索引を追加し、テーブル数と外部キー数は変えません。以下は作成SQL・差分SQLに合わせた定義であり、今回の実DB適用・再照合を完了した記録ではありません。過去の実DB照合結果は第8章に日付を明記して保持します。主な対象はローカル接続設定が指す `issho_no_deai` です。
+本書は NewBooze（日本酒紹介・好み診断アプリ）のDB構造を示す設計書です。2026年10月5日に指定のphpMyAdminへログインし、`issho_no_deai` と `newbooze` の全18テーブルのCREATE定義を確認しました。その後の現行DDLには `sake_page_details` と `outbound_clicks` が追加され、20テーブル・外部キー26本となっています。2026年10月19日のメール認証仕様ではusersに4列と一意索引、2026年10月21日のパスワード再設定仕様ではNULL許容3列と一意索引を追加し、テーブル数と外部キー数は変えません。以下は作成SQL・差分SQLに合わせた定義であり、今回の実DB適用・再照合を完了した記録ではありません。過去の実DB照合結果は第8章に日付を明記して保持します。主な対象はローカル接続設定が指す `issho_no_deai` です。
 
 - 確認サーバー：127.0.0.1、MariaDB 10.11.19（Homebrew）。phpMyAdmin 5.2.3。
 - ローカル接続設定：`issho_no_deai`。既定設定：`newbooze`。両DBとも存在します。起動中プロセスの接続先までは本調査で確認していません。
 - ストレージエンジン：InnoDB。文字コード：utf8mb4。照合順序：utf8mb4_unicode_ci。
 - 接続URLの時刻指定：Asia/Tokyo。DBのセッション・グローバルタイムゾーンは未取得のため、接続時に統一して運用します。
-- 現行作成SQLは全19テーブル、外部キー24本。従来18テーブル・23本に商品詳細の1対1テーブルと外部キーを追加。単独の `id` は BIGINT(20) UNSIGNED・自動採番。中間テーブルは複合主キーを使用します。
+- 現行作成SQLは全20テーブル、外部キー26本。従来18テーブル・23本に商品詳細の1対1テーブルとクリック記録のテーブル・外部キー計3本を追加。単独の `id` は BIGINT(20) UNSIGNED・自動採番。中間テーブルは複合主キーを使用します。
 - 調査では構造の参照のみを行いました。DBの定義・保存データは変更していません。
 
 ## 2. テーブル一覧
@@ -36,6 +36,7 @@
 | `user_preferences` | ユーザーのタグ別嗜好スコア |
 | `sake_reviews` | 日本酒の評価・レビューと公開設定 |
 | `sake_page_details` | 銘柄別の詳細紹介JSON |
+| `outbound_clicks` | 公式サイトへのクリックと任意のアカウントID |
 
 ## 3. ER図
 
@@ -67,6 +68,8 @@ erDiagram
     users ||--o{ sake_reviews : "user_id"
     sake ||--o{ sake_reviews : "sake_id"
     sake ||--o| sake_page_details : "sake_id"
+    users |o..o{ outbound_clicks : "user_id"
+    sake |o..o{ outbound_clicks : "sake_id"
 ```
 
 ## 4. テーブル定義
@@ -400,6 +403,26 @@ erDiagram
 
 `fk_sake_page_details` は商品削除時にCASCADEで詳細も削除します。管理登録でSakePageのJSONを基本情報と同じトランザクション内に保存します。JPA Entityは設けず、JdbcTemplateで取得・保存します。DBの紹介を優先し、未保存なら既存のsake-pages.json、さらに未登録なら基本情報で補完します。
 
+### 4.20 `outbound_clicks` — 公式サイトへのクリック記録
+
+| カラム | 型 | 必須 | 初期値・自動設定 | キー |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | ○ | 自動採番 | PK |
+| `user_id` | BIGINT UNSIGNED | — | NULL | FK → users.id |
+| `logged_in` | BOOLEAN（TINYINT(1)） | ○ | アプリで操作時の状態を設定 | — |
+| `sake_id` | BIGINT UNSIGNED | — | NULL | FK → sake.id |
+| `target_name` | VARCHAR(100) | ○ | — | — |
+| `source` | VARCHAR(16) | ○ | — | — |
+| `link_kind` | VARCHAR(16) | ○ | — | — |
+| `destination_url` | VARCHAR(1000) | ○ | — | — |
+| `clicked_at` | DATETIME | ○ | CURRENT_TIMESTAMP | — |
+
+user_idとsake_idの外部キーはどちらもON DELETE SET NULLです。退会・銘柄削除時もクリックの総数を保持し、退会後はアカウントIDとの紐付けを外します。logged_inはクリック当時の認証状態を残すため、退会でログイン中・未ログインの内訳は変わりません。アカウント別集計は現在存在する会員だけを表示します。
+
+索引はuser_id・clicked_atの複合索引、clicked_at、sake_idです。1クリックを1行で保存し、同じ会員・対象の組合せの一意制約は設けません。target_nameとdestination_urlはクリック時点の値を保存します。sake_idは商品詳細からのクリックに限って設定し、ホーム・ガイドの案内はNULLです。JPA Entityを設けず、JdbcTemplateで記録・集計します。
+
+sourceはdetail・home・guide、link_kindはofficial・purchase・product・retailer・referenceのうち、その導線で許可する組合せだけをServiceで受け付けます。user_idは認証情報から取得し、未ログインならNULLです。匿名の識別子・IPアドレス・User-Agentは保存しません。GETや画面表示では保存せず、CSRF保護付きPOSTを記録します。clicked_atはアプリ側でAsia/TokyoのLocalDateTimeを指定して保存し、取得もLocalDateTimeで扱います。管理画面の日時は日本時間です。DBへの直接SQLでは既定値CURRENT_TIMESTAMPが接続先の時刻に従うため、適用先の時刻設定も確認します。
+
 ## 5. 機能と保存ルール
 
 - 管理者権限：`users.admin` を真偽値として管理します。初期値0は一般ユーザー、1は管理者です。初期管理者の作成は明示的な初回設定だけで行い、既存会員の上書き・昇格は行いません。旧既定パスワードの管理者レコードは自動変更せず、ログインと残ったセッションを拒否します。移行時に新管理者を作成し、旧管理者の権限をどう扱うか明示的に決めます。
@@ -408,6 +431,7 @@ erDiagram
 - メール変更：未認証化、未使用のパスワード再設定トークンの無効化、新しいメールアドレスへのSMTP送信を同じトランザクションに含めます。失敗時は元のメールアドレス・認証状態・トークン情報を保持します。送信成功時はログアウトし、認証後にログインします。
 - パスワード再設定：認証済み会員の行をロックし、60秒間隔で32バイト乱数のURL-safeトークンを発行します。SHA-256の64文字ハッシュと30分の期限・送信日時だけを保存し、旧パスワードを維持します。SMTP失敗時はロールバックし、再送成功時だけ旧リンクを失効させます。CSRF保護付きPOSTで行ロック下に未使用・期限内・認証済みを検証し、新ハッシュの保存とトークン消費を同時に行います。GETだけでは変更・消費しません。会員設定からのパスワード変更でも再設定ハッシュ・期限を消去します。
 - セッションの失効：静的ファイル以外の認証済みリクエストで会員の現在値を取得し、ハッシュ・メールアドレス・認証状態・権限の変更や会員削除で古いセッションを拒否します。追加のセッション管理テーブルは設けません。
+- 公式サイトへのクリック：商品詳細・ホーム・初心者ガイドから既存の公式リンクを開く操作を1件ずつ記録します。登録済みでも未ログイン時は会員に紐付けません。記録成功後に公式サイトへ転送し、保存失敗は日本語で案内します。ADMIN限定で合計と会員別の件数を参照します。移動先の表示完了や購入・申込みは記録しません。
 - 日本酒検索：`sake` を中心に酒蔵・酒種・タグを参照します。酒蔵は未設定を許容します。
 - 診断：設問 → 選択肢 → タグの重みを集計します。ログイン中の回答は `diagnosis_sessions` と `diagnosis_answers` に保存します。未ログイン時は診断結果をDB保存しません。
 - 回答：1回の診断につき同じ設問の回答は1件。選択肢の所属設問との一致はサービスが選択肢から設問を取得して保証しており、現行FKだけでは一致を保証しません。
@@ -434,13 +458,15 @@ erDiagram
 
 ## 7. 作成SQLと運用
 
-新規DB作成用SQLは [create_issho_no_deai.sql](../data/create_issho_no_deai.sql)、手順は [RESET_DATABASE.md](../data/RESET_DATABASE.md) を参照してください。作成SQLには全19テーブルと日本酒10件、診断4問・選択肢12件、酒種・タグの初期データが含まれます。分岐診断を使用する場合は、その後にdata/diagnosis_branching.sqlで設問6問と選択肢18件を追加する（合計10問・30選択肢、1回の回答は6問）。既存行を保持し、DDLの変更はない。ユーザーや投稿・レビューの初期データはありません。酒蔵マスタは空です。
+新規DB作成用SQLは [create_issho_no_deai.sql](../data/create_issho_no_deai.sql)、手順は [RESET_DATABASE.md](../data/RESET_DATABASE.md) を参照してください。作成SQLには全20テーブルと日本酒10件、診断4問・選択肢12件、酒種・タグの初期データが含まれます。分岐診断を使用する場合は、その後にdata/diagnosis_branching.sqlで設問6問と選択肢18件を追加する（合計10問・30選択肢、1回の回答は6問）。既存行を保持し、DDLの変更はない。ユーザーや投稿・レビューの初期データはありません。酒蔵マスタは空です。
 
 `CREATE DATABASE` は同名DBがある場合に失敗します。既存DBの削除・変更はせず、未使用DB名で実行します。旧DB向けの差分SQLは型や照合順序が異なるため、本書の新規作成SQLと混在させないでください。アプリは `ddl-auto=validate` を使用し、起動時にエンティティとDB定義の整合性を検証します。
 
 既存DBで詳細紹介テーブルがない場合は `data/sake_page_details_schema.sql` を適用します。メール認証を追加する既存DBでは、接続先を確認し、バックアップ後、アプリ起動前に `data/email_verification_schema.sql` を適用します。既存ユーザーは `email_verified=1` の初期値で保持します。新規作成SQLにも同じ4列と一意索引を含めます。初期管理者はアプリから認証済みで作ります。適用手順と確認項目は `docs/email-verification.md` を参照してください。初心者ガイドとメジャー候補の追加に伴うDB構造変更はありません。
 
 パスワード再設定は [password_reset_token_schema.sql](../data/password_reset_token_schema.sql) で既存の `users` にNULL許容3列と一意索引を追加します。SQLは `USE` を指定せず、既存会員・パスワードの変更やDB初期化は行いません。実際の接続先とバックアップを確認し、列・索引が未追加のDBへ起動前に一度だけ適用してください。新規作成SQLには同じ3列・索引を含めるため、両方を重複適用しません。旧 `password_reset_schema.sql` は `temporary_password` 列用であり、この差分SQLの代わりにはなりません。`ddl-auto=validate` は維持します。今回の実DB適用・再照合は本書では確認済みとしていません。
+
+クリック記録は [outbound_clicks_schema.sql](../data/outbound_clicks_schema.sql) で既存DBへ追加します。実行前にapplication-local.propertiesや環境変数を含む実際の接続先を確認し、既存データと定義をバックアップします。SQLはCREATE TABLE IF NOT EXISTSだけで新規テーブルを追加し、DB名の変更・既存行の削除・初期化は行いません。既に同名テーブルがあればCREATEが変更を行わないため、SHOW CREATE TABLEで定義が一致することも確認します。JDBC専用テーブルはJPAのvalidateだけでは検証されません。起動後に匿名とログイン中の各クリック、管理集計、退会後の匿名化を別途確認します。手順は [OUTBOUND_CLICKS.md](OUTBOUND_CLICKS.md) を参照し、適用・テストの実施結果は過去の実DB調査と分けて記録してください。
 
 安全な管理者移行・バックアップ・公開構成の確認項目は [SECURITY.md](SECURITY.md) と [admin.md](admin.md) を参照してください。
 

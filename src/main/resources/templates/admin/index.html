@@ -8,5 +8,5 @@
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
 <!-- 管理者が行う操作への入口を並べる。共通ヘッダー以外の管理画面の見た目はadmin.cssで指定する。 -->
-<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}" aria-current="page">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a></nav>
-<h2>管理者メニュー</h2><p>新しい日本酒の登録と、ユーザー名の一覧・検索ができます。</p></main><script th:src="@{/js/main.js}"></script></body></html>
+<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}" aria-current="page">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a><a th:href="@{/admin/outbound-clicks}">公式サイトへのクリック数</a></nav>
+<h2>管理者メニュー</h2><p>新しい日本酒の登録、ユーザー名の一覧・検索、公式サイトへのクリック数の確認ができます。</p></main><script th:src="@{/js/main.js}"></script></body></html>

@@ -136,8 +136,8 @@
       <ul>
         <li th:each="ref : ${majorReferences}">
           <strong th:text="${ref.name}"></strong>：<span th:text="${ref.reason}"></span>
-          <a th:href="${ref.productUrl}" target="_blank" rel="noopener noreferrer">公式商品情報 →</a> ／
-          <a th:href="${ref.retailerUrl}" target="_blank" rel="noopener noreferrer">公式の購入先案内 →</a>
+          <form th:replace="~{fragments/outbound-link :: outboundLink('home', ${ref.name}, 'product', '公式商品情報 →', 'outbound-link-text')}"></form> ／
+          <form th:replace="~{fragments/outbound-link :: outboundLink('home', ${ref.name}, 'retailer', '公式の購入先案内 →', 'outbound-link-text')}"></form>
           <span class="muted" th:text="|（確認日 ${ref.checkedOn}）|"></span>
         </li>
       </ul>

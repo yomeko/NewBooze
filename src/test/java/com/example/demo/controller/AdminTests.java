@@ -153,8 +153,16 @@ class AdminTests {
                 .andExpect(content().string(containsString("香りを楽しみたい人")))
                 .andExpect(content().string(containsString("少し冷やして")))
                 .andExpect(content().string(containsString("白身魚のお刺身")))
-                .andExpect(content().string(containsString("href=\"https://shop.example/product\"")))
-                .andExpect(content().string(containsString("href=\"https://brewery.example/product\"")));
+                .andExpect(content().string(containsString("action=\"/sake/outbound\"")))
+                .andExpect(content().string(containsString("name=\"target\" value=\"" + id + "\"")))
+                .andExpect(content().string(containsString("name=\"kind\" value=\"purchase\"")))
+                .andExpect(content().string(containsString("name=\"kind\" value=\"official\"")));
+        mvc.perform(post("/sake/outbound").with(csrf()).param("source", "detail")
+                .param("target", id.toString()).param("kind", "purchase"))
+                .andExpect(status().isSeeOther()).andExpect(redirectedUrl("https://shop.example/product"));
+        mvc.perform(post("/sake/outbound").with(csrf()).param("source", "detail")
+                .param("target", id.toString()).param("kind", "official"))
+                .andExpect(status().isSeeOther()).andExpect(redirectedUrl("https://brewery.example/product"));
         mvc.perform(get("/search").param("keyword", "紹介テスト酒造"))
                 .andExpect(content().string(containsString("商品詳細フォーマットテスト")));
     }

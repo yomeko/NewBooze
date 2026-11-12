@@ -15,8 +15,16 @@
 /* 地域・度数・価格を3列に並べる。minmax(0, 1fr)で長い入力内容でも列からはみ出しにくくする。 */
 .admin-form-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
 .admin-page .field-help { margin: 8px 0 0; font-size: 13px; color: #706b5e; line-height: 1.6; }
+.click-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.click-summary > div { padding: 20px; border: 1px solid var(--line, #ddd); border-radius: 10px; background: var(--cream, #faf7f0); }
+.click-summary dt { font-weight: 700; }
+.click-summary dd { margin: 12px 0 0; font-size: clamp(20px, 3vw, 32px); overflow-wrap: anywhere; }
+.admin-table-scroll { overflow-x: auto; }
+.admin-table-scroll th, .admin-table-scroll td { white-space: nowrap; }
+.admin-table-scroll:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 /* 画面幅700px以下では入力欄を1列にし、スマートフォンでも読みやすくする。 */
 @media (max-width: 700px) {
+  .click-summary { grid-template-columns: 1fr; gap: 10px; }
   .admin-page { margin: 20px auto; padding: 20px; }
   .admin-form-row { grid-template-columns: 1fr; gap: 0; }
   .admin-nav a { padding: 8px 10px; }

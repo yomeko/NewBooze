@@ -34,7 +34,7 @@
         <a sec:authorize="isAnonymous()" class="button sake-favorite" th:href="@{/login}" aria-label="ログインしてお気に入りに追加" title="ログインしてお気に入りに追加"><span aria-hidden="true">♡</span></a>
         <!-- 公式の購入リンクを優先し、なければ公式URLを使用する。URLがない場合は非表示。 -->
         <th:block th:with="officialLinks=${page.purchaseLinks.?[official]}, purchaseUrl=${#lists.isEmpty(officialLinks) ? page.officialUrl : officialLinks[0].url}">
-          <a class="button primary" th:if="${!#strings.isEmpty(purchaseUrl)}" th:href="${purchaseUrl}" target="_blank" rel="noopener noreferrer">購入先を見る<span aria-hidden="true"> ↗</span><span class="visually-hidden">（公式サイトを新しいタブで開く）</span></a>
+          <th:block th:if="${!#strings.isEmpty(purchaseUrl)}"><form th:replace="~{fragments/outbound-link :: outboundLink('detail', ${sake.id}, 'purchase', '購入先を見る ↗', 'button primary')}"></form></th:block>
         </th:block>
       </div>
   </div>
@@ -102,7 +102,7 @@
     </section>
   </div>
 
-  <p class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><a th:href="${page.officialUrl}" target="_blank" rel="noopener noreferrer">もっと詳しく：酒造の公式サイト ↗<span class="visually-hidden">（新しいタブで開く）</span></a></p>
+  <div class="sake-official" th:if="${!#strings.isEmpty(page.officialUrl)}"><form th:replace="~{fragments/outbound-link :: outboundLink('detail', ${sake.id}, 'official', 'もっと詳しく：酒造の公式サイト ↗', 'outbound-link-text')}"></form></div>
   <p class="sake-note">はじめて購入する方へ：<a th:href="@{/guide#buy}">購入場所・選び方</a> ／ <a th:href="@{/guide#store}">持ち帰ったあとの保存</a> ／ <a th:href="@{/guide#open}">開封・開封後の扱い</a></p>
 
   </div>

@@ -4,7 +4,7 @@
 <title>日本酒を登録 - 一升の出会い</title><link rel="stylesheet" th:href="@{/css/style.css}"><link rel="stylesheet" th:href="@{/css/admin.css}"></head>
 <body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
 <main class="admin-page admin-product-page"><h1>管理画面</h1>
-<nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}" aria-current="page">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a></nav>
+<nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}" aria-current="page">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a><a th:href="@{/admin/outbound-clicks}">公式サイトへのクリック数</a></nav>
 <div class="admin-form-heading"><p class="eyebrow">PRODUCT DETAILS</p><h2>新しい日本酒を登録</h2><p>商品詳細ページの並びに沿って入力できます。銘柄名・酒種以外は任意です。</p></div>
 <p class="success" role="status" th:if="${success}" th:text="${success}"></p><p th:if="${registeredId}"><a class="button" th:href="@{/sake/{id}(id=${registeredId})}">登録した商品詳細を見る</a></p>
 <form th:action="@{/admin/sake/new}" th:object="${sakeForm}" method="post" enctype="multipart/form-data">

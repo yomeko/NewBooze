@@ -25,7 +25,7 @@
     <p class="eyebrow">STEP 01</p><h2 id="buy-title">どこで買う？</h2>
     <p>相談しながら選ぶなら酒販店や百貨店の酒売場が候補です。身近なスーパーでは、取り扱いのある銘柄から探してみましょう。蔵元の公式ショップや、公式サイトで案内される取扱店も確認できます。</p>
     <p>ネットで買う場合は、販売者、容量、送料、配送方法を確認しましょう。「要冷蔵」の商品は、冷蔵配送と受け取り後の保管場所も購入前に確認します。</p>
-    <p>購入先の例：<a href="https://dassai.com/dealer/" target="_blank" rel="noopener noreferrer">獺祭の公式取扱店 ↗</a> ／ <a href="https://www.dewazakura.co.jp/shop/" target="_blank" rel="noopener noreferrer">出羽桜の公式取扱店舗 ↗</a>。取り扱いや在庫は店舗に確認してください。</p>
+    <div class="guide-purchase-links">購入先の例：<form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'dassai', 'retailer', '獺祭の公式取扱店 ↗', 'outbound-link-text')}"></form> ／ <form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'dewazakura', 'retailer', '出羽桜の公式取扱店舗 ↗', 'outbound-link-text')}"></form>。取り扱いや在庫は店舗に確認してください。</div>
     <a class="guide-next" href="#choose">次は、一本の選び方 →</a>
   </section>
   <section class="guide-step" id="choose" aria-labelledby="choose-title">
@@ -46,21 +46,21 @@
     <p class="eyebrow">STEP 04</p><h2 id="store-title">開ける前の保存</h2>
     <p>ラベルの保存方法を優先し、光と高温を避けて保管します。生酒や香りを楽しむ吟醸・大吟醸は、冷蔵庫での保管が勧められています。瓶は立てて置けます。</p>
     <p>生酒は特に温度管理が大切です。日本酒造組合中央会は5℃未満での保管を案内しています。家庭でも商品の指定温度を確認し、冷蔵庫の設定と置き場所に気をつけましょう。</p>
-    <p class="guide-source">出典：<a href="https://japansake.or.jp/sake/en/basic/how-to-store-preserve-sake/" target="_blank" rel="noopener noreferrer">日本酒造組合中央会の保存ガイド ↗</a></p>
+    <div class="guide-source">出典：<form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'japansake', 'reference', '日本酒造組合中央会の保存ガイド ↗', 'outbound-link-text')}"></form></div>
     <a class="guide-next" href="#open">次は、開封と飲み方 →</a>
   </section>
   <section class="guide-step" id="open" aria-labelledby="open-title">
     <p class="eyebrow">STEP 05</p><h2 id="open-title">開けるときは、まずラベルを確認</h2>
     <p>瓶を安定した場所に置き、栓の形と開栓の注意表示を確認して開けます。発泡性のお酒は、よく冷やし、振らずに、商品の指定手順でゆっくり開けましょう。栓や中身の噴き出しに注意してください。</p>
     <p>清潔な酒器に少しずつ注ぎ、おすすめの温度を商品詳細や蔵元の案内で確認します。例えば通常の獺祭は10〜12℃が案内されています。すべての日本酒を同じ温度にする必要はありません。</p>
-    <p class="guide-source">出典：<a href="https://netshop.houraisen.co.jp/products/detail/82" target="_blank" rel="noopener noreferrer">蓬莱泉スパークリングの開栓案内 ↗</a> ／ <a href="https://dassai.com/faq/" target="_blank" rel="noopener noreferrer">獺祭の飲み方 ↗</a></p>
+    <div class="guide-source">出典：<form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'houraisen', 'reference', '蓬莱泉スパークリングの開栓案内 ↗', 'outbound-link-text')}"></form> ／ <form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'dassai-faq', 'reference', '獺祭の飲み方 ↗', 'outbound-link-text')}"></form></div>
     <a class="guide-next" href="#after">次は、開封後の保存 →</a>
   </section>
   <section class="guide-step" id="after" aria-labelledby="after-title">
     <p class="eyebrow">STEP 06</p><h2 id="after-title">開封後は栓をして冷蔵庫へ</h2>
     <p>残ったお酒は栓をしっかり閉めて冷蔵庫に保管し、開けた日をメモしておくと管理しやすくなります。開封後は香りや味が変わるため、商品の案内を確認して早めに楽しみましょう。</p>
     <p>例えば通常の獺祭は冷蔵して1週間以内、獺祭スパークリングは開けた日のうちに飲むことが勧められています。この期間はおいしさの目安であり、すべての銘柄に共通する期限ではありません。飲み切るために無理に飲むことは避けましょう。</p>
-    <p class="guide-source">出典：<a href="https://dassai.com/faq/" target="_blank" rel="noopener noreferrer">獺祭の開栓後の案内 ↗</a> ／ <a href="https://japansake.or.jp/sake/en/basic/how-to-store-preserve-sake/" target="_blank" rel="noopener noreferrer">日本酒造組合中央会の保存ガイド ↗</a></p>
+    <div class="guide-source">出典：<form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'dassai-faq', 'reference', '獺祭の開栓後の案内 ↗', 'outbound-link-text')}"></form> ／ <form th:replace="~{fragments/outbound-link :: outboundLink('guide', 'japansake', 'reference', '日本酒造組合中央会の保存ガイド ↗', 'outbound-link-text')}"></form></div>
     <h3>空き瓶は地域のルールを確認</h3>
     <p>中身を空にして、瓶とキャップの分別・回収日をお住まいの自治体の案内で確認します。一升瓶などを販売店が回収する場合もあるため、購入店に相談できます。割れた瓶の扱いも自治体ごとに確認してください。</p>
     <a class="guide-next" href="#buy">購入場所から読み直す ↑</a>

@@ -57,6 +57,12 @@ nav a, .sake-card a, .back {
 /* ナビ内の「ログアウト」ボタン：<form>内の<button>だが、
    見た目はnav aのテキストリンクと揃えるためリセットしている */
 .nav-logout-form { display: inline-flex; margin: 0; }
+.outbound-form { display: inline; margin: 0; }
+.outbound-link { font: inherit; }
+.outbound-link-text { border: 0; padding: 0; background: transparent; color: var(--red); text-decoration: underline; text-underline-offset: .18em; cursor: pointer; text-align: inherit; }
+.outbound-link-text:hover { color: var(--ink); }
+.guide-purchase-links { margin: 1em 0; }
+
 .link-button {
   background: none;
   border: 0;

@@ -1,14 +1,14 @@
 # 一升の出会い 内部設計書
 
-版数：第1.5版　更新日：2026年10月21日
+版数：第1.6版　更新日：2026年11月12日
 
-本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
+本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは20テーブルで、従来18テーブルにsake_page_detailsとoutbound_clicksを追加している。実DBへの適用・検証結果は別途記録する。
 
 ## 1 文書の位置づけ
 
 ### 1.1 目的と対象
 
-要件定義書 第1.8版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
+要件定義書 第1.9版の実装を開発チームが把握し、保守と発表の根拠に使えるようにする。対象はcom.example.demo配下、テンプレート、静的資産、dataのSQL、JSON設定。外部AIを使った推薦、準備中の案内ページの本機能、飲酒投稿の操作画面は完成済みとして扱わない。
 
 ### 1.2 更新方針と開発体制
 
@@ -55,7 +55,7 @@ JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録�
 
 ### 3.1 方針とテーブル一覧
 
-DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validateは構造を検証する。起動時にテーブルを作成・変更しない。SQLの19テーブルは、過去のDB設計書の18テーブルに詳細紹介を加えたもの。19テーブルにJPA Entityが19クラス必要という意味ではなく、レビューと詳細紹介はJDBCで扱う。
+DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validateは構造を検証する。起動時にテーブルを作成・変更しない。SQLの20テーブルは、過去のDB設計書の18テーブルに詳細紹介とクリック記録を加えたもの。20テーブルにJPA Entityが20クラス必要という意味ではなく、レビュー・詳細紹介・クリック記録はJDBCで扱う。
 
 | テーブル | 主キー | 主な役割 |
 |---|---|---|
@@ -65,6 +65,7 @@ DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validate�
 | tags | id | 特徴名と分類 |
 | sake | id | brewery_id、sake_type_id、名称・地域・度数・価格・画像 |
 | sake_page_details | sake_id | 詳細紹介のdetail_json |
+| outbound_clicks | id | アカウント任意のクリック記録・移動先・日時 |
 | diagnosis_questions | id | 設問と表示順 |
 | diagnosis_choices | id | question_idと選択肢文 |
 | choice_tags | choice_idとtag_id | 診断のweight |
@@ -83,7 +84,7 @@ DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validate�
 
 sakeは任意のbreweriesと必須のsake_typesを参照する。sake_tagsとchoice_tagsが共通tagsを介して銘柄と回答を比較する。会員の診断はsessionsからanswersへ、嗜好はuser_preferencesへ保存する。レビューは星1〜5のCHECKと複合主キーを使う。同じ投稿への同じユーザーの通報は一意制約を持つ。
 
-sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キー・外部キー、detail_jsonはLONGTEXT NOT NULL。銘柄削除時はCASCADE。全DDLの外部キーは24本。カラム・索引・削除規則の詳細はDB_DESIGN.mdを参照する。
+sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キー・外部キー、detail_jsonはLONGTEXT NOT NULL。銘柄削除時はCASCADE。outbound_clicksは任意のusersとsakeを参照し、どちらも削除時にSET NULLでクリック記録を保持する。全DDLの外部キーは26本。カラム・索引・削除規則の詳細はDB_DESIGN.mdを参照する。
 
 ### 3.3 保存ルール
 
@@ -108,7 +109,7 @@ drink_posts、drink_post_likes、drink_post_reportsにはEntity・Repositoryが�
 | 認証 auth配下 | ログイン、会員登録、メール認証の確認・完了・再送、パスワード再設定の要求・確定 |
 | マイページ mypage.html | 保存された嗜好と過去タグ保持の説明、お気に入り、プロフィール |
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
-| 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録 |
+| 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録、公式サイトへのクリック数 |
 | 案内 collection.html | 各準備中ページの共通表示とメニューの準備中ラベル |
 | 公開案内 about.html、contact.html、external-transmission.html | 研究と終了予定、運営者・窓口の設定状態、外部接続の説明 |
 | プライバシー privacy.html | 登録前にも読める情報の利用目的、公開範囲、保存と終了時の扱い |
@@ -186,6 +187,16 @@ about、contact、privacy、external-transmissionは認証不要の専用ペー�
 
 卒業研究終了時にサービスを終了する方針を表示する。終了日、データ削除日、バックアップ保持期間と事前告知・処理手順は未確定で、公開前に運営者が決定する。退会は既存の本人確認付き削除処理を利用し、連動する会員データの削除とバックアップの扱いを分けて説明する。サービスの自動停止や全データの自動削除を行う機構は今回追加しない。
 
+### 5.6 公式サイトへのクリック記録
+
+OutboundClickControllerのPOST /sake/outboundは、source・target・kindと、認証情報のCustomUserDetailsを受け取る。画面はCSRF付きの標準POSTフォームで、新しいタブを開くtargetとnoopener・noreferrerを指定する。JavaScriptなしで操作でき、GETや先読みによる記録は行わない。
+
+OutboundClickServiceは移動先をサーバー側で解決する。detailはカタログの銘柄IDとSakePageServiceのDB優先の詳細情報を使い、officialは公式URL、purchaseは最初の公式購入先・未登録なら公式URLを選ぶ。homeはSakeDiscoveryService.majorReferencesの名称に対応するproductUrlまたはretailerUrl、guideはdassai・dewazakuraの既存取扱店URL、およびjapansake・houraisen・dassai-faqの既存公式出典URLを使う。存在しない対象・種類・未登録URLは404とし、任意URLを受け付けない。
+
+OutboundClickRepositoryはJdbcTemplateのパラメータ付きSQLで1操作につき1行を挿入する。user_idはリクエスト入力でなく認証済みprincipalから取得し、未ログインならNULL、logged_inは操作時の認証状態を保存する。匿名識別子・IP・User-Agentは保存しない。保存後に303で公式サイトへ進み、保存失敗時は成功の転送をせず日本語の説明と戻り先を示す。同じ利用者による再クリックも加算する。クリック日時はアプリ側でAsia/TokyoのLocalDateTimeを指定して保存・取得し、管理画面にも日本時間と表示する。
+
+ADMIN限定のGET /admin/outbound-clicksでは、全体・未ログイン・ログイン中の合計と、現在存在する会員ごとの件数・最終クリック日時を30件ずつ表示する。会員削除時はuser_idをNULLとし、logged_inを残すため総数と操作時の内訳は変えない。削除済み会員の行はアカウント別一覧に表示しない。銘柄削除時もsake_idだけをNULLにする。記録はクリック数を表し、移動先の表示完了や購入結果は取得しない。詳細はOUTBOUND_CLICKS.mdを参照する。
+
 ## 6 エンドポイントと権限
 
 Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する。保存操作はPOSTとCSRFトークンを使う。公開URL、認証必須URL、ADMIN必須URLはSecurityConfigで区別する。
@@ -198,6 +209,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /guide | 初心者ガイド |
 | GET | /search | keyword、name、type、taste、priceRange、sort、page |
 | GET | /sake/{id} | 商品と公開レビュー、reviewSort、reviewPage |
+| POST | /sake/outbound | 匿名可・CSRF必須、公式リンクの記録後に303転送 |
 | GET | /sake/images/{filename} | 商品画像 |
 | GET | /sake/reviewers/{userId}/profile-image | 公開レビュー投稿者のプロフィール画像 |
 | GET | /diagnosis | 診断設問 |
@@ -238,6 +250,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 |---|---|---|
 | GET | /admin | ADMIN、管理トップ |
 | GET | /admin/users | ADMIN、keywordとpage、30件ずつ |
+| GET | /admin/outbound-clicks | ADMIN、クリック合計とアカウント別件数、page・30件ずつ |
 | GETとPOST | /admin/sake/new | ADMIN、銘柄登録 |
 | GET | /ranking、/pairings、/goods | 認証必須、準備中の案内 |
 | GET | /brewery-map、/categories、/tags | 公開、準備中の案内 |
@@ -286,4 +299,4 @@ Gradleの全テストでDB接続・表示・権限・保存・画像等を検証
 
 残課題は準備中ページ、運営者と窓口・保存期間・委託先の確定、終了時の告知と処理手順、飲酒投稿・いいね・通報の操作経路、診断履歴一覧、トピック初期表示のランダム化、参考価格・度数等の商品情報と写真の掲載許諾の継続確認、SMTPと公開環境の運用確認。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を検討する。今回はこれらの未提供機能を追加したと記載しない。今回の公開内容整備のテスト、画面確認、実DB適用の結果はPUBLICATION.mdを参照し、過去の検証と区別する。
 
-参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md。
+参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md、docs/OUTBOUND_CLICKS.md。

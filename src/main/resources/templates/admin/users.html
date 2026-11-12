@@ -7,7 +7,7 @@
 <title>管理画面 - 一升の出会い</title><link rel="stylesheet" th:href="@{/css/style.css}">
 <link rel="stylesheet" th:href="@{/css/admin.css}">
 </head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
-<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}" aria-current="page">ユーザー一覧・検索</a></nav>
+<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}" aria-current="page">ユーザー一覧・検索</a><a th:href="@{/admin/outbound-clicks}">公式サイトへのクリック数</a></nav>
 <!-- 検索はGET送信なので、入力したkeywordがURLに付き、検索結果を再表示できる。 -->
 <h2>ユーザー一覧・検索</h2><form th:action="@{/admin/users}" method="get"><div class="form-group"><label for="keyword">ユーザー名</label><input id="keyword" name="keyword" th:value="${keyword}" placeholder="ユーザー名で検索" type="search"></div><button class="button primary">検索</button> <a th:href="@{/admin/users}">すべて表示</a></form>
 <!-- ユーザーを行ごとに表示する。adminの真偽で、管理者か一般ユーザーかの文字を切り替える。 -->
