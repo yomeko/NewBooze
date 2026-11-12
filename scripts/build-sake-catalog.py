@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""公式確認済みJSONから、カタログ追加・空欄補完用のMySQL 8 SQLを生成する。"""
+"""公式確認済みJSONから、MySQL 8/MariaDB 10.11用のカタログ・空欄補完SQLを生成する。"""
 
 import argparse
 import csv
@@ -57,10 +57,10 @@ def sql_key(column, brewery=False, precise=False):
     expression = f"REGEXP_REPLACE({column}, '[[:space:]　]+', '')"
     if brewery:
         # MySQLのREPLACEは照合順序に依存せず置換するため全角・略字も明示する。
-        for word in (*CORPORATE_WORDS, "（株）", "（有）", "㈱", "㈲", "㍿"):
+        for word in (*CORPORATE_WORDS, "（株）", "（有）", "(株）", "（株)", "(有）", "（有)", "㈱", "㈲", "㍿"):
             expression = f"REPLACE({expression}, {sql_string(word)}, '')"
     if precise:
-        return f"(LOWER({expression}) COLLATE utf8mb4_ja_0900_as_cs_ks)"
+        return f"(LOWER({expression}) COLLATE utf8mb4_bin)"
     return f"({expression} COLLATE utf8mb4_unicode_ci)"
 
 
@@ -237,22 +237,69 @@ def fallback_page_ids():
     return sorted(set(ids))
 
 
+def portable_key_normalization(table):
+    """幅・カナの濁点を一時キーで正規化。DB固有の日本語照合順序は使わない。"""
+    characters = set(chr(code) for start, end in ((0xFF01, 0xFF5F), (0xFF61, 0xFFA0), (0x3040, 0x3100))
+                     for code in range(start, end))
+    characters.update("神㈱㈲㍿")
+    replacements = [(char, unicodedata.normalize("NFKD", char).lower()) for char in sorted(characters)]
+    replacements = [(old, new) for old, new in replacements if old != new]
+
+    def literal(value):
+        # 全角の引用符・バックスラッシュも、sql_modeに依存しない16進文字列で扱う。
+        return "CONVERT(X'" + value.encode("utf-8").hex() + "' USING utf8mb4)"
+
+    statements = []
+    # 巨大な入れ子や候補の直積ごとの計算を避け、各キーを小さな段階に分けて一度ずつ処理。
+    for offset in range(0, len(replacements), 20):
+        assignments = []
+        for column in ("name_key", "brewery_key"):
+            expression = column
+            for old, new in replacements[offset:offset + 20]:
+                expression = f"REPLACE({expression}, {literal(old)}, {literal(new)})"
+            assignments.append(f"{column} = {expression}")
+        statements.append(f"UPDATE {table} SET " + ", ".join(assignments) + ";")
+    statements.append(f"UPDATE {table} SET name_key = {sql_key('name_key', precise=True)}, "
+                      f"brewery_key = {sql_key('brewery_key', True, precise=True)};")
+    return statements
+
+
 def attribute_statements():
     """単一の商品と酒蔵に対応した既存行の、空欄だけを補完する。"""
     fallback_ids = fallback_page_ids()
     fallback_guard = "  AND s.id NOT IN (" + ", ".join(map(str, fallback_ids)) + ")" if fallback_ids else "  AND 1 = 1"
-    return [
+    statements = [
+        "\n-- MySQL/MariaDB共通の一時キー。濁点・アクセント・ひらがな/カタカナを区別する。",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_existing_keys (",
+        "  id BIGINT UNSIGNED NOT NULL PRIMARY KEY, name_key VARCHAR(400) NOT NULL,",
+        "  brewery_key VARCHAR(400) NOT NULL, region VARCHAR(50) NULL, brewery_prefecture VARCHAR(50) NULL,",
+        "  KEY idx_existing_name (name_key(191))",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;",
+        "INSERT INTO tmp_sake_catalog_existing_keys (id, name_key, brewery_key, region, brewery_prefecture)",
+        "SELECT s.id, LOWER(s.name), LOWER(b.name), s.region, b.prefecture",
+        "FROM sake s JOIN breweries b ON b.id = s.brewery_id WHERE @sake_catalog_lock_acquired = 1;",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_source_keys (",
+        "  seq INT NOT NULL, name_key VARCHAR(800) NOT NULL, brewery_key VARCHAR(400) NOT NULL,",
+        "  prefecture VARCHAR(50) NOT NULL, KEY idx_source_name (name_key(191))",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;",
+        "INSERT INTO tmp_sake_catalog_source_keys (seq, name_key, brewery_key, prefecture)",
+        "SELECT a.seq, LOWER(a.alias_key), LOWER(src.brewery), src.prefecture",
+        "FROM tmp_sake_catalog_aliases a JOIN tmp_sake_catalog_source src ON src.seq = a.seq",
+        "WHERE @sake_catalog_lock_acquired = 1;",
+    ]
+    statements += portable_key_normalization("tmp_sake_catalog_existing_keys")
+    statements += portable_key_normalization("tmp_sake_catalog_source_keys")
+    statements += [
         "\n-- 別名は一意の商品のみ対応させ、酒蔵・地域が違う既存行は変更しない。",
         "CREATE TEMPORARY TABLE tmp_sake_catalog_matches AS",
         "SELECT seq, id FROM (",
         "  SELECT pairs.*, COUNT(*) OVER (PARTITION BY seq) AS source_matches,",
         "         COUNT(*) OVER (PARTITION BY id) AS target_matches FROM (",
-        "    SELECT DISTINCT a.seq, s.id FROM tmp_sake_catalog_aliases a",
-        f"    JOIN sake s ON {sql_key('s.name', precise=True)} = {sql_key('a.alias_key', precise=True)}",
-        "    JOIN tmp_sake_catalog_source src ON src.seq = a.seq",
-        "    JOIN breweries b ON b.id = s.brewery_id",
-        f"    WHERE @sake_catalog_lock_acquired = 1 AND {sql_key('b.name', True, precise=True)} = {sql_key('src.brewery', True, precise=True)}",
-        "      AND s.region = src.prefecture AND (b.prefecture IS NULL OR b.prefecture = src.prefecture)",
+        "    SELECT DISTINCT src.seq, existing.id FROM tmp_sake_catalog_source_keys src",
+        "    JOIN tmp_sake_catalog_existing_keys existing",
+        "      ON existing.name_key = src.name_key AND existing.brewery_key = src.brewery_key",
+        "    WHERE @sake_catalog_lock_acquired = 1 AND existing.region = src.prefecture",
+        "      AND (existing.brewery_prefecture IS NULL OR existing.brewery_prefecture = src.prefecture)",
         "  ) pairs",
         ") ranked WHERE source_matches = 1 AND target_matches = 1;",
         "UPDATE sake s JOIN tmp_sake_catalog_matches m ON m.id = s.id",
@@ -276,6 +323,7 @@ def attribute_statements():
         fallback_guard + ";",
         "SET @sake_catalog_price_detail_rows = ROW_COUNT();",
     ]
+    return statements
 
 
 def make_sql(records, attributes_only=False):
@@ -284,7 +332,7 @@ def make_sql(records, attributes_only=False):
     lines = [
         "-- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。" if attributes_only else
         "-- 一升の出会い：公式確認済み日本酒を都道府県コード01→47順で追加し、確認済み属性を補完。",
-        "-- MySQL 8.0以降用。対象DBを選択し、同じ接続でファイル全体を実行する。",
+        "-- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。",
         "-- 既存の度数・価格・画像URLは空欄だけを補完。既存値・詳細JSONを上書きしない。",
         "-- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。",
         "-- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。",
@@ -293,7 +341,7 @@ def make_sql(records, attributes_only=False):
         "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
         "SELECT DATABASE() AS target_database;",
     ]
-    tables = ("source", "aliases", "matches") + (() if attributes_only else ("candidates", "brewery_ids", "type_ids", "inserted"))
+    tables = ("source", "aliases", "existing_keys", "source_keys", "matches") + (() if attributes_only else ("candidates", "brewery_ids", "type_ids", "inserted"))
     lines += [f"DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_{table};" for table in tables]
     lines += [
         "CREATE TEMPORARY TABLE tmp_sake_catalog_source (",

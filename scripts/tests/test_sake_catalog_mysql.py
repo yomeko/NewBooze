@@ -1,11 +1,13 @@
-"""Validate the additive sake catalog against an isolated MySQL 8.4 container.
+"""Validate the additive sake catalog against an isolated MySQL or MariaDB container.
 
 Run from the repository root:
     python3 scripts/tests/test_sake_catalog_mysql.py
+    python3 scripts/tests/test_sake_catalog_mysql.py --image mariadb:10.11
 
 The default run starts and removes its own container without publishing a port.
-An existing disposable container can be supplied with --container; it must have
-the label codex.purpose=sake-catalog-test. No application database is contacted.
+An existing disposable container can be supplied with --container and its --image;
+it must have the label codex.purpose=sake-catalog-test. No application database is
+contacted.
 """
 
 import argparse
@@ -24,6 +26,10 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = "mysql:8.4"
+DATABASE_IMAGES = {
+    "mysql:8.4": ("MYSQL_ALLOW_EMPTY_PASSWORD", "mysql", "mysqladmin"),
+    "mariadb:10.11": ("MARIADB_ALLOW_EMPTY_ROOT_PASSWORD", "mariadb", "mariadb-admin"),
+}
 LABEL = "codex.purpose=sake-catalog-test"
 COMPANY_WORDS = (
     "株式会社", "有限会社", "合名会社", "合資会社", "合同会社", "(株)", "(有)", "㈱", "㈲",
@@ -85,9 +91,11 @@ def fixture_catalog_sql(records, attributes=None, attributes_only=False):
 
 
 class MysqlSandbox:
-    def __init__(self, container=None):
+    def __init__(self, container=None, image=IMAGE):
         self.container = container or "newbooze-catalog-test-" + uuid.uuid4().hex[:10]
         self.owned = container is None
+        self.image = image
+        self.empty_password_variable, self.client, self.admin_client = DATABASE_IMAGES[image]
         self.environment = os.environ.copy()
         for name in ("DOCKER_HOST", "DOCKER_CONTEXT", "DOCKER_TLS", "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH"):
             self.environment.pop(name, None)
@@ -104,7 +112,7 @@ class MysqlSandbox:
         if self.owned:
             self.docker(
                 "run", "--detach", "--name", self.container, "--label", LABEL,
-                "--env", "MYSQL_ALLOW_EMPTY_PASSWORD=yes", IMAGE,
+                "--env", self.empty_password_variable + "=yes", self.image,
                 "--skip-log-bin", "--character-set-server=utf8mb4",
                 "--collation-server=utf8mb4_unicode_ci",
             )
@@ -118,13 +126,15 @@ class MysqlSandbox:
             # The image's initialization server accepts socket connections but
             # disables TCP. Wait for the final server before executing fixtures.
             ready = self.docker(
-                "exec", self.container, "mysqladmin", "--protocol=tcp", "--host=127.0.0.1",
+                "exec", self.container, self.admin_client, "--protocol=tcp", "--host=127.0.0.1", "-uroot",
                 "ping", "--silent", check=False,
             )
             if ready.returncode == 0:
                 return self
             time.sleep(1)
-        raise RuntimeError("The isolated MySQL container did not become ready within 60 seconds")
+        if self.owned:
+            self.docker("rm", "--force", "--volumes", self.container, check=False)
+        raise RuntimeError(f"The isolated {self.image} container did not become ready within 60 seconds")
 
     def __exit__(self, *_):
         if self.owned:
@@ -132,7 +142,7 @@ class MysqlSandbox:
 
     def mysql(self, sql, database=None, check=True):
         args = [
-            "exec", "-i", self.container, "mysql", "--default-character-set=utf8mb4",
+            "exec", "-i", self.container, self.client, "--default-character-set=utf8mb4",
             "--batch", "--raw", "--skip-column-names", "-uroot",
         ]
         if database is not None:
@@ -413,7 +423,7 @@ def test_unavailable_named_lock(sandbox, attributes_only=False):
     original = seed_snapshot(sandbox, database)
     holder = subprocess.Popen(
         ["docker", "--host=unix:///var/run/docker.sock", "exec", "-i", sandbox.container,
-         "mysql", "--default-character-set=utf8mb4", "--batch", "--raw", "--skip-column-names",
+         sandbox.client, "--default-character-set=utf8mb4", "--batch", "--raw", "--skip-column-names",
          "--unbuffered", "-uroot", database],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         text=True, encoding="utf-8", env=sandbox.environment,
@@ -532,13 +542,29 @@ def test_attribute_identity_variants(sandbox):
         ({"brewery": "E酒造株式会社"}, {"brewery": "É酒造株式会社"}, False),
         ({"name": "検証 abc123 サケ 純米", "brewery": "株式会社 検証 abc123 サケ 酒造"},
          {"name": "検証 ＡＢＣ１２３ ｻｹ 純米", "brewery": "㈱ 検証 ＡＢＣ１２３ ｻｹ 酒造"}, True),
+        ({"name": "検証 ガ 純米"}, {"name": "検証 ｶﾞ 純米"}, True),
+        ({"name": "検証 ガ 純米"}, {"name": "検証 カ\u3099 純米"}, True),
+        ({"name": "検証 ｶﾞ 純米"}, {"name": "検証 カ\u3099 純米"}, True),
+        ({"name": "検証 パ 純米"}, {"name": "検証 ﾊﾟ 純米"}, True),
+        ({"name": "検証 カ 純米"}, {"name": "検証 ｶﾞ 純米"}, False),
+        ({"brewery": "ガ酒造株式会社"}, {"brewery": "ｶﾞ酒造株式会社"}, True),
+        ({"brewery": "ガ酒造株式会社"}, {"brewery": "カ\u3099酒造株式会社"}, True),
+        ({"brewery": "ｶﾞ酒造株式会社"}, {"brewery": "カ\u3099酒造株式会社"}, True),
+        ({"brewery": "パ酒造株式会社"}, {"brewery": "ﾊﾟ酒造株式会社"}, True),
+        ({"brewery": "カ酒造株式会社"}, {"brewery": "ｶﾞ酒造株式会社"}, False),
+        ({"brewery": "(株）検証酒造"}, {"brewery": "株式会社 検証酒造"}, True),
         ({"name": "検証 神心 純米", "brewery": "神酒造株式会社"},
          {"name": "検証 神心 純米", "brewery": "神酒造株式会社"}, True),
+        ({"name": "検証 神心 純米", "brewery": "神酒造株式会社"},
+         {"name": "検証 神心 純米", "brewery": "神酒造株式会社"}, True),
     ]
     for existing, source, should_match in cases:
         database = sandbox.fresh_database()
         sandbox.mysql(fixture_sql(**existing), database)
         before = catalog_rows(sandbox, database)
+        assert len(before) == 11 and before[-1][1] == existing.get("name", "検証酒 純米") \
+            and before[-1][3] == existing.get("brewery", "検証酒造株式会社"), \
+            ("The identity fixture did not insert the expected existing product and brewery", existing, before[-1])
         attributes = {**verified_fixture_attributes(), **source}
         sandbox.mysql(fixture_sql(attributes=[attributes], attributes_only=True, **source), database)
         after = catalog_rows(sandbox, database)
@@ -550,7 +576,8 @@ def test_attribute_identity_variants(sandbox):
             assert after == before, ("Attributes crossed a different product or brewery name", existing, source)
             assert sandbox.mysql("SELECT COUNT(*) FROM sake_page_details;", database).stdout.strip() == "0", \
                 ("Price details crossed a different product or brewery name", existing, source)
-    print("PASS: attribute identities distinguish voicing, kana script and accents while preserving width, case and compatibility kanji")
+    print("PASS: attribute identities distinguish voicing, kana script and accents while preserving width, "
+          "case, combining marks, corporate-name variants and compatibility kanji")
 
 
 def test_attribute_ambiguous_alias(sandbox):
@@ -639,9 +666,19 @@ def test_attribute_source_validation():
     print("PASS: attribute sources require exact numeric ABV, tax-inclusive capacity prices and verified HTTPS images; ranges remain text")
 
 
+def test_generated_sql_portability(catalog_sql, attributes_sql):
+    for name, sql in (("sake_catalog_prefecture_order.sql", catalog_sql),
+                      ("sake_catalog_attributes.sql", attributes_sql)):
+        assert re.search(r"\butf8mb4_[a-z0-9_]*0900[a-z0-9_]*\b", sql, re.IGNORECASE) is None, \
+            f"{name} contains a MySQL-only 0900 collation unsupported by MariaDB 10.11"
+    print("PASS: both generated SQL files avoid MySQL-only 0900 collations")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--container", help="Existing disposable MySQL container with the catalog-test label")
+    parser.add_argument("--image", choices=DATABASE_IMAGES, default=IMAGE,
+                        help="Database image to start or use with --container (default: %(default)s)")
+    parser.add_argument("--container", help="Existing disposable container with the catalog-test label")
     args = parser.parse_args()
     catalog_sql = (ROOT / "data/sake_catalog_prefecture_order.sql").read_text(encoding="utf-8")
     attributes_sql = (ROOT / "data/sake_catalog_attributes.sql").read_text(encoding="utf-8")
@@ -650,9 +687,10 @@ def main():
     if not records:
         raise SystemExit("No source records exist; generate the catalog before the integration test")
     records.sort(key=lambda record: (int(record["prefecture_code"]), product_key(record["name"])))
+    test_generated_sql_portability(catalog_sql, attributes_sql)
     test_attribute_source_validation()
-    with MysqlSandbox(args.container) as sandbox:
-        print("MySQL version:", sandbox.mysql("SELECT VERSION();").stdout.strip())
+    with MysqlSandbox(args.container, args.image) as sandbox:
+        print("Database version:", sandbox.mysql("SELECT VERSION();").stdout.strip())
         test_catalog(sandbox, catalog_sql, records)
         test_catalog_upgrade(sandbox, catalog_sql, records)
         test_catalog_attribute_upgrade(sandbox, attributes_sql, records)
