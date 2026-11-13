@@ -7,6 +7,17 @@ SELECT COUNT(abv) AS abv_rows, COUNT(price) AS price_rows,
   COUNT(NULLIF(image_url, '')) AS image_url_rows FROM sake;
 -- 再構築直後の期待値: detail_rows=2296。
 SELECT COUNT(*) AS detail_rows FROM sake_page_details;
+-- 範囲表記追加後の期待値: abv_text_rows=196。単一の数値へ換算しない。
+SELECT SUM(CASE WHEN JSON_VALID(detail_json) THEN
+  JSON_TYPE(JSON_EXTRACT(detail_json, '$.abvText')) = 'STRING'
+  AND NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.abvText'))), '') IS NOT NULL
+  ELSE FALSE END) AS abv_text_rows FROM sake_page_details;
+SELECT s.id, s.name, JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText')) AS official_abv_text
+FROM sake s JOIN sake_page_details d ON d.sake_id = s.id
+WHERE CASE WHEN JSON_VALID(d.detail_json) THEN
+  JSON_TYPE(JSON_EXTRACT(d.detail_json, '$.abvText')) = 'STRING'
+  AND NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText'))), '') IS NOT NULL
+  ELSE FALSE END ORDER BY s.id;
 -- id, brewery_id, sake_type_id, name, region, abv, price, image_url, description, created_atの順。
 SHOW COLUMNS FROM sake;
 -- 先頭は北海道の商品。

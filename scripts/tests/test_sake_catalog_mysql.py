@@ -327,6 +327,8 @@ def test_catalog_rebuild(sandbox, rebuild_sql, catalog_sql, records):
             prices = ([{"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}]
                       if attributes.get("price") is not None else [])
             assert page.get("prices", []) == prices, ("Rebuilt price capacity differs from verified evidence", sake_id, page)
+            expected_abv_text = attributes.get("abv_text") if attributes.get("abv") is None else None
+            assert page.get("abvText") == expected_abv_text, ("Rebuilt ABV text differs from verified evidence", sake_id, page)
         assert_foreign_keys(sandbox, database)
         assert preserved_snapshot() == preserved, "Rebuild changed users, diagnosis data, or unrelated activity"
         for table, original_rows in masters.items():
@@ -443,6 +445,9 @@ def test_catalog(sandbox, catalog_sql, records):
             assert row[0] in price_details, ("Verified price is missing capacity metadata", record["name"], row[0])
             assert price_details[row[0]]["prices"] == [{"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}], \
                 ("Price capacity or tax-inclusive value was not recorded", row)
+        if attributes.get("abv") is None and attributes.get("abv_text"):
+            assert price_details[row[0]]["abvText"] == attributes["abv_text"], \
+                ("Official ABV range was not retained as text", record["name"])
     codes = {product_key(record["name"]): int(record["prefecture_code"]) for record in additions}
     inserted_codes = [codes[product_key(row[1])] for row in after if row[0] > 10]
     assert inserted_codes == sorted(inserted_codes), "New records are not in prefecture-code order"
@@ -538,6 +543,7 @@ def test_catalog_attribute_upgrade(sandbox, attributes_sql, records):
         for value in sandbox.json_rows(database, "SELECT JSON_ARRAY(sake_id, detail_json) FROM sake_page_details;")
     }
     expected_price_ids = set()
+    expected_range_ids = set()
     for record in additions:
         row = new_rows[product_key(record["name"])]
         attributes = record.get("_attributes", {})
@@ -551,7 +557,12 @@ def test_catalog_attribute_upgrade(sandbox, attributes_sql, records):
             assert page["id"] == row[0] and page["prices"] == [
                 {"volume": f"{attributes['volume_ml']}ml", "yen": attributes["price"]}
             ], ("The real attributes-only file changed tax-inclusive price or capacity", record["name"], page)
-    assert set(price_details) == expected_price_ids, "The real attributes-only file created unexpected price details"
+        if attributes.get("abv") is None and attributes.get("abv_text"):
+            expected_range_ids.add(row[0])
+            assert price_details[row[0]]["abvText"] == attributes["abv_text"], \
+                ("The real attributes-only file changed an official ABV range", record["name"])
+    assert set(price_details) == expected_price_ids | expected_range_ids, \
+        "The real attributes-only file created unexpected detail records"
     details_before = sandbox.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", database).stdout
     sandbox.mysql(attributes_sql, database)
     assert catalog_rows(sandbox, database) == after, "Reapplying the real attributes-only file changed products or attributes"
@@ -828,7 +839,9 @@ def test_attribute_abv_range(sandbox):
         row = catalog_rows(sandbox, database)[-1]
         assert row[6:10] == [None, 1650, None, attributes["image_url"]], \
             ("An ABV range became a numeric value or blocked other verified attributes", row)
-    print("PASS: ABV ranges remain numeric NULL during insertion and backfill while other verified attributes are imported")
+        page = sandbox.json_rows(database, f"SELECT detail_json FROM sake_page_details WHERE sake_id = {row[0]};")[0]
+        assert page["abvText"] == attributes["abv_text"], "The official ABV range was not retained for display"
+    print("PASS: ABV ranges retain official display text and remain numeric NULL during insertion and backfill")
 
 
 def test_attribute_classpath_detail_preserved(sandbox):

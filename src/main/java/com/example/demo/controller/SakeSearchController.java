@@ -66,8 +66,9 @@ public class SakeSearchController {
             default -> null;
         };
         // 検索結果本体（ページネーション情報込みのSakePageDto）
-        model.addAttribute("result", catalogService.search(
-                keyword, name, type, minPrice, maxPrice, taste, sort, page));
+        var result = catalogService.search(keyword, name, type, minPrice, maxPrice, taste, sort, page);
+        model.addAttribute("result", result);
+        model.addAttribute("abvLabels", pages.abvLabelsFor(result.content()));
         model.addAttribute("types", catalogService.types());
         model.addAttribute("tastes", tastes);
         // 画面再表示時に検索条件を保持するため、入力値をそのまま画面へ戻す

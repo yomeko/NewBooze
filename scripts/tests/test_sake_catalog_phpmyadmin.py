@@ -1,4 +1,4 @@
-"""Import the rebuild through real phpMyAdmin in an isolated MariaDB fixture.
+"""Import the rebuild and ABV-text update through real phpMyAdmin.
 
 Run from the repository root (Docker and Python's standard library only):
     python3 scripts/tests/test_sake_catalog_phpmyadmin.py
@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
 from urllib.request import build_opener, HTTPCookieProcessor, ProxyHandler, Request
 import uuid
 
-from test_sake_catalog_mysql import LABEL, MysqlSandbox
+from test_sake_catalog_mysql import LABEL, MysqlSandbox, builder_module, sql_literal
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -253,6 +253,108 @@ def test_rebuild_import(database, phpmyadmin, rebuild_sql):
         database.mysql(f"DROP DATABASE `{fixture}`;", check=False)
 
 
+def test_abv_text_upgrade(database, phpmyadmin, rebuild_sql):
+    """Upgrade the already rebuilt 2296-product catalog without reinitializing it."""
+    fixture = database.fresh_database()
+    try:
+        database.mysql(rebuild_sql, fixture)
+        # Removing only the optional new field reproduces the previous JSON
+        # format even when this regression runs against a future rebuild file.
+        database.mysql("""
+            UPDATE sake_page_details
+            SET detail_json = JSON_REMOVE(detail_json, '$.abvText');
+        """, fixture)
+        builder = builder_module()
+        records = builder.apply_enrichment(builder.load_records(ROOT / "data/sake-catalog/regions"),
+                                           ROOT / "data/sake-catalog/enrichment")
+        expected = {record["name"]: record["_attributes"]["abv_text"] for record in records
+                    if record.get("_attributes", {}).get("abv") is None
+                    and record.get("_attributes", {}).get("abv_text")}
+        assert len(expected) == 196, "Review the official ABV-text expectation when source coverage changes"
+
+        def detail_pages():
+            return {row[0]: (row[1], json.loads(row[2])) for row in database.json_rows(fixture, """
+                SELECT JSON_ARRAY(s.id, s.name, d.detail_json)
+                FROM sake s JOIN sake_page_details d ON d.sake_id = s.id ORDER BY s.id;
+            """)}
+
+        selected_id, (_, selected_page) = next(
+            (sake_id, saved) for sake_id, saved in detail_pages().items() if saved[0] in expected)
+        selected_page.update({
+            "introduction": "既存の紹介文を保持するHTTP差分検証",
+            "purchaseLinks": [{"label": "既存の購入先", "url": "https://example.invalid/shop", "official": True}],
+            "preservedCustomField": {"nested": ["original", 1, True]},
+        })
+        database.mysql(
+            "UPDATE sake_page_details SET detail_json = " + sql_literal(json.dumps(selected_page, ensure_ascii=False))
+            + f" WHERE sake_id = {selected_id};", fixture)
+        database.mysql(f"""
+            INSERT INTO users (id, name, email, password_hash)
+              VALUES (901, '範囲差分HTTP検証', 'pma-abv-test@example.invalid', 'test-only');
+            INSERT INTO favorites (user_id, sake_id) VALUES (901, {selected_id});
+            INSERT INTO sake_reviews (user_id, sake_id, rating, comment)
+              VALUES (901, {selected_id}, 4, '再構築せずに保持するレビュー');
+            INSERT INTO sake_tags (sake_id, tag_id, score) VALUES ({selected_id}, 1, 3);
+            CREATE TABLE pma_abv_followup_probe (
+              id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              fk_checks INT NOT NULL, marker VARCHAR(80) NOT NULL
+            ) ENGINE=InnoDB;
+        """, fixture)
+        tables = ("sake", "breweries", "sake_types", "users", "favorites", "sake_reviews", "sake_tags", "tags")
+
+        def snapshot():
+            return {table: database.mysql(f"SELECT * FROM `{table}` ORDER BY 1, 2;", fixture).stdout
+                    for table in tables}
+
+        def raw_details():
+            return database.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", fixture).stdout
+
+        original, original_pages = snapshot(), detail_pages()
+        original_schema = database.mysql("SHOW CREATE TABLE sake;", fixture).stdout
+        assert len(original_pages) == 2296 and all("abvText" not in page for _, page in original_pages.values())
+        update_sql = (ROOT / "data/sake_catalog_abv_text.sql").read_text(encoding="utf-8")
+        # phpMyAdmin summarizes long imports rather than rendering every result
+        # table. A fixture-only marker proves its connection can still execute
+        # a SELECT-backed write after all statements in the real update file.
+        probes = """
+            INSERT INTO pma_abv_followup_probe (fk_checks, marker)
+              SELECT @@FOREIGN_KEY_CHECKS, 'pma_abv_update_followup_ok';
+        """
+        imported = phpmyadmin.import_sql(fixture, update_sql + probes)
+        assert "<h1>Error</h1>" not in imported, "phpMyAdmin reported an ABV-text import error"
+        assert "Import has been successfully finished" in imported, "phpMyAdmin did not finish the ABV-text import"
+        probe_rows = database.mysql("SELECT fk_checks, marker FROM pma_abv_followup_probe ORDER BY id;", fixture).stdout.splitlines()
+        assert probe_rows == ["1\tpma_abv_update_followup_ok"], \
+            "phpMyAdmin could not continue the same connection with FK checks enabled after the ABV-text update"
+        updated_pages = detail_pages()
+        assert updated_pages.keys() == original_pages.keys(), "ABV-text update added or removed product details"
+        actual = {}
+        for sake_id, (name, page) in updated_pages.items():
+            old_name, old_page = original_pages[sake_id]
+            assert name == old_name
+            if name in expected:
+                assert page == old_page | {"abvText": expected[name]}, \
+                    ("ABV-text import changed existing JSON fields or the official text", name)
+                actual[name] = page["abvText"]
+            else:
+                assert page == old_page, ("ABV-text import changed an unrelated detail", name)
+        assert actual == expected, "phpMyAdmin did not import all 196 exact official ABV texts"
+        assert snapshot() == original, "ABV-text update changed products, numeric values, users, or associations"
+        assert database.mysql("SHOW CREATE TABLE sake;", fixture).stdout == original_schema, \
+            "ABV-text update changed the requested ten-column schema"
+        assert database.mysql("SELECT COUNT(*), MIN(id), MAX(id) FROM sake;", fixture).stdout.strip() == "2296\t1\t2296"
+        first_details = raw_details()
+        repeated = phpmyadmin.import_sql(fixture, update_sql + probes)
+        assert "Import has been successfully finished" in repeated
+        assert database.mysql("SELECT fk_checks, marker FROM pma_abv_followup_probe ORDER BY id;", fixture).stdout.splitlines() \
+            == ["1\tpma_abv_update_followup_ok", "1\tpma_abv_update_followup_ok"]
+        assert snapshot() == original and raw_details() == first_details, "Repeating the ABV-text import changed saved data"
+        print("PASS: phpMyAdmin upgrades the existing 2296-product catalog with all 196 official ABV texts; "
+              "existing JSON, numeric values, IDs, associations and schema are preserved, and reimport is byte-stable")
+    finally:
+        database.mysql(f"DROP DATABASE `{fixture}`;", check=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--container", help="Existing disposable, labeled MariaDB 10.11 container")
@@ -261,6 +363,7 @@ def main():
     with MysqlSandbox(container=arguments.container, image="mariadb:10.11") as database:
         with PhpMyAdminSandbox(database) as phpmyadmin:
             test_rebuild_import(database, phpmyadmin, rebuild_sql)
+            test_abv_text_upgrade(database, phpmyadmin, rebuild_sql)
 
 
 if __name__ == "__main__":

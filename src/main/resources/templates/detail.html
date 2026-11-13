@@ -59,7 +59,7 @@
     <dl class="sake-specification-list">
       <div><dt>酒の種類</dt><dd th:text="${#strings.isEmpty(sake.type) ? '未登録' : sake.type}"></dd></div>
       <div><dt>産地</dt><dd th:text="${#strings.isEmpty(sake.region) ? '未登録' : sake.region}"></dd></div>
-      <div><dt>アルコール度数</dt><dd><span th:if="${sake.abv > 0}" th:text="|${#numbers.formatDecimal(sake.abv, 1, 1)}%|"></span><span th:unless="${sake.abv > 0}">未確認</span></dd></div>
+      <div><dt>アルコール度数</dt><dd th:text="${page.abvDisplay(sake.abv)}"></dd></div>
     </dl>
     <h3>容量・価格</h3>
     <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">

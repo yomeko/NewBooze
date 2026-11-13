@@ -3,6 +3,7 @@ package com.example.demo.model;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * JSONから読む日本酒の追加紹介情報。DBの基本情報とは別に、飲み方や料理をまとめる。
@@ -12,13 +13,25 @@ import java.util.List;
 public record SakePage(long id, String name, String introduction, String brewery,
         List<String> taste, List<String> aroma, List<Price> prices,
         List<String> drinking, List<String> food, List<String> recommendedFor,
-        String officialUrl, List<Long> similarIds, List<PurchaseLink> purchaseLinks) {
+        String officialUrl, List<Long> similarIds, List<PurchaseLink> purchaseLinks, String abvText) {
+    /** abvTextのない既存の登録処理・紹介JSONと互換性を保つ。 */
+    public SakePage(long id, String name, String introduction, String brewery,
+            List<String> taste, List<String> aroma, List<Price> prices,
+            List<String> drinking, List<String> food, List<String> recommendedFor,
+            String officialUrl, List<Long> similarIds, List<PurchaseLink> purchaseLinks) {
+        this(id, name, introduction, brewery, taste, aroma, prices, drinking, food,
+                recommendedFor, officialUrl, similarIds, purchaseLinks, "");
+    }
+
     // recordを作ると必ず通る確認処理。JSONの読み込み時もここで値を整理する。
     public SakePage {
         if (id <= 0) throw new IllegalArgumentException("日本酒IDは正の整数にしてください");
         name = clean(name);
         introduction = clean(introduction);
         brewery = clean(brewery);
+        abvText = clean(abvText);
+        if (abvText.codePointCount(0, abvText.length()) > 120)
+            throw new IllegalArgumentException("度数の原文は120文字以内にしてください: " + id);
         if (introduction.codePointCount(0, introduction.length()) > 160)
             throw new IllegalArgumentException("紹介文は約100文字（最大160文字）にしてください: " + id);
         taste = words(taste);
@@ -36,6 +49,19 @@ public record SakePage(long id, String name, String introduction, String brewery
         purchaseLinks = purchaseLinks == null ? List.of() : purchaseLinks.stream()
                 .filter(v -> v != null && !v.url().isEmpty())
                 .sorted(Comparator.comparing(PurchaseLink::official).reversed()).toList();
+    }
+
+    /** 単一の登録値を優先し、値がなければ公式の範囲表記をそのまま表示する。 */
+    public String abvDisplay(double numericAbv) {
+        return formatAbv(numericAbv, abvText);
+    }
+
+    /** 一覧でも詳細と同じ度数表記を使い、範囲へ単位を重ねて付けない。 */
+    public static String formatAbv(double numericAbv, String abvText) {
+        if (Double.isFinite(numericAbv) && numericAbv > 0)
+            return String.format(Locale.ROOT, "%.1f%%", numericAbv);
+        abvText = clean(abvText);
+        return abvText.isEmpty() ? "未確認" : abvText;
     }
 
     // 容量と価格の組み合わせ。価格が未登録ならnullを許し、登録する価格は正の整数に限る。

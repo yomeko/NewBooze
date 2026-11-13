@@ -64,6 +64,7 @@ class SakeDetailTests {
     @Autowired UserRepository users;
     @Autowired SakeInteractionService interactions;
     @Autowired com.example.demo.service.SakeCatalogService catalog;
+    @Autowired com.example.demo.service.SakePageService pages;
     @Autowired jakarta.persistence.EntityManager entityManager;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
@@ -122,6 +123,60 @@ class SakeDetailTests {
                 .andExpect(content().string(containsString("価格：未確認")))
                 .andExpect(content().string(not(containsString("0.0%"))))
                 .andExpect(content().string(not(containsString("参考価格：0円"))));
+        mvc.perform(get("/search").param("name", "新政 No.6")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("未確認")))
+                .andExpect(content().string(not(containsString("0.0%"))));
+    }
+
+    @Test void searchAndDetailKeepOfficialAbvRangesAndExistingIntroductionAndPrices() throws Exception {
+        var existing = pages.pageFor(catalog.findById(1).orElseThrow());
+        String originalJson = new tools.jackson.databind.ObjectMapper().writeValueAsString(existing);
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 1");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (1, ?)", originalJson);
+        jdbc.update("UPDATE sake SET abv = NULL WHERE id = 1");
+        entityManager.clear();
+
+        for (String officialText : java.util.List.of("15度〜16度", "15度以上16度未満")) {
+            jdbc.update("UPDATE sake_page_details SET detail_json = JSON_SET(detail_json, '$.abvText', ?) WHERE sake_id = 1",
+                    officialText);
+            mvc.perform(get("/sake/1")).andExpect(status().isOk())
+                    .andExpect(content().string(containsString(officialText)))
+                    .andExpect(content().string(not(containsString(officialText + "%"))))
+                    .andExpect(content().string(not(containsString("0.0%"))))
+                    .andExpect(content().string(containsString(existing.introduction())))
+                    .andExpect(content().string(containsString("720ml")))
+                    .andExpect(content().string(containsString("2,475円（税込）")));
+            mvc.perform(get("/search").param("name", "獺祭 純米大吟醸45")).andExpect(status().isOk())
+                    .andExpect(content().string(containsString(officialText)))
+                    .andExpect(content().string(not(containsString(officialText + "%"))))
+                    .andExpect(content().string(not(containsString("0.0%"))));
+        }
+    }
+
+    @Test void numericAbvTakesPrecedenceOverSavedRangeInSearchAndDetail() throws Exception {
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (2, ?)",
+                "{\"id\":2,\"name\":\"新政 No.6\",\"abvText\":\"15度〜16度\"}");
+        jdbc.update("UPDATE sake SET abv = 15.5 WHERE id = 2");
+        entityManager.clear();
+        for (var request : java.util.List.of(get("/sake/2"), get("/search").param("name", "新政 No.6"))) {
+            mvc.perform(request).andExpect(status().isOk())
+                    .andExpect(content().string(containsString("15.5%")))
+                    .andExpect(content().string(not(containsString("15度〜16度"))));
+        }
+    }
+
+    @Test void searchAndDetailEscapeAbvTextAsPlainText() throws Exception {
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (2, ?)",
+                "{\"id\":2,\"name\":\"新政 No.6\",\"abvText\":\"15度〜16度<script>alert(1)</script>\"}");
+        jdbc.update("UPDATE sake SET abv = NULL WHERE id = 2");
+        entityManager.clear();
+        for (var request : java.util.List.of(get("/sake/2"), get("/search").param("name", "新政 No.6"))) {
+            mvc.perform(request).andExpect(status().isOk())
+                    .andExpect(content().string(containsString("15度〜16度&lt;script&gt;alert(1)&lt;/script&gt;")))
+                    .andExpect(content().string(not(containsString("<script>alert(1)</script>"))));
+        }
     }
 
     // 写真・購入先・お気に入りが同じ商品操作欄に配置されることを確認する。

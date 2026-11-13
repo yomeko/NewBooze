@@ -264,10 +264,8 @@ def portable_key_normalization(table):
     return statements
 
 
-def attribute_statements():
-    """単一の商品と酒蔵に対応した既存行の、空欄だけを補完する。"""
-    fallback_ids = fallback_page_ids()
-    fallback_guard = "  AND s.id NOT IN (" + ", ".join(map(str, fallback_ids)) + ")" if fallback_ids else "  AND 1 = 1"
+def identity_statements():
+    """商品名・酒蔵・県が一意に対応する既存IDだけを照合する。"""
     statements = [
         "\n-- MySQL/MariaDB共通の一時キー。濁点・アクセント・ひらがな/カタカナを区別する。",
         "CREATE TEMPORARY TABLE tmp_sake_catalog_existing_keys (",
@@ -302,6 +300,15 @@ def attribute_statements():
         "      AND (existing.brewery_prefecture IS NULL OR existing.brewery_prefecture = src.prefecture)",
         "  ) pairs",
         ") ranked WHERE source_matches = 1 AND target_matches = 1;",
+    ]
+    return statements
+
+
+def attribute_statements():
+    """単一の商品と酒蔵に対応した既存行の、空欄だけを補完する。"""
+    fallback_ids = fallback_page_ids()
+    fallback_guard = "  AND s.id NOT IN (" + ", ".join(map(str, fallback_ids)) + ")" if fallback_ids else "  AND 1 = 1"
+    statements = [
         "UPDATE sake s JOIN tmp_sake_catalog_matches m ON m.id = s.id",
         "JOIN tmp_sake_catalog_source src ON src.seq = m.seq",
         "SET s.abv = COALESCE(s.abv, src.abv), s.price = COALESCE(s.price, src.price),",
@@ -326,6 +333,65 @@ def attribute_statements():
     return statements
 
 
+def abv_text_statements():
+    """公式原文を空欄へ併合し、紹介・価格・リンクと既存の原文を保持する。"""
+    source = ROOT / "src/main/resources/data/sake-pages.json"
+    pages = json.loads(source.read_text(encoding="utf-8")) if source.exists() else []
+    statements = [
+        "\n-- 同梱紹介JSONはIDと商品名が一致する場合だけ丸ごと保持する。",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_abv_fallback (",
+        "  id BIGINT UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,",
+        "  detail_json LONGTEXT NOT NULL",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;",
+    ]
+    if pages:
+        statements += ["INSERT INTO tmp_sake_catalog_abv_fallback (id, name, detail_json) VALUES"]
+        values = []
+        for page in pages:
+            if type(page.get("id")) is not int or page["id"] <= 0 or not isinstance(page.get("name"), str):
+                raise ValueError("同梱紹介JSONのID・商品名が不正です")
+            serialized = json.dumps(page, ensure_ascii=False, separators=(",", ":"))
+            literal = "CONVERT(X'" + serialized.encode("utf-8").hex() + "' USING utf8mb4)"
+            values.append(f"  ({page['id']}, {sql_string(page['name'])}, {literal})")
+        statements += [",\n".join(values) + ";"]
+    statements += [
+        "\n-- 不正JSONは関数評価前に安全な空objectへ置き換え、元の行は変更しない。",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_abv_pages AS",
+        "SELECT s.id, s.name, src.abv_text, d.sake_id IS NULL AS is_new,",
+        "  CASE WHEN d.sake_id IS NOT NULL THEN COALESCE(JSON_VALID(d.detail_json), FALSE) ELSE TRUE END AS valid_json,",
+        "  CASE WHEN d.sake_id IS NOT NULL THEN CASE WHEN JSON_VALID(d.detail_json) THEN d.detail_json ELSE '{}' END",
+        "       WHEN f.id IS NOT NULL THEN f.detail_json",
+        "       ELSE JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery, 'introduction', '',",
+        "         'prices', CASE WHEN src.price IS NOT NULL AND src.volume_ml IS NOT NULL AND s.price = src.price",
+        "           THEN JSON_ARRAY(JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price)) ELSE JSON_ARRAY() END,",
+        "         'officialUrl', CASE WHEN src.source_url LIKE 'https://%' THEN src.source_url ELSE '' END) END AS detail_json, FALSE AS fillable",
+        "FROM tmp_sake_catalog_matches m JOIN sake s ON s.id = m.id",
+        "JOIN tmp_sake_catalog_source src ON src.seq = m.seq",
+        "LEFT JOIN sake_page_details d ON d.sake_id = s.id",
+        "LEFT JOIN tmp_sake_catalog_abv_fallback f ON f.id = s.id AND f.name = s.name COLLATE utf8mb4_bin",
+        "WHERE @sake_catalog_lock_acquired = 1 AND src.abv IS NULL AND src.abv_text IS NOT NULL AND src.abv_text <> '';",
+        "UPDATE tmp_sake_catalog_abv_pages SET fillable = COALESCE(valid_json AND JSON_TYPE(detail_json) = 'OBJECT'",
+        "  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.id')) = 'INTEGER'",
+        "  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.id')) = CAST(id AS CHAR)",
+        "  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.name')) = 'STRING'",
+        "  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.name')) COLLATE utf8mb4_bin = name COLLATE utf8mb4_bin",
+        "  AND (JSON_EXTRACT(detail_json, '$.abvText') IS NULL",
+        "       OR JSON_TYPE(JSON_EXTRACT(detail_json, '$.abvText')) = 'NULL'",
+        "       OR (JSON_TYPE(JSON_EXTRACT(detail_json, '$.abvText')) = 'STRING'",
+        "           AND TRIM(JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.abvText'))) = '')), FALSE);",
+        "UPDATE sake_page_details d JOIN tmp_sake_catalog_abv_pages p ON p.id = d.sake_id",
+        "SET d.detail_json = JSON_SET(d.detail_json, '$.abvText', p.abv_text)",
+        "WHERE @sake_catalog_lock_acquired = 1 AND p.fillable = TRUE AND p.is_new = FALSE",
+        "  AND d.detail_json COLLATE utf8mb4_bin = p.detail_json COLLATE utf8mb4_bin;",
+        "SET @sake_catalog_abv_text_rows = ROW_COUNT();",
+        "INSERT INTO sake_page_details (sake_id, detail_json)",
+        "SELECT id, JSON_SET(detail_json, '$.abvText', abv_text) FROM tmp_sake_catalog_abv_pages",
+        "WHERE @sake_catalog_lock_acquired = 1 AND fillable = TRUE AND is_new = TRUE;",
+        "SET @sake_catalog_abv_text_rows = @sake_catalog_abv_text_rows + ROW_COUNT();",
+    ]
+    return statements
+
+
 def source_staging_statements(records, tables):
     lines = []
     lines += [f"DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_{table};" for table in tables]
@@ -336,7 +402,7 @@ def source_staging_statements(records, tables):
         "  brewery_key VARCHAR(200) NOT NULL, name VARCHAR(100) NOT NULL,",
         "  name_key VARCHAR(200) NOT NULL UNIQUE, sake_type VARCHAR(50) NOT NULL,",
         "  source_url TEXT NOT NULL, checked_on DATE NOT NULL,",
-        "  abv DECIMAL(4,1) NULL, price INT UNSIGNED NULL, volume_ml INT UNSIGNED NULL,",
+        "  abv DECIMAL(4,1) NULL, abv_text VARCHAR(120) NULL, price INT UNSIGNED NULL, volume_ml INT UNSIGNED NULL,",
         "  image_url VARCHAR(255) NULL, price_source_url TEXT NULL",
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
         "CREATE TEMPORARY TABLE tmp_sake_catalog_aliases (",
@@ -347,13 +413,13 @@ def source_staging_statements(records, tables):
         subset = [r for r in records if r["prefecture_code"] == code]
         lines += [f"\n-- {code:02d} {PREFECTURES[code - 1]} / {len(subset)}商品",
                   "INSERT INTO tmp_sake_catalog_source",
-                  "  (seq, prefecture_code, prefecture, brewery, brewery_key, name, name_key, sake_type, source_url, checked_on, abv, price, volume_ml, image_url, price_source_url) VALUES"]
+                  "  (seq, prefecture_code, prefecture, brewery, brewery_key, name, name_key, sake_type, source_url, checked_on, abv, abv_text, price, volume_ml, image_url, price_source_url) VALUES"]
         values = []
         for row in subset:
             strings = [row["prefecture"], row["_canonical_brewery"], row["_brewery_key"], row["name"],
                        row["_name_key"], row["sake_type"], row["source_url"], row["checked_on"]]
             attributes = row.get("_attributes", {})
-            fields = [attributes.get(key) for key in ("abv", "price", "volume_ml", "image_url", "price_source_url")]
+            fields = [attributes.get(key) for key in ("abv", "abv_text", "price", "volume_ml", "image_url", "price_source_url")]
             values.append(f"  ({row['_seq']}, {code}, " + ", ".join(map(sql_string, strings)) + ", "
                           + ", ".join(map(sql_scalar, fields)) + ")")
         lines.append(",\n".join(values) + ";")
@@ -396,18 +462,23 @@ def catalog_master_statements():
     ]
 
 
-def make_sql(records, attributes_only=False, rebuild=False):
+def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False):
     if rebuild:
-        if attributes_only:
-            raise ValueError("再構築と属性補完専用は同時に指定できません")
+        if attributes_only or abv_text_only:
+            raise ValueError("再構築と補完専用は同時に指定できません")
         return make_rebuild_sql(records)
+    if abv_text_only and attributes_only:
+        raise ValueError("属性補完専用と範囲表記専用は同時に指定できません")
+    only_existing = attributes_only or abv_text_only
     if not records:
         return "-- 確認済み属性なし。永続テーブルを変更しない。\nSELECT 'no_verified_attributes' AS status;\n"
     lines = [
+        "-- 一升の出会い：公式の度数範囲をdetail_json.abvTextへ補完。商品・数値属性・列構成は変更しない。" if abv_text_only else
         "-- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。" if attributes_only else
         "-- 一升の出会い：公式確認済み日本酒を都道府県コード01→47順で追加し、確認済み属性を補完。",
         "-- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。",
-        "-- 既存の度数・価格・画像URLは空欄だけを補完。既存値・詳細JSONを上書きしない。",
+        "-- sakeの各値は変更しない。詳細JSONの紹介等と入力済みabvTextを保持し、空のabvTextだけ追記。" if abv_text_only else
+        "-- 既存の度数・価格・画像URLは空欄だけを補完。詳細JSONの紹介等を保持し空のabvTextだけ追記。",
         "-- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。",
         "-- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。",
         "-- 出典・確認日: data/sake-catalog/sources.csv / attribute-sources.csv",
@@ -415,7 +486,7 @@ def make_sql(records, attributes_only=False, rebuild=False):
         "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
         "SELECT DATABASE() AS target_database;",
     ]
-    tables = ("source", "aliases", "existing_keys", "source_keys", "matches") + (() if attributes_only else ("candidates", "brewery_ids", "type_ids", "inserted"))
+    tables = ("source", "aliases", "existing_keys", "source_keys", "matches", "abv_fallback", "abv_pages") + (() if only_existing else ("candidates", "brewery_ids", "type_ids", "inserted"))
     lines += source_staging_statements(records, tables)
     lines += [
               "\n-- 同一DBに対するこのSQLの並行実行を直列化する。取得失敗時は永続テーブルを変更しない。",
@@ -424,7 +495,7 @@ def make_sql(records, attributes_only=False, rebuild=False):
               "START TRANSACTION;",
               "SET @sake_catalog_inserted_rows = 0;",
               ]
-    if not attributes_only:
+    if not only_existing:
         lines += [
               "CREATE TEMPORARY TABLE tmp_sake_catalog_candidates AS",
               "SELECT src.* FROM tmp_sake_catalog_source src",
@@ -449,20 +520,27 @@ def make_sql(records, attributes_only=False, rebuild=False):
               f"JOIN sake s ON {sql_key('s.name')} = c.name_key",
               "WHERE @sake_catalog_lock_acquired = 1;",
               ]
-    lines += attribute_statements()
+    lines += identity_statements()
+    if not abv_text_only:
+        lines += attribute_statements()
+    else:
+        lines += ["SET @sake_catalog_updated_rows = 0;", "SET @sake_catalog_price_detail_rows = 0;"]
+    lines += abv_text_statements()
     lines += [
               "COMMIT;",
               "\nSELECT CASE WHEN @sake_catalog_lock_acquired = 1 THEN 'completed'",
               "            ELSE 'not_applied_lock_unavailable' END AS status,",
               "       @sake_catalog_inserted_rows AS inserted_products,",
               "       @sake_catalog_updated_rows AS filled_existing_products,",
-              "       @sake_catalog_price_detail_rows AS inserted_price_details;",
+              "       @sake_catalog_price_detail_rows AS inserted_price_details,",
+              "       @sake_catalog_abv_text_rows AS filled_abv_text_details;",
               "SELECT COUNT(*) AS source_products, COUNT(src.abv) AS verified_abv,",
+              "       SUM(src.abv IS NULL AND src.abv_text IS NOT NULL) AS verified_abv_text,",
               "       COUNT(src.price) AS verified_prices, COUNT(src.image_url) AS verified_image_urls,",
               "       COUNT(m.id) AS unambiguously_matched_products",
               "FROM tmp_sake_catalog_source src LEFT JOIN tmp_sake_catalog_matches m ON m.seq = src.seq;",
               ]
-    if not attributes_only:
+    if not only_existing:
         lines += [
               "SELECT src.prefecture_code, src.prefecture, COUNT(*) AS source_products,",
               "       SUM(i.seq IS NOT NULL) AS inserted_products,",
@@ -483,6 +561,20 @@ def make_sql(records, attributes_only=False, rebuild=False):
             "WHERE m.id IS NULL ORDER BY src.seq;",
         ]
     lines += [
+              "SELECT s.id, s.name, src.abv_text AS official_abv_text,",
+              "       'existing_text_or_invalid_or_mismatched_detail' AS reason",
+              "FROM tmp_sake_catalog_source src JOIN tmp_sake_catalog_matches m ON m.seq = src.seq",
+              "JOIN sake s ON s.id = m.id JOIN sake_page_details d ON d.sake_id = s.id",
+              "JOIN tmp_sake_catalog_abv_pages p ON p.id = s.id",
+              "WHERE src.abv IS NULL AND src.abv_text IS NOT NULL AND src.abv_text <> ''",
+              "  AND COALESCE(p.valid_json AND JSON_TYPE(p.detail_json) = 'OBJECT'",
+              "    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.id')) = 'INTEGER'",
+              "    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.id')) = CAST(s.id AS CHAR)",
+              "    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.name')) = 'STRING'",
+              "    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.name')) COLLATE utf8mb4_bin = s.name COLLATE utf8mb4_bin",
+              "    AND CASE WHEN JSON_VALID(d.detail_json) THEN",
+              "    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText')) COLLATE utf8mb4_bin = src.abv_text COLLATE utf8mb4_bin, FALSE)",
+              "    ELSE FALSE END, FALSE) = FALSE ORDER BY src.seq;",
               "SELECT RELEASE_LOCK(@sake_catalog_lock_name) AS released_catalog_lock;",
               *[f"DROP TEMPORARY TABLE tmp_sake_catalog_{table};" for table in reversed(tables)],
               "",
@@ -612,7 +704,7 @@ def make_rebuild_sql(records):
         body += [
             "INSERT INTO sake_page_details (sake_id, detail_json)",
             "SELECT s.id, JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery, 'introduction', '',",
-            f"  'prices', {prices},",
+            f"  'prices', {prices}, 'abvText', CASE WHEN src.abv IS NULL THEN src.abv_text ELSE NULL END,",
             "  'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url",
             "                      WHEN src.source_url LIKE 'https://%' THEN src.source_url ELSE '' END)",
             "FROM sake s JOIN tmp_sake_catalog_candidates src ON src.seq = s.id",
@@ -666,6 +758,8 @@ def make_verify_sql(records):
     """登録後の状態だけを確認し、永続データや接続設定を変更しない。"""
     expected = {field: sum(row.get("_attributes", {}).get(field) is not None for row in records)
                 for field in ("abv", "price", "image_url")}
+    ranges = sum(row.get("_attributes", {}).get("abv") is None
+                 and bool(row.get("_attributes", {}).get("abv_text")) for row in records)
     return "\n".join([
         "-- 読み取り専用。phpMyAdminで対象アプリDBを選択して実行。再構築・削除・更新は行わない。",
         "SELECT DATABASE() AS target_database, VERSION() AS server_version, @@foreign_key_checks AS foreign_key_checks;",
@@ -676,6 +770,17 @@ def make_verify_sql(records):
         "  COUNT(NULLIF(image_url, '')) AS image_url_rows FROM sake;",
         f"-- 再構築直後の期待値: detail_rows={len(records)}。",
         "SELECT COUNT(*) AS detail_rows FROM sake_page_details;",
+        f"-- 範囲表記追加後の期待値: abv_text_rows={ranges}。単一の数値へ換算しない。",
+        "SELECT SUM(CASE WHEN JSON_VALID(detail_json) THEN",
+        "  JSON_TYPE(JSON_EXTRACT(detail_json, '$.abvText')) = 'STRING'",
+        "  AND NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.abvText'))), '') IS NOT NULL",
+        "  ELSE FALSE END) AS abv_text_rows FROM sake_page_details;",
+        "SELECT s.id, s.name, JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText')) AS official_abv_text",
+        "FROM sake s JOIN sake_page_details d ON d.sake_id = s.id",
+        "WHERE CASE WHEN JSON_VALID(d.detail_json) THEN",
+        "  JSON_TYPE(JSON_EXTRACT(d.detail_json, '$.abvText')) = 'STRING'",
+        "  AND NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText'))), '') IS NOT NULL",
+        "  ELSE FALSE END ORDER BY s.id;",
         "-- id, brewery_id, sake_type_id, name, region, abv, price, image_url, description, created_atの順。",
         "SHOW COLUMNS FROM sake;",
         "-- 先頭は北海道の商品。",
@@ -753,10 +858,13 @@ def main():
     args = parser.parse_args()
     records = apply_enrichment(load_records(ROOT / "data/sake-catalog/regions"), ROOT / "data/sake-catalog/enrichment")
     attribute_records = [row for row in records if any(row.get("_attributes", {}).get(field) is not None
-                                                     for field in ("abv", "price", "image_url"))]
+                                                     for field in ("abv", "abv_text", "price", "image_url"))]
+    range_records = [row for row in records if row.get("_attributes", {}).get("abv") is None
+                     and row.get("_attributes", {}).get("abv_text")]
     catalog_sql = make_sql(records)
     attributes_sql = make_sql(attribute_records, attributes_only=True)
     rebuild_sql = make_sql(records, rebuild=True)
+    abv_text_sql = make_sql(range_records, abv_text_only=True)
     checked_on = max([row["checked_on"] for row in records]
                      + [row["_attributes"][field] for row in records if row.get("_attributes")
                         for field in ("checked_on", "abv_checked_on", "price_checked_on", "image_checked_on")])
@@ -765,6 +873,7 @@ def main():
         ROOT / "data/sake_catalog_attributes.sql": attributes_sql,
         ROOT / "data/sake_catalog_rebuild.sql": rebuild_sql,
         ROOT / "data/sake_catalog_verify.sql": make_verify_sql(records),
+        ROOT / "data/sake_catalog_abv_text.sql": abv_text_sql,
         ROOT / "data/sake-catalog/sources.csv": make_sources(records),
         ROOT / "data/sake-catalog/prefecture-counts.csv": make_counts(records),
         ROOT / "data/sake-catalog/attribute-sources.csv": make_attribute_sources(records),
@@ -773,6 +882,8 @@ def main():
             make_import_zip(catalog_sql, f"sake_import_{len(records)}.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_attributes_{len(records)}.sql.zip":
             make_import_zip(attributes_sql, f"sake_attributes_{len(records)}.sql", checked_on),
+        ROOT / f"data/sake-catalog/import/sake_abv_text_{len(range_records)}.sql.zip":
+            make_import_zip(abv_text_sql, f"sake_abv_text_{len(range_records)}.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_rebuild_{len(records)}.sql.zip":
             make_import_zip(rebuild_sql, f"sake_rebuild_{len(records)}.sql", checked_on),
     }

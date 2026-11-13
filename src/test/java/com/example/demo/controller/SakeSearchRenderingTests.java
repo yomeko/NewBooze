@@ -1,11 +1,13 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.SakePageDto;
+import com.example.demo.model.Sake;
 import com.example.demo.service.SakeCatalogService;
 import com.example.demo.service.SakeInteractionService;
 import com.example.demo.service.SakePageService;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** DBなしで実際の検索フォームを描画し、再送信とページ送りの条件保持を確認する。 */
 class SakeSearchRenderingTests {
     private final SakeCatalogService catalog = mock(SakeCatalogService.class);
+    private final SakePageService pages = mock(SakePageService.class);
     private MockMvc mvc;
 
     @BeforeEach void setup() {
@@ -42,7 +45,7 @@ class SakeSearchRenderingTests {
         views.setTemplateEngine(engine);
         views.setCharacterEncoding(StandardCharsets.UTF_8.name());
         mvc = MockMvcBuilders.standaloneSetup(new SakeSearchController(catalog,
-                mock(SakePageService.class), mock(SakeInteractionService.class)))
+                pages, mock(SakeInteractionService.class)))
                 .setViewResolvers(views).build();
         when(catalog.types()).thenReturn(List.of("純米"));
         when(catalog.tastes()).thenReturn(List.of("甘口", "辛口"));
@@ -113,6 +116,28 @@ class SakeSearchRenderingTests {
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(formValues(tasteHtml)).containsEntry("keyword", List.of(""))
                 .containsEntry("taste", List.of("辛口"));
+    }
+
+    @Test void resultCardsDisplayAbvLabelsWithoutAddingPercentOrInterpretingHtml() throws Exception {
+        var products = List.of(product(11, "範囲表記の銘柄", 0), product(12, "数値度数の銘柄", 15.5),
+                product(13, "度数未確認の銘柄", 0), product(14, "文字表示の銘柄", 0));
+        when(catalog.search("", "", "", null, null, "", "recommended", 0))
+                .thenReturn(new SakePageDto(products, 0, 1, products.size()));
+        when(pages.abvLabelsFor(products)).thenReturn(Map.of(
+                11L, "15度以上16度未満", 12L, "15.5%", 13L, "未確認",
+                14L, "15度〜16度<script>alert(1)</script>"));
+
+        String html = mvc.perform(get("/search")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        assertThat(html).contains("15度以上16度未満", "15.5%", "未確認",
+                "15度〜16度&lt;script&gt;alert(1)&lt;/script&gt;")
+                .doesNotContain("15度以上16度未満%", "15.5%%", "0.0%", "<script>alert(1)</script>");
+        verify(pages).abvLabelsFor(products);
+    }
+
+    private Sake product(long id, String name, double abv) {
+        return new Sake(id, name, "確認済み酒蔵", "北海道", "純米", "北海道", abv,
+                1500, "", "", Map.of(), null, 0);
     }
 
     /** ブラウザのGET送信と同じく、実際に描画されたinputと選択中のoptionを集める。 */
