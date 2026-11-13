@@ -94,8 +94,8 @@
       <p th:if="${sake.reviewCount > 0}" th:text="|★ ${#numbers.formatDecimal(sake.averageRating, 1, 1)} / 5（${sake.reviewCount}件）|"></p>
       <p class="muted" th:unless="${sake.reviewCount > 0}">まだ評価がありません</p>
       <p class="muted" th:if="${!#strings.isEmpty(sake.breweryName)}" th:text="|蔵元：${sake.breweryName}|"></p>
-      <!-- リテラル置換構文(|...|)の中に、numbers.formatIntegerでカンマ区切りの価格表示を組み込む -->
-      <p class="muted" th:text="|${sake.region} ・ ${abvLabels[sake.id]} ・ ${#numbers.formatInteger(sake.price, 1, 'COMMA')}円|"></p>
+      <!-- 度数と容量別価格は同じ詳細JSONから一括取得し、未確認価格を0円にしない。 -->
+      <p class="muted" th:text="|${sake.region} ・ ${specifications[sake.id].abv} ・ ${specifications[sake.id].price}|"></p>
       <p th:text="${sake.description}"></p>
       <a class="sake-card-detail-link" th:href="@{/sake/{id}(id=${sake.id})}"
          th:attr="aria-label=|${sake.name}の詳細を見る|">詳しく見る →</a>

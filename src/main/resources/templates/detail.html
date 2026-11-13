@@ -63,7 +63,7 @@
     </dl>
     <h3>容量・価格</h3>
     <ul class="sake-price-list" th:if="${!#lists.isEmpty(page.prices)}">
-      <li th:each="price : ${page.prices}">
+      <li th:each="price : ${page.orderedPrices()}">
         <span th:text="${#strings.isEmpty(price.volume) ? '対象容量：未確認' : price.volume}"></span>
         <strong th:if="${price.yen != null}" th:text="|${#numbers.formatInteger(price.yen, 1, 'COMMA')}円（税込）|"></strong>
         <span th:unless="${price.yen != null}">価格：未確認</span>

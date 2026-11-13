@@ -306,8 +306,6 @@ def identity_statements():
 
 def attribute_statements():
     """単一の商品と酒蔵に対応した既存行の、空欄だけを補完する。"""
-    fallback_ids = fallback_page_ids()
-    fallback_guard = "  AND s.id NOT IN (" + ", ".join(map(str, fallback_ids)) + ")" if fallback_ids else "  AND 1 = 1"
     statements = [
         "UPDATE sake s JOIN tmp_sake_catalog_matches m ON m.id = s.id",
         "JOIN tmp_sake_catalog_source src ON src.seq = m.seq",
@@ -318,17 +316,81 @@ def attribute_statements():
         "  (s.abv IS NULL AND src.abv IS NOT NULL) OR (s.price IS NULL AND src.price IS NOT NULL) OR",
         "  ((s.image_url IS NULL OR s.image_url = '') AND src.image_url IS NOT NULL));",
         "SET @sake_catalog_updated_rows = ROW_COUNT();",
-        "\n-- 容量・税込価格を詳細情報にも保持。既存DB詳細と同梱JSONの表示は上書きしない。",
-        "INSERT INTO sake_page_details (sake_id, detail_json)",
-        "SELECT s.id, JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery,",
-        "  'prices', JSON_ARRAY(JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price)),",
-        "  'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url ELSE '' END)",
+    ]
+    return statements
+
+
+def price_statements():
+    """価格だけの差分では、既存の数値属性や商品行を変更しない。"""
+    return [
+        "UPDATE sake s JOIN tmp_sake_catalog_matches m ON m.id = s.id",
+        "JOIN tmp_sake_catalog_source src ON src.seq = m.seq",
+        "SET s.price = src.price",
+        "WHERE @sake_catalog_lock_acquired = 1 AND s.price IS NULL AND src.price IS NOT NULL;",
+        "SET @sake_catalog_updated_rows = ROW_COUNT();",
+    ]
+
+
+def price_detail_statements():
+    """容量と税込価格の空欄だけを補完し、紹介・範囲度数・手入力を保持する。"""
+    source = ROOT / "src/main/resources/data/sake-pages.json"
+    pages = json.loads(source.read_text(encoding="utf-8")) if source.exists() else []
+    statements = [
+        "\n-- 容量は公式に確認した実容量だけ。720ml以外を720mlへ換算しない。",
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_price_fallback (",
+        "  id BIGINT UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,",
+        "  detail_json LONGTEXT NOT NULL",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;",
+    ]
+    if pages:
+        values = []
+        for page in pages:
+            if type(page.get("id")) is not int or page["id"] <= 0 or not isinstance(page.get("name"), str):
+                raise ValueError("同梱紹介JSONのID・商品名が不正です")
+            serialized = json.dumps(page, ensure_ascii=False, separators=(",", ":"))
+            literal = "CONVERT(X'" + serialized.encode("utf-8").hex() + "' USING utf8mb4)"
+            values.append(f"  ({page['id']}, {sql_string(page['name'])}, {literal})")
+        statements += ["INSERT INTO tmp_sake_catalog_price_fallback (id, name, detail_json) VALUES",
+                       ",\n".join(values) + ";"]
+    statements += [
+        "CREATE TEMPORARY TABLE tmp_sake_catalog_price_pages AS",
+        "SELECT s.id, s.name, s.price AS current_price, src.price AS verified_price, src.volume_ml,",
+        "  d.sake_id IS NULL AS is_new,",
+        "  CASE WHEN d.sake_id IS NOT NULL THEN COALESCE(JSON_VALID(d.detail_json), FALSE) ELSE TRUE END AS valid_json,",
+        "  CASE WHEN d.sake_id IS NOT NULL THEN CASE WHEN JSON_VALID(d.detail_json) THEN d.detail_json ELSE '{}' END",
+        "       WHEN f.id IS NOT NULL THEN f.detail_json",
+        "       ELSE JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery, 'prices', JSON_ARRAY(),",
+        "         'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url ELSE '' END) END AS detail_json,",
+        "  FALSE AS fillable",
         "FROM tmp_sake_catalog_matches m JOIN sake s ON s.id = m.id",
         "JOIN tmp_sake_catalog_source src ON src.seq = m.seq",
-        "WHERE @sake_catalog_lock_acquired = 1 AND src.price IS NOT NULL AND src.volume_ml IS NOT NULL",
-        "  AND s.price = src.price AND NOT EXISTS (SELECT 1 FROM sake_page_details d WHERE d.sake_id = s.id)",
-        fallback_guard + ";",
+        "LEFT JOIN sake_page_details d ON d.sake_id = s.id",
+        "LEFT JOIN tmp_sake_catalog_price_fallback f ON f.id = s.id AND f.name = s.name COLLATE utf8mb4_bin",
+        "WHERE @sake_catalog_lock_acquired = 1 AND src.price IS NOT NULL AND src.volume_ml IS NOT NULL;",
+        "UPDATE tmp_sake_catalog_price_pages SET fillable = COALESCE(current_price = verified_price",
+        "  AND valid_json AND JSON_TYPE(detail_json) = 'OBJECT'",
+        "  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.id')) = 'INTEGER'",
+        "  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.id')) = CAST(id AS CHAR)",
+        "  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.name')) = 'STRING'",
+        "  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.name')) COLLATE utf8mb4_bin = name COLLATE utf8mb4_bin",
+        "  AND (JSON_EXTRACT(detail_json, '$.prices') IS NULL",
+        "       OR JSON_TYPE(JSON_EXTRACT(detail_json, '$.prices')) = 'NULL'",
+        "       OR (JSON_TYPE(JSON_EXTRACT(detail_json, '$.prices')) = 'ARRAY'",
+        "           AND JSON_LENGTH(JSON_EXTRACT(detail_json, '$.prices')) = 0)), FALSE);",
+        "UPDATE sake_page_details d JOIN tmp_sake_catalog_price_pages p ON p.id = d.sake_id",
+        "JOIN sake s ON s.id = p.id AND s.price = p.verified_price",
+        "SET d.detail_json = JSON_SET(d.detail_json, '$.prices',",
+        "  JSON_ARRAY(JSON_OBJECT('volume', CONCAT(p.volume_ml, 'ml'), 'yen', p.verified_price)))",
+        "WHERE @sake_catalog_lock_acquired = 1 AND p.fillable = TRUE AND p.is_new = FALSE",
+        "  AND d.detail_json COLLATE utf8mb4_bin = p.detail_json COLLATE utf8mb4_bin;",
         "SET @sake_catalog_price_detail_rows = ROW_COUNT();",
+        "INSERT INTO sake_page_details (sake_id, detail_json)",
+        "SELECT p.id, JSON_SET(p.detail_json, '$.prices',",
+        "  JSON_ARRAY(JSON_OBJECT('volume', CONCAT(p.volume_ml, 'ml'), 'yen', p.verified_price)))",
+        "FROM tmp_sake_catalog_price_pages p JOIN sake s ON s.id = p.id AND s.price = p.verified_price",
+        "WHERE @sake_catalog_lock_acquired = 1 AND p.fillable = TRUE AND p.is_new = TRUE;",
+        "SET @sake_catalog_inserted_price_detail_rows = ROW_COUNT();",
+        "SET @sake_catalog_price_detail_rows = @sake_catalog_price_detail_rows + @sake_catalog_inserted_price_detail_rows;",
     ]
     return statements
 
@@ -462,23 +524,25 @@ def catalog_master_statements():
     ]
 
 
-def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False):
+def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False, prices_only=False):
     if rebuild:
-        if attributes_only or abv_text_only:
+        if attributes_only or abv_text_only or prices_only:
             raise ValueError("再構築と補完専用は同時に指定できません")
         return make_rebuild_sql(records)
-    if abv_text_only and attributes_only:
-        raise ValueError("属性補完専用と範囲表記専用は同時に指定できません")
-    only_existing = attributes_only or abv_text_only
+    if sum((attributes_only, abv_text_only, prices_only)) > 1:
+        raise ValueError("補完専用モードは同時に指定できません")
+    only_existing = attributes_only or abv_text_only or prices_only
     if not records:
         return "-- 確認済み属性なし。永続テーブルを変更しない。\nSELECT 'no_verified_attributes' AS status;\n"
     lines = [
+        "-- 一升の出会い：確認済みの容量・税込価格を補完。商品行の追加・削除・再採番はしない。" if prices_only else
         "-- 一升の出会い：公式の度数範囲をdetail_json.abvTextへ補完。商品・数値属性・列構成は変更しない。" if abv_text_only else
         "-- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。" if attributes_only else
         "-- 一升の出会い：公式確認済み日本酒を都道府県コード01→47順で追加し、確認済み属性を補完。",
         "-- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。",
+        "-- NULLのpriceと空のpricesだけ補完。既存の数値・紹介・範囲度数・購入先・入力済み価格配列は保持。" if prices_only else
         "-- sakeの各値は変更しない。詳細JSONの紹介等と入力済みabvTextを保持し、空のabvTextだけ追記。" if abv_text_only else
-        "-- 既存の度数・価格・画像URLは空欄だけを補完。詳細JSONの紹介等を保持し空のabvTextだけ追記。",
+        "-- 既存属性は空欄だけ補完。詳細JSONの紹介等を保持し、空のpricesとabvTextだけ追記。",
         "-- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。",
         "-- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。",
         "-- 出典・確認日: data/sake-catalog/sources.csv / attribute-sources.csv",
@@ -486,7 +550,10 @@ def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False)
         "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;",
         "SELECT DATABASE() AS target_database;",
     ]
-    tables = ("source", "aliases", "existing_keys", "source_keys", "matches", "abv_fallback", "abv_pages") + (() if only_existing else ("candidates", "brewery_ids", "type_ids", "inserted"))
+    tables = (("source", "aliases", "existing_keys", "source_keys", "matches")
+              + (() if abv_text_only else ("price_fallback", "price_pages"))
+              + (() if prices_only else ("abv_fallback", "abv_pages"))
+              + (() if only_existing else ("candidates", "brewery_ids", "type_ids", "inserted")))
     lines += source_staging_statements(records, tables)
     lines += [
               "\n-- 同一DBに対するこのSQLの並行実行を直列化する。取得失敗時は永続テーブルを変更しない。",
@@ -494,6 +561,9 @@ def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False)
               "SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);",
               "START TRANSACTION;",
               "SET @sake_catalog_inserted_rows = 0;",
+              "SET @sake_catalog_price_detail_rows = 0;",
+              "SET @sake_catalog_inserted_price_detail_rows = 0;",
+              "SET @sake_catalog_abv_text_rows = 0;",
               ]
     if not only_existing:
         lines += [
@@ -521,18 +591,24 @@ def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False)
               "WHERE @sake_catalog_lock_acquired = 1;",
               ]
     lines += identity_statements()
-    if not abv_text_only:
+    if prices_only:
+        lines += price_statements()
+    elif not abv_text_only:
         lines += attribute_statements()
     else:
-        lines += ["SET @sake_catalog_updated_rows = 0;", "SET @sake_catalog_price_detail_rows = 0;"]
-    lines += abv_text_statements()
+        lines += ["SET @sake_catalog_updated_rows = 0;"]
+    if not abv_text_only:
+        lines += price_detail_statements()
+    if not prices_only:
+        lines += abv_text_statements()
     lines += [
               "COMMIT;",
               "\nSELECT CASE WHEN @sake_catalog_lock_acquired = 1 THEN 'completed'",
               "            ELSE 'not_applied_lock_unavailable' END AS status,",
               "       @sake_catalog_inserted_rows AS inserted_products,",
               "       @sake_catalog_updated_rows AS filled_existing_products,",
-              "       @sake_catalog_price_detail_rows AS inserted_price_details,",
+              "       @sake_catalog_inserted_price_detail_rows AS inserted_price_details,",
+              "       @sake_catalog_price_detail_rows AS filled_price_details,",
               "       @sake_catalog_abv_text_rows AS filled_abv_text_details;",
               "SELECT COUNT(*) AS source_products, COUNT(src.abv) AS verified_abv,",
               "       SUM(src.abv IS NULL AND src.abv_text IS NOT NULL) AS verified_abv_text,",
@@ -560,7 +636,8 @@ def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False)
             "FROM tmp_sake_catalog_source src LEFT JOIN tmp_sake_catalog_matches m ON m.seq = src.seq",
             "WHERE m.id IS NULL ORDER BY src.seq;",
         ]
-    lines += [
+    if not prices_only:
+        lines += [
               "SELECT s.id, s.name, src.abv_text AS official_abv_text,",
               "       'existing_text_or_invalid_or_mismatched_detail' AS reason",
               "FROM tmp_sake_catalog_source src JOIN tmp_sake_catalog_matches m ON m.seq = src.seq",
@@ -575,6 +652,26 @@ def make_sql(records, attributes_only=False, rebuild=False, abv_text_only=False)
               "    AND CASE WHEN JSON_VALID(d.detail_json) THEN",
               "    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText')) COLLATE utf8mb4_bin = src.abv_text COLLATE utf8mb4_bin, FALSE)",
               "    ELSE FALSE END, FALSE) = FALSE ORDER BY src.seq;",
+        ]
+    if not abv_text_only:
+        lines += [
+            "SELECT s.id, s.name, src.volume_ml AS verified_volume_ml, src.price AS verified_tax_included_yen,",
+            "       'existing_price_or_invalid_or_mismatched_or_nonempty_detail' AS reason",
+            "FROM tmp_sake_catalog_source src JOIN tmp_sake_catalog_matches m ON m.seq = src.seq",
+            "JOIN sake s ON s.id = m.id LEFT JOIN sake_page_details d ON d.sake_id = s.id",
+            "JOIN tmp_sake_catalog_price_pages p ON p.id = s.id",
+            "WHERE src.price IS NOT NULL AND src.volume_ml IS NOT NULL",
+            "  AND COALESCE(s.price = src.price AND p.valid_json AND JSON_TYPE(p.detail_json) = 'OBJECT'",
+            "    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.id')) = 'INTEGER'",
+            "    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.id')) = CAST(s.id AS CHAR)",
+            "    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.name')) = 'STRING'",
+            "    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.name')) COLLATE utf8mb4_bin = s.name COLLATE utf8mb4_bin",
+            "    AND CASE WHEN JSON_VALID(COALESCE(d.detail_json, p.detail_json)) THEN",
+            "      JSON_TYPE(JSON_EXTRACT(COALESCE(d.detail_json, p.detail_json), '$.prices')) = 'ARRAY'",
+            "      AND JSON_CONTAINS(COALESCE(d.detail_json, p.detail_json), JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price), '$.prices')",
+            "      ELSE FALSE END, FALSE) = FALSE ORDER BY src.seq;",
+        ]
+    lines += [
               "SELECT RELEASE_LOCK(@sake_catalog_lock_name) AS released_catalog_lock;",
               *[f"DROP TEMPORARY TABLE tmp_sake_catalog_{table};" for table in reversed(tables)],
               "",
@@ -768,6 +865,8 @@ def make_verify_sql(records):
         f"-- 確認済み属性の期待値: abv={expected['abv']}, price={expected['price']}, image_url={expected['image_url']}。未確認値はNULL。",
         "SELECT COUNT(abv) AS abv_rows, COUNT(price) AS price_rows,",
         "  COUNT(NULLIF(image_url, '')) AS image_url_rows FROM sake;",
+        f"-- 価格補完後の未確認価格の期待値: missing_price_rows={len(records) - expected['price']}。",
+        "SELECT COUNT(*) AS missing_price_rows FROM sake WHERE price IS NULL OR price = 0;",
         f"-- 再構築直後の期待値: detail_rows={len(records)}。",
         "SELECT COUNT(*) AS detail_rows FROM sake_page_details;",
         f"-- 範囲表記追加後の期待値: abv_text_rows={ranges}。単一の数値へ換算しない。",
@@ -787,6 +886,57 @@ def make_verify_sql(records):
         "SELECT id, name, region, abv, price, image_url FROM sake ORDER BY id LIMIT 10;",
         "",
     ])
+
+
+def make_missing_prices_sql():
+    """実DBの数値価格未登録行を表示する。データや接続設定は変更しない。"""
+    regions = ", ".join(map(sql_string, PREFECTURES))
+    region_order = f"FIELD(s.region, {regions})"
+    return "\n".join([
+        "-- 読み取り専用。phpMyAdminで現在のアプリDBを選択して実行する。",
+        "-- NULL/0の数値価格を一覧化する。詳細JSONに価格がある場合は別列に表示する。",
+        "-- 出典CSVのカタログ連番と、このSQLで返す実DBのidは別物。",
+        "SELECT DATABASE() AS target_database, COUNT(*) AS total_products,",
+        "  COALESCE(SUM(price IS NULL), 0) AS null_price_rows, COALESCE(SUM(price = 0), 0) AS zero_price_rows",
+        "FROM sake;",
+        "SELECT s.id, s.name, s.region, b.name AS brewery, s.price,",
+        "  CASE WHEN JSON_VALID(d.detail_json) THEN JSON_EXTRACT(d.detail_json, '$.prices') ELSE NULL END AS saved_capacity_prices,",
+        "  CASE WHEN JSON_VALID(d.detail_json) THEN JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.officialUrl')) ELSE NULL END AS official_url",
+        "FROM sake s LEFT JOIN breweries b ON b.id = s.brewery_id",
+        "LEFT JOIN sake_page_details d ON d.sake_id = s.id",
+        "WHERE s.price IS NULL OR s.price = 0",
+        f"ORDER BY CASE WHEN {region_order} = 0 THEN 48 ELSE {region_order} END, s.id;",
+        "",
+    ])
+
+
+def make_price_sources(records, missing=False):
+    """出典上の価格未確認一覧、または確認済み容量・税込価格の表示一覧。"""
+    buffer = io.StringIO(newline="")
+    common = ["catalog_sequence", "prefecture_code", "prefecture", "brewery", "name"]
+    fields = (common + ["source_url", "reason", "record_checked_on", "notes"] if missing else
+              common + ["volume_ml", "price", "price_display", "price_source_url", "price_checked_on", "notes"])
+    writer = csv.DictWriter(buffer, fields, lineterminator="\n")
+    writer.writeheader()
+    for row in records:
+        attributes = row.get("_attributes", {})
+        price = attributes.get("price")
+        if (price is None) != missing:
+            continue
+        result = {key: row[key] for key in ("prefecture", "brewery", "name")}
+        result.update(catalog_sequence=row["_seq"], prefecture_code=f"{row['prefecture_code']:02d}",
+                      notes=attributes.get("notes", row.get("source_note", "")))
+        if missing:
+            result.update(source_url=row["source_url"],
+                          reason="今回の記録では容量と税込価格を確定できていない",
+                          record_checked_on=attributes.get("checked_on", row["checked_on"]))
+        else:
+            volume = attributes["volume_ml"]
+            result.update(volume_ml=volume, price=price, price_display=f"{volume}ml {price:,}円（税込）",
+                          price_source_url=attributes["price_source_url"],
+                          price_checked_on=attributes["price_checked_on"])
+        writer.writerow(result)
+    return buffer.getvalue()
 
 
 def make_sources(records):
@@ -861,10 +1011,12 @@ def main():
                                                      for field in ("abv", "abv_text", "price", "image_url"))]
     range_records = [row for row in records if row.get("_attributes", {}).get("abv") is None
                      and row.get("_attributes", {}).get("abv_text")]
+    price_records = [row for row in records if row.get("_attributes", {}).get("price") is not None]
     catalog_sql = make_sql(records)
     attributes_sql = make_sql(attribute_records, attributes_only=True)
     rebuild_sql = make_sql(records, rebuild=True)
     abv_text_sql = make_sql(range_records, abv_text_only=True)
+    prices_sql = make_sql(price_records, prices_only=True)
     checked_on = max([row["checked_on"] for row in records]
                      + [row["_attributes"][field] for row in records if row.get("_attributes")
                         for field in ("checked_on", "abv_checked_on", "price_checked_on", "image_checked_on")])
@@ -874,16 +1026,22 @@ def main():
         ROOT / "data/sake_catalog_rebuild.sql": rebuild_sql,
         ROOT / "data/sake_catalog_verify.sql": make_verify_sql(records),
         ROOT / "data/sake_catalog_abv_text.sql": abv_text_sql,
+        ROOT / "data/sake_catalog_prices.sql": prices_sql,
+        ROOT / "data/sake_catalog_missing_prices.sql": make_missing_prices_sql(),
         ROOT / "data/sake-catalog/sources.csv": make_sources(records),
         ROOT / "data/sake-catalog/prefecture-counts.csv": make_counts(records),
         ROOT / "data/sake-catalog/attribute-sources.csv": make_attribute_sources(records),
         ROOT / "data/sake-catalog/attribute-counts.csv": make_attribute_counts(records),
+        ROOT / "data/sake-catalog/missing-prices.csv": make_price_sources(records, missing=True),
+        ROOT / "data/sake-catalog/verified-prices.csv": make_price_sources(records),
         ROOT / f"data/sake-catalog/import/sake_import_{len(records)}.sql.zip":
             make_import_zip(catalog_sql, f"sake_import_{len(records)}.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_attributes_{len(records)}.sql.zip":
             make_import_zip(attributes_sql, f"sake_attributes_{len(records)}.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_abv_text_{len(range_records)}.sql.zip":
             make_import_zip(abv_text_sql, f"sake_abv_text_{len(range_records)}.sql", checked_on),
+        ROOT / "data/sake-catalog/import/sake_prices.sql.zip":
+            make_import_zip(prices_sql, "sake_prices.sql", checked_on),
         ROOT / f"data/sake-catalog/import/sake_rebuild_{len(records)}.sql.zip":
             make_import_zip(rebuild_sql, f"sake_rebuild_{len(records)}.sql", checked_on),
     }

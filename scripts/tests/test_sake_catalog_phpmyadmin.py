@@ -1,4 +1,4 @@
-"""Import the rebuild and ABV-text update through real phpMyAdmin.
+"""Import the rebuild, ABV-text update, and capacity prices through phpMyAdmin.
 
 Run from the repository root (Docker and Python's standard library only):
     python3 scripts/tests/test_sake_catalog_phpmyadmin.py
@@ -244,7 +244,12 @@ def test_rebuild_import(database, phpmyadmin, rebuild_sql):
         assert "<h1>Error</h1>" not in verified_html, "phpMyAdmin reported a verification SQL error"
         verified = QueryResults(verified_html)
         assert verified.rows(["total_rows", "first_id", "last_id"]) == [["2296", "1", "2296"]]
-        assert verified.rows(["abv_rows", "price_rows", "image_url_rows"]) == [["1521", "919", "1914"]]
+        builder = builder_module()
+        records = builder.apply_enrichment(builder.load_records(ROOT / "data/sake-catalog/regions"),
+                                           ROOT / "data/sake-catalog/enrichment")
+        counts = [str(sum(row.get("_attributes", {}).get(field) is not None for row in records))
+                  for field in ("abv", "price", "image_url")]
+        assert verified.rows(["abv_rows", "price_rows", "image_url_rows"]) == [counts]
         assert verified.rows(["detail_rows"]) == [["2296"]]
         assert snapshot() == before_verification, "The read-only verification file changed fixture data"
         print("PASS: phpMyAdmin 5.2.3 imports 2296 products/details with FK checks enabled, "
@@ -355,6 +360,79 @@ def test_abv_text_upgrade(database, phpmyadmin, rebuild_sql):
         database.mysql(f"DROP DATABASE `{fixture}`;", check=False)
 
 
+def test_price_upgrade(database, phpmyadmin, rebuild_sql):
+    """Fill known prices/capacities while keeping all other saved catalog data."""
+    fixture = database.fresh_database()
+    try:
+        database.mysql(rebuild_sql, fixture)
+        database.mysql("""
+            UPDATE sake SET price = NULL;
+            UPDATE sake_page_details SET detail_json = JSON_SET(detail_json, '$.prices', JSON_ARRAY());
+            INSERT INTO users (id, name, email, password_hash)
+              VALUES (901, '価格差分HTTP検証', 'pma-price-test@example.invalid', 'test-only');
+            INSERT INTO favorites (user_id, sake_id) VALUES (901, 1);
+            INSERT INTO sake_reviews (user_id, sake_id, rating, comment)
+              VALUES (901, 1, 4, '価格追加時に保持するレビュー');
+            INSERT INTO sake_tags (sake_id, tag_id, score) VALUES (1, 1, 3);
+            CREATE TABLE pma_price_followup_probe (
+              id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, fk_checks INT NOT NULL
+            ) ENGINE=InnoDB;
+        """, fixture)
+        builder = builder_module()
+        records = builder.apply_enrichment(builder.load_records(ROOT / "data/sake-catalog/regions"),
+                                           ROOT / "data/sake-catalog/enrichment")
+        expected = {row["name"]: row["_attributes"] for row in records
+                    if row.get("_attributes", {}).get("price") is not None}
+        tables = ("breweries", "sake_types", "users", "favorites", "sake_reviews", "sake_tags", "tags")
+
+        def related():
+            return {table: database.mysql(f"SELECT * FROM `{table}` ORDER BY 1, 2;", fixture).stdout
+                    for table in tables}
+
+        def products():
+            return database.json_rows(fixture, """
+                SELECT JSON_ARRAY(id, name, price, brewery_id, sake_type_id, region, abv,
+                                  image_url, description, CAST(created_at AS CHAR)) FROM sake ORDER BY id;
+            """)
+
+        def pages():
+            return {row[0]: json.loads(row[1]) for row in database.json_rows(
+                fixture, "SELECT JSON_ARRAY(sake_id, detail_json) FROM sake_page_details ORDER BY sake_id;")}
+
+        original, original_pages, original_related = products(), pages(), related()
+        original_schema = database.mysql("SHOW CREATE TABLE sake;", fixture).stdout
+        difference = (ROOT / "data/sake_catalog_prices.sql").read_text(encoding="utf-8")
+        probes = "\nINSERT INTO pma_price_followup_probe (fk_checks) SELECT @@FOREIGN_KEY_CHECKS;\n"
+        imported = phpmyadmin.import_sql(fixture, difference + probes)
+        assert "Import has been successfully finished" in imported and "<h1>Error</h1>" not in imported
+        assert database.mysql("SELECT fk_checks FROM pma_price_followup_probe ORDER BY id;", fixture).stdout.splitlines() == ["1"]
+        updated, updated_pages = products(), pages()
+        assert updated_pages.keys() == original_pages.keys() and related() == original_related
+        assert database.mysql("SHOW CREATE TABLE sake;", fixture).stdout == original_schema
+        for old, new in zip(original, updated):
+            assert old[:2] + old[3:] == new[:2] + new[3:], "Price import changed another product value or ID"
+            attrs = expected.get(new[1])
+            assert new[2] == (attrs["price"] if attrs else None), ("Wrong price", new)
+            prices = ([{"volume": f"{attrs['volume_ml']}ml", "yen": attrs["price"]}] if attrs else [])
+            assert updated_pages[new[0]] == original_pages[new[0]] | {"prices": prices}, \
+                ("Price import changed ABV text, introduction, or other JSON fields", new[1])
+        first_details = database.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", fixture).stdout
+        repeated = phpmyadmin.import_sql(fixture, difference + probes)
+        assert "Import has been successfully finished" in repeated
+        assert products() == updated and related() == original_related
+        assert database.mysql("SELECT sake_id, detail_json FROM sake_page_details ORDER BY sake_id;", fixture).stdout == first_details
+        assert database.mysql("SELECT fk_checks FROM pma_price_followup_probe ORDER BY id;", fixture).stdout.splitlines() == ["1", "1"]
+        before_list = products(), pages()
+        listed = phpmyadmin.import_sql(fixture, (ROOT / "data/sake_catalog_missing_prices.sql").read_text(encoding="utf-8"))
+        summary = QueryResults(listed).rows(["target_database", "total_products", "null_price_rows", "zero_price_rows"])
+        assert summary == [[fixture, str(len(records)), str(len(records) - len(expected)), "0"]]
+        assert (products(), pages()) == before_list, "The missing-price report changed data"
+        print(f"PASS: phpMyAdmin fills {len(expected)} exact capacity/price pairs, preserves IDs/JSON/associations/schema, "
+              "repeats without changes, and runs the read-only missing-price report")
+    finally:
+        database.mysql(f"DROP DATABASE `{fixture}`;", check=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--container", help="Existing disposable, labeled MariaDB 10.11 container")
@@ -364,6 +442,7 @@ def main():
         with PhpMyAdminSandbox(database) as phpmyadmin:
             test_rebuild_import(database, phpmyadmin, rebuild_sql)
             test_abv_text_upgrade(database, phpmyadmin, rebuild_sql)
+            test_price_upgrade(database, phpmyadmin, rebuild_sql)
 
 
 if __name__ == "__main__":

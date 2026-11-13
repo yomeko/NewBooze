@@ -125,7 +125,67 @@ class SakeDetailTests {
                 .andExpect(content().string(not(containsString("参考価格：0円"))));
         mvc.perform(get("/search").param("name", "新政 No.6")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("未確認")))
-                .andExpect(content().string(not(containsString("0.0%"))));
+                .andExpect(content().string(containsString("価格：未確認")))
+                .andExpect(content().string(not(containsString("0.0%"))))
+                .andExpect(content().string(not(containsString(" ・ 0円"))));
+    }
+
+    @Test void searchAndDetailShowKnownAlternateCapacityWithoutGuessing720ml() throws Exception {
+        var page = new com.example.demo.model.SakePage(2, "新政 No.6", "既存の紹介文", "", null, null,
+                java.util.List.of(new com.example.demo.model.SakePage.Price("500ml", 2400)),
+                null, null, null, null, null, null, "15度以上16度未満");
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (2, ?)",
+                new tools.jackson.databind.ObjectMapper().writeValueAsString(page));
+        jdbc.update("UPDATE sake SET price = NULL, abv = NULL WHERE id = 2");
+        entityManager.clear();
+
+        mvc.perform(get("/search").param("name", "新政 No.6")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("500ml 2,400円（税込）")))
+                .andExpect(content().string(containsString("15度以上16度未満")))
+                .andExpect(content().string(not(containsString("720ml"))))
+                .andExpect(content().string(not(containsString(" ・ 0円"))));
+        String detail = mvc.perform(get("/sake/2")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("既存の紹介文")))
+                .andExpect(content().string(containsString("15度以上16度未満")))
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(detail).containsPattern("(?s)500ml</span>\\s*<strong>2,400円（税込）</strong>")
+                .doesNotContain("720ml", "価格：未確認");
+    }
+
+    @Test void capacityPricesPrefer720mlWithoutChoosingTheLowestPriceOrChangingStoredOrder() throws Exception {
+        var page = new com.example.demo.model.SakePage(2, "新政 No.6", "", "", null, null,
+                java.util.List.of(new com.example.demo.model.SakePage.Price("1800ml", 6600),
+                        new com.example.demo.model.SakePage.Price("500ml", 1200),
+                        new com.example.demo.model.SakePage.Price("720ml", 2750),
+                        new com.example.demo.model.SakePage.Price("720ml", 2200)),
+                null, null, null, null, null, null);
+        String stored = new tools.jackson.databind.ObjectMapper().writeValueAsString(page);
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (2, ?)", stored);
+        jdbc.update("UPDATE sake SET price = NULL WHERE id = 2");
+        entityManager.clear();
+
+        mvc.perform(get("/search").param("name", "新政 No.6")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("720ml 2,750円（税込）")))
+                .andExpect(content().string(not(containsString("500ml 1,200円（税込）"))))
+                .andExpect(content().string(not(containsString("720ml 2,200円（税込）"))));
+        String detail = mvc.perform(get("/sake/2")).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(detail).containsPattern("(?s)720ml</span>\\s*<strong>2,750円（税込）</strong>.*720ml</span>\\s*<strong>2,200円（税込）</strong>.*1800ml</span>");
+        assertThat(jdbc.queryForObject("SELECT detail_json FROM sake_page_details WHERE sake_id = 2", String.class))
+                .isEqualTo(stored);
+    }
+
+    @Test void mismatchedReferencePriceDoesNotBorrowAnUnrelatedCapacity() throws Exception {
+        jdbc.update("DELETE FROM sake_page_details WHERE sake_id = 2");
+        jdbc.update("INSERT INTO sake_page_details (sake_id, detail_json) VALUES (2, ?)",
+                "{\"id\":2,\"name\":\"新政 No.6\",\"prices\":[{\"volume\":\"720ml\",\"yen\":2475}]}");
+        jdbc.update("UPDATE sake SET price = 2180 WHERE id = 2");
+        entityManager.clear();
+        mvc.perform(get("/search").param("name", "新政 No.6")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("参考価格：2,180円（対象容量：未確認）")))
+                .andExpect(content().string(not(containsString("720ml 2,180円"))));
     }
 
     @Test void searchAndDetailKeepOfficialAbvRangesAndExistingIntroductionAndPrices() throws Exception {

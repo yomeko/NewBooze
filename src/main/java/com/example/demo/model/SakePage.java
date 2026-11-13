@@ -64,11 +64,45 @@ public record SakePage(long id, String name, String introduction, String brewery
         return abvText.isEmpty() ? "未確認" : abvText;
     }
 
+    /** 確認できた720ml価格を先頭にし、同じ優先度の入力順・価格は変えない。 */
+    public List<Price> orderedPrices() {
+        return orderedPrices(prices);
+    }
+
+    private static List<Price> orderedPrices(List<Price> values) {
+        return values == null ? List.of() : values.stream().filter(java.util.Objects::nonNull)
+                .sorted(Comparator.comparingInt(price -> {
+                    if (price.yen() != null && price.is720ml()) return 0;
+                    if (price.yen() != null && !price.volume().isEmpty()) return 1;
+                    if (price.yen() != null) return 2;
+                    return price.is720ml() ? 3 : 4;
+                })).toList();
+    }
+
+    /** 数値の参考価格に別商品の容量を付けず、対応する確認済み価格を表示する。 */
+    public static String formatPrice(int referencePrice, List<Price> prices) {
+        var known = orderedPrices(prices).stream().filter(price -> price.yen() != null);
+        if (referencePrice > 0) known = known.filter(price -> price.yen() == referencePrice);
+        var selected = known.findFirst();
+        if (selected.isPresent()) {
+            Price price = selected.get();
+            return (price.volume().isEmpty() ? "対象容量：未確認" : price.volume())
+                    + " " + String.format(Locale.ROOT, "%,d円（税込）", price.yen());
+        }
+        return referencePrice > 0
+                ? String.format(Locale.ROOT, "参考価格：%,d円（対象容量：未確認）", referencePrice)
+                : "価格：未確認";
+    }
+
     // 容量と価格の組み合わせ。価格が未登録ならnullを許し、登録する価格は正の整数に限る。
     public record Price(String volume, Integer yen) {
         public Price {
             volume = clean(volume);
             if (yen != null && yen <= 0) throw new IllegalArgumentException("価格は正の整数かnullにしてください");
+        }
+
+        private boolean is720ml() {
+            return volume.replaceAll("[\\s　]+", "").equalsIgnoreCase("720ml");
         }
     }
 

@@ -56,6 +56,8 @@ class ProductImageRenderingTests {
         var pages = mock(SakePageService.class);
         when(pages.pageFor(any())).thenReturn(new SakePage(1, entity.getName(), "", "",
                 null, null, null, null, null, null, OFFICIAL_PAGE, null, null));
+        when(pages.specificationsFor(any())).thenReturn(java.util.Map.of(
+                1L, new SakePageService.SpecificationLabels("未確認", "価格：未確認")));
         interactions = mock(SakeInteractionService.class);
         when(interactions.publicReviews(1L, "newest", 0)).thenReturn(
                 new SakeInteractionService.ReviewPage(List.of(), 0, 0, 0, 1, "newest"));

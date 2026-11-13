@@ -398,7 +398,7 @@ erDiagram
 | `sake_id` | BIGINT UNSIGNED | ○ | — | PK, FK → sake.id |
 | `detail_json` | LONGTEXT | ○ | — | — |
 
-`fk_sake_page_details` は商品削除時にCASCADEで詳細も削除します。管理登録でSakePageのJSONを基本情報と同じトランザクション内に保存します。JPA Entityは設けず、JdbcTemplateで取得・保存します。DBの紹介を優先し、未保存なら既存のsake-pages.json、さらに未登録なら基本情報で補完します。範囲度数はdetail_jsonのabvTextに公式表記で保存し、sakeの10列とabvのDECIMAL型を維持します。data/sake_catalog_abv_text.sqlは既存紹介・価格・入力値を保って補完します。
+`fk_sake_page_details` は商品削除時にCASCADEで詳細も削除します。管理登録でSakePageのJSONを基本情報と同じトランザクション内に保存します。JPA Entityは設けず、JdbcTemplateで取得・保存します。DBの紹介を優先し、未保存なら既存のsake-pages.json、さらに未登録なら基本情報で補完します。範囲度数はabvText、税込価格と容量はpricesに保存します。sakeの10列と数値型を維持し、data/sake_catalog_prices.sqlでNULL価格と空pricesだけを補完します。既存紹介・度数原文・入力値は保持します。
 
 ## 5. 機能と保存ルール
 

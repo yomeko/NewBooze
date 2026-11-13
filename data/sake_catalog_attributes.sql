@@ -1,10 +1,10 @@
 -- 一升の出会い：確認済み属性の空欄補完。商品そのものは追加しない。
 -- MySQL 8.0 / MariaDB 10.11用。対象DBを選択し、同じ接続でファイル全体を実行する。
--- 既存の度数・価格・画像URLは空欄だけを補完。詳細JSONの紹介等を保持し空のabvTextだけ追記。
+-- 既存属性は空欄だけ補完。詳細JSONの紹介等を保持し、空のpricesとabvTextだけ追記。
 -- USE/CREATE DATABASE/DELETEは行わない。mysql --forceは禁止。
 -- 先に data/sake-catalog/README.md を読み、接続先・バックアップを確認する。
 -- 出典・確認日: data/sake-catalog/sources.csv / attribute-sources.csv
--- 収録商品数: 2056。容量違いは統合。日本全国の全商品の網羅ではない。
+-- 収録商品数: 2061。容量違いは統合。日本全国の全商品の網羅ではない。
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 SELECT DATABASE() AS target_database;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_source;
@@ -12,6 +12,8 @@ DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_aliases;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_existing_keys;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_source_keys;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_matches;
+DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_price_fallback;
+DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_price_pages;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_abv_fallback;
 DROP TEMPORARY TABLE IF EXISTS tmp_sake_catalog_abv_pages;
 CREATE TEMPORARY TABLE tmp_sake_catalog_source (
@@ -819,30 +821,30 @@ INSERT INTO tmp_sake_catalog_source
 -- 14 神奈川県 / 43商品
 INSERT INTO tmp_sake_catalog_source
   (seq, prefecture_code, prefecture, brewery, brewery_key, name, name_key, sake_type, source_url, checked_on, abv, abv_text, price, volume_ml, image_url, price_source_url) VALUES
-  (880, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 とんぼスパークリング 活性純米にごり酒（火入れ）', 'いづみ橋とんぼスパークリング活性純米にごり酒(火入れ)', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/6e0576e0f5470cd07c5e12bb66d0fb91-97x300.jpg', NULL),
-  (881, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 ほしじるし 純米吟醸', 'いづみ橋ほしじるし純米吟醸', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/1b4a42fdbd7fcdb75478a78238a67766-100x300.jpg', NULL),
+  (880, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 とんぼスパークリング 活性純米にごり酒（火入れ）', 'いづみ橋とんぼスパークリング活性純米にごり酒(火入れ)', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 15.0, '15度', 825, 250, 'https://izumibashi.com/wp-content/uploads/6e0576e0f5470cd07c5e12bb66d0fb91-97x300.jpg', 'https://shop.izumibashi.com/products/とんぼ-スパークリング微発泡-250ml'),
+  (881, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 ほしじるし 純米吟醸', 'いづみ橋ほしじるし純米吟醸', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16%', 2420, 720, 'https://izumibashi.com/wp-content/uploads/1b4a42fdbd7fcdb75478a78238a67766-100x300.jpg', 'https://shop.izumibashi.com/products/数量限定-ほしじるし-純米吟醸720ml'),
   (882, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 夏ヤゴ 13（サーティーン） 生酛仕込み 純米酒', 'いづみ橋夏ヤゴ13(サーティーン)生酛仕込み純米酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 13.0, '13％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/85febd312155592fbd226d1ebc4eb327-166x300.jpg', NULL),
   (883, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 夏ヤゴ MOMO 13 純米酒 生酛仕込み', 'いづみ橋夏ヤゴmomo13純米酒生酛仕込み', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 13.0, '13％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/74eb8a2d52d5605295aa0fac56d4f608-150x300.jpg', NULL),
   (884, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 夏ヤゴ ピンク 生酛 純米原酒 ～雄町～', 'いづみ橋夏ヤゴピンク生酛純米原酒~雄町~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 18.0, '18%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/5527cc0db886d7fb1c09285a1c6d2e5e-150x300.jpg', NULL),
   (885, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 夏ヤゴ ブルー 純米原酒 ～山田錦～', 'いづみ橋夏ヤゴブルー純米原酒~山田錦~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 18.0, '18%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/natuyago1-160x300.jpg', NULL),
-  (886, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 海老名耕地', 'いづみ橋恵海老名耕地', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/d84b73c2a63bbd9a11bbd16175ea7ade-240x300.jpg', NULL),
-  (887, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 赤ラベル 純米原酒', 'いづみ橋恵赤ラベル純米原酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 18.0, '18％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/517ad61877c29618edc0fa45a2dd2920-251x300.jpg', NULL),
-  (888, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 青ラベル 純米吟醸酒', 'いづみ橋恵青ラベル純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/ffe8190c3a95b535243f67b2fb3ee6ee-177x300.jpg', NULL),
-  (889, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 桃色 黒とんぼ ～神力米～', 'いづみ橋桃色黒とんぼ~神力米~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/f375f053096305e2714445d56a9fca07-188x300.jpg', NULL),
-  (890, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 楽風舞 純米吟醸酒', 'いづみ橋楽風舞純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/rakufumai720-87x300.jpg', NULL),
-  (891, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 山田錦 生酛純米酒', 'いづみ橋秋とんぼ山田錦生酛純米酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/45e7926b665bd4e47f6f9a1ad65f17d6-243x300.jpg', NULL),
-  (892, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 楽風舞 純米吟醸酒', 'いづみ橋秋とんぼ楽風舞純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/af58d16bbcca3602506ee5a45caf7d64-188x300.jpg', NULL),
-  (893, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 雄町 生酛 純米酒', 'いづみ橋秋とんぼ雄町生酛純米酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/akitonbo-omachi-194x300.jpg', NULL),
+  (886, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 海老名耕地', 'いづみ橋恵海老名耕地', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 1870, 720, 'https://izumibashi.com/wp-content/uploads/d84b73c2a63bbd9a11bbd16175ea7ade-240x300.jpg', 'https://shop.izumibashi.com/products/megumi-ebinakouchi-720ml'),
+  (887, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 赤ラベル 純米原酒', 'いづみ橋恵赤ラベル純米原酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 18.0, '18％', 1980, 720, 'https://izumibashi.com/wp-content/uploads/517ad61877c29618edc0fa45a2dd2920-251x300.jpg', 'https://shop.izumibashi.com/products/megumi-redlabel-720ml'),
+  (888, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 恵 青ラベル 純米吟醸酒', 'いづみ橋恵青ラベル純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', 2090, 720, 'https://izumibashi.com/wp-content/uploads/ffe8190c3a95b535243f67b2fb3ee6ee-177x300.jpg', 'https://shop.izumibashi.com/products/megumi-bleulabel-720ml'),
+  (889, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 桃色 黒とんぼ ～神力米～', 'いづみ橋桃色黒とんぼ~神力米~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 2200, 720, 'https://izumibashi.com/wp-content/uploads/f375f053096305e2714445d56a9fca07-188x300.jpg', 'https://shop.izumibashi.com/products/桃色黒とんぼ-きもと-純米酒-720ml'),
+  (890, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 楽風舞 純米吟醸酒', 'いづみ橋楽風舞純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 2090, 720, 'https://izumibashi.com/wp-content/uploads/rakufumai720-87x300.jpg', 'https://shop.izumibashi.com/products/720mlいづみ橋-楽風舞-純米吟醸酒-720ml'),
+  (891, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 山田錦 生酛純米酒', 'いづみ橋秋とんぼ山田錦生酛純米酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 2090, 720, 'https://izumibashi.com/wp-content/uploads/45e7926b665bd4e47f6f9a1ad65f17d6-243x300.jpg', 'https://shop.izumibashi.com/products/autumn-tonbo-yamadanishiki-720ml'),
+  (892, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 楽風舞 純米吟醸酒', 'いづみ橋秋とんぼ楽風舞純米吟醸酒', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16%', 2090, 720, 'https://izumibashi.com/wp-content/uploads/af58d16bbcca3602506ee5a45caf7d64-188x300.jpg', 'https://shop.izumibashi.com/products/autumn-tonbo-yakuhumai-720ml'),
+  (893, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 秋とんぼ 雄町 生酛 純米酒', 'いづみ橋秋とんぼ雄町生酛純米酒', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 2200, 720, 'https://izumibashi.com/wp-content/uploads/akitonbo-omachi-194x300.jpg', 'https://shop.izumibashi.com/products/autumn-tonbo-omachi-720ml'),
   (894, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 空色 黒とんぼ ～雄町米～', 'いづみ橋空色黒とんぼ~雄町米~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/ae46b1f460ee46f789c27b264a6cb421-3-e1717130374841-199x300.jpg', NULL),
-  (895, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米吟醸 白麹仕込み', 'いづみ橋純米吟醸白麹仕込み', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/156984573_1800x1800-300x300.webp', NULL),
-  (896, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 TONBO20', 'いづみ橋純米大吟醸tonbo20', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 14.0, '14%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/0044-1-1-242x300.jpg', NULL),
+  (895, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米吟醸 白麹仕込み', 'いづみ橋純米吟醸白麹仕込み', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', 2750, 720, 'https://izumibashi.com/wp-content/uploads/156984573_1800x1800-300x300.webp', 'https://shop.izumibashi.com/products/junmaiginjou-shirokouji-720ml'),
+  (896, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 TONBO20', 'いづみ橋純米大吟醸tonbo20', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 14.0, '14%', 23100, 720, 'https://izumibashi.com/wp-content/uploads/0044-1-1-242x300.jpg', 'https://shop.izumibashi.com/products/tonbo20-限定酒'),
   (897, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 とんぼラベル 山田錦', 'いづみ橋純米大吟醸とんぼラベル山田錦', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/f412900d29c5e79900f796378eb3141a-1-214x300.jpg', NULL),
-  (898, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 とんぼラベル 楽風舞 生酛造り', 'いづみ橋純米大吟醸とんぼラベル楽風舞生酛造り', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/Rakufumai35-212x300.jpg', NULL),
+  (898, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 とんぼラベル 楽風舞 生酛造り', 'いづみ橋純米大吟醸とんぼラベル楽風舞生酛造り', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 15.0, '15％', 8030, 720, 'https://izumibashi.com/wp-content/uploads/Rakufumai35-212x300.jpg', 'https://shop.izumibashi.com/products/junmaidaiginjou-tonbo-label-rakuhumai-720ml'),
   (899, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 純米大吟醸 とんぼラベル 雄町 生酛', 'いづみ橋純米大吟醸とんぼラベル雄町生酛', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16%', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/8eccc1d2beb17ff973ed31dd0cce9ac3-100x300.jpg', NULL),
   (900, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 雫ラベル 生酛・純米吟醸（生原酒）', 'いづみ橋雫ラベル生酛・純米吟醸(生原酒)', '純米吟醸', 'https://izumibashi.com/product/', '2026-11-10', 17.0, '17度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/shizuku1-200x300.jpg', NULL),
-  (901, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 黒とんぼ 生酛純米酒 山田錦 ～since2011～', 'いづみ橋黒とんぼ生酛純米酒山田錦~since2011~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/b554e0f00ca98d32e5f1264454d99c6f-241x300.jpg', NULL),
-  (902, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', '特選 純米大吟醸 生酛仕込 いづみ橋', '特選純米大吟醸生酛仕込いづみ橋', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/31e6e78897b6de9b0ac5b949052952ec-214x300.jpg', NULL),
-  (903, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', '純米大吟醸 いづみ橋 山田錦 扁平精米48%', '純米大吟醸いづみ橋山田錦扁平精米48%', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://izumibashi.com/wp-content/uploads/015d1db0df0aabe9b3c2c3a0cec1ef76-198x300.jpg', NULL),
+  (901, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', 'いづみ橋 黒とんぼ 生酛純米酒 山田錦 ～since2011～', 'いづみ橋黒とんぼ生酛純米酒山田錦~since2011~', '純米酒', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 2200, 720, 'https://izumibashi.com/wp-content/uploads/b554e0f00ca98d32e5f1264454d99c6f-241x300.jpg', 'https://shop.izumibashi.com/products/kurotonbo-kimoto-720ml'),
+  (902, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', '特選 純米大吟醸 生酛仕込 いづみ橋', '特選純米大吟醸生酛仕込いづみ橋', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16％', 6930, 720, 'https://izumibashi.com/wp-content/uploads/31e6e78897b6de9b0ac5b949052952ec-214x300.jpg', 'https://shop.izumibashi.com/products/specialprize-junmaidaiginjou-kimoto-720ml'),
+  (903, 14, '神奈川県', '泉橋酒造株式会社', '泉橋酒造', '純米大吟醸 いづみ橋 山田錦 扁平精米48%', '純米大吟醸いづみ橋山田錦扁平精米48%', '純米大吟醸', 'https://izumibashi.com/product/', '2026-11-10', 16.0, '16度', 3630, 720, 'https://izumibashi.com/wp-content/uploads/015d1db0df0aabe9b3c2c3a0cec1ef76-198x300.jpg', 'https://shop.izumibashi.com/products/父の日ラベル-純米大吟醸-いづみ橋-扁平精米48-720ml-手提げ付き'),
   (904, 14, '神奈川県', '熊澤酒造株式会社', '熊澤酒造', '千峰天青 夏 純米吟醸', '千峰天青夏純米吟醸', '純米吟醸', 'https://kumazawa.jp/sake-beer/kumazawa/lineup/', '2026-11-10', 14.0, '14度', NULL, NULL, NULL, NULL),
   (905, 14, '神奈川県', '熊澤酒造株式会社', '熊澤酒造', '千峰天青 熊本九号酵母 純米吟醸', '千峰天青熊本九号酵母純米吟醸', '純米吟醸', 'https://kumazawa.jp/sake-beer/kumazawa/lineup/', '2026-11-10', 16.0, '16度', NULL, NULL, NULL, NULL),
   (906, 14, '神奈川県', '熊澤酒造株式会社', '熊澤酒造', '千峰天青 純米吟醸', '千峰天青純米吟醸', '純米吟醸', 'https://kumazawa.jp/sake-beer/kumazawa/lineup/', '2026-11-10', 16.0, '16度', NULL, NULL, NULL, NULL),
@@ -1100,7 +1102,7 @@ INSERT INTO tmp_sake_catalog_source
   (1150, 19, '山梨県', '笹一酒造株式会社', '笹一酒造', '笹一 純米大吟醸 甲州夢山水', '笹一純米大吟醸甲州夢山水', '純米大吟醸', 'https://www.sasaichi.co.jp/product/index1.php', '2026-11-10', NULL, '16度以上17度未満', NULL, NULL, NULL, NULL),
   (1151, 19, '山梨県', '笹一酒造株式会社', '笹一酒造', '笹一 純米生', '笹一純米生', '純米酒', 'https://www.sasaichi.co.jp/yata/', '2026-11-10', NULL, '15度以上16度未満', 525, 300, 'https://www.sasaichi.co.jp/images/yata/img03.jpg', 'https://www.sasaichi.co.jp/yata/');
 
--- 20 長野県 / 44商品
+-- 20 長野県 / 49商品
 INSERT INTO tmp_sake_catalog_source
   (seq, prefecture_code, prefecture, brewery, brewery_key, name, name_key, sake_type, source_url, checked_on, abv, abv_text, price, volume_ml, image_url, price_source_url) VALUES
   (1152, 20, '長野県', '宮坂醸造株式会社', '宮坂醸造', '真澄 あらばしり', '真澄あらばしり', '純米吟醸', 'https://www.masumi.co.jp/product/', '2026-11-10', 17.0, '17度', 1925, 720, 'https://www.masumi.co.jp/wp/wp-content/themes/masumi/img/photo/product/arabashiri_1.jpg', 'https://www.masumi.co.jp/product/arabashiri'),
@@ -1121,32 +1123,37 @@ INSERT INTO tmp_sake_catalog_source
   (1167, 20, '長野県', '宮坂醸造株式会社', '宮坂醸造', '真澄 辛口ゴールド', '真澄辛口ゴールド', '普通酒', 'https://www.masumi.co.jp/product/', '2026-11-10', 15.0, '15度', 1210, 720, 'https://www.masumi.co.jp/wp/wp-content/themes/masumi/img/photo/product/gold_1.jpg', 'https://www.masumi.co.jp/product/karakuchi-gold'),
   (1168, 20, '長野県', '宮坂醸造株式会社', '宮坂醸造', '真澄 辛口生一本', '真澄辛口生一本', '純米吟醸', 'https://www.masumi.co.jp/product/', '2026-11-10', 15.0, '15度', 2299, 720, NULL, 'https://www.masumi.co.jp/product/karakuchiki-ippon'),
   (1169, 20, '長野県', '宮坂醸造株式会社', '宮坂醸造', '真澄 銀撰', '真澄銀撰', '普通酒', 'https://www.masumi.co.jp/product/', '2026-11-10', 14.0, '14度', 2310, 1800, 'https://www.masumi.co.jp/wp/wp-content/themes/masumi/img/photo/product/ginsen_1.jpg', 'https://www.masumi.co.jp/product/ginsen'),
-  (1170, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 BENNETT（ベネット） 中取り純米大吟醸', '彗bennett(ベネット)中取り純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_bennet.png', NULL),
-  (1171, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 DONATI（ドナティ） 初汲み純米吟醸', '彗donati(ドナティ)初汲み純米吟醸', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_donaty.png', NULL),
-  (1172, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 HALLEY（ハレー） 直汲み純米', '彗halley(ハレー)直汲み純米', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_halley.png', NULL),
-  (1174, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 うわずみ どむろく', '渓流うわずみどむろく', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-uwazumi.png', NULL),
-  (1175, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく', '渓流どむろく', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-domuroku.png', NULL),
-  (1176, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく 純米', '渓流どむろく純米', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 14.0, '14％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-jyunmai.png', NULL),
-  (1177, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく 純米大吟醸', '渓流どむろく純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 14.0, '14％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-jyumaidai.png', NULL),
-  (1178, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 マウンテンダンス スパークリング', '渓流マウンテンダンススパークリング', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 12.0, '12％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/spsake.png', NULL),
+  (1170, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 BENNETT（ベネット） 中取り純米大吟醸', '彗bennett(ベネット)中取り純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 2365, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_bennet.png', 'https://www.keiryu.jp/c/char/K-267'),
+  (1171, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 DONATI（ドナティ） 初汲み純米吟醸', '彗donati(ドナティ)初汲み純米吟醸', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 2035, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_donaty.png', 'https://www.keiryu.jp/c/char/K-265'),
+  (1172, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '彗 HALLEY（ハレー） 直汲み純米', '彗halley(ハレー)直汲み純米', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 1595, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_cher_halley.png', 'https://www.keiryu.jp/c/char/K-266'),
+  (1173, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 ３倍どむ', '渓流3倍どむ', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', NULL, NULL, 1595, 720, NULL, 'https://www.keiryu.jp/c/domuroku/K-510'),
+  (1174, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 うわずみ どむろく', '渓流うわずみどむろく', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', 1848, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-uwazumi.png', 'https://www.keiryu.jp/c/domuroku/K-097'),
+  (1175, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく', '渓流どむろく', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', 1452, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-domuroku.png', 'https://www.keiryu.jp/c/domuroku/K-017'),
+  (1176, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく 純米', '渓流どむろく純米', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 14.0, '14％', 1540, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-jyunmai.png', 'https://www.keiryu.jp/c/domuroku/K-259'),
+  (1177, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 どむろく 純米大吟醸', '渓流どむろく純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 14.0, '14％', 2200, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_dom-jyumaidai.png', 'https://www.keiryu.jp/c/domuroku/K-539'),
+  (1178, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 マウンテンダンス スパークリング', '渓流マウンテンダンススパークリング', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 12.0, '12％', 2090, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/spsake.png', 'https://www.keiryu.jp/c/keiryu/K-546'),
   (1179, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 大吟醸', '渓流大吟醸', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_daigin.png', NULL),
-  (1180, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 大吟醸 しずく', '渓流大吟醸しずく', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_shizuku.png', NULL),
-  (1181, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり大吟醸', '渓流朝しぼり大吟醸', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 18.0, '18％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-daigin.png', NULL),
-  (1182, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり本醸造', '渓流朝しぼり本醸造', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 19.0, '19％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-honjyozo.png', NULL),
-  (1183, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり番外品（純米大吟醸）', '渓流朝しぼり番外品(純米大吟醸)', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-bangai.png', NULL),
-  (1184, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり純米吟醸', '渓流朝しぼり純米吟醸', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-jyunmaigin.png', NULL),
-  (1185, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり純米酒', '渓流朝しぼり純米酒', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-jyunmai.png', NULL),
-  (1186, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 純米吟醸 黒ラベル', '渓流純米吟醸黒ラベル', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_kurolabel.png', NULL),
-  (1191, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 別誂純米大吟醸 生酒', '直虎別誂純米大吟醸生酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-betsuaturae.png', NULL),
-  (1192, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 番外品純米大吟醸 生原酒', '直虎番外品純米大吟醸生原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-bangai.png', NULL),
-  (1193, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 直取り あらばしり純米吟醸 生原酒', '直虎直取りあらばしり純米吟醸生原酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-arabasiri.png', NULL),
-  (1194, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米吟醸 生原酒', '直虎純米吟醸生原酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-kiippon.png', NULL),
-  (1195, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米吟醸 生酒', '直虎純米吟醸生酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-jyunmai.png', NULL),
-  (1196, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米大吟醸 原酒', '直虎純米大吟醸原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-junnmaidai.png', NULL),
-  (1197, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 プレミアムフラワー 純米大吟醸', '遠藤プレミアムフラワー純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/pf.png', NULL),
-  (1198, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 大吟醸', '遠藤大吟醸', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 18.0, '18％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-daigin.png', NULL),
-  (1199, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 生一本 純米酒', '遠藤生一本純米酒', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-kiippon.png', NULL),
-  (1200, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 純米大吟醸 生原酒', '遠藤純米大吟醸生原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', NULL, NULL, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-jyumaidai.png', NULL);
+  (1180, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 大吟醸 しずく', '渓流大吟醸しずく', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 16.0, '16％', 4950, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_shizuku.png', 'https://www.keiryu.jp/c/keiryu/K-003'),
+  (1181, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり大吟醸', '渓流朝しぼり大吟醸', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 18.0, '18％', 1782, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-daigin.png', 'https://www.keiryu.jp/c/asashibori/K-010'),
+  (1182, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり本醸造', '渓流朝しぼり本醸造', '本醸造', 'https://endo-keiryu.com/product/', '2026-11-10', 19.0, '19％', 1452, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-honjyozo.png', 'https://www.keiryu.jp/c/asashibori/K-004'),
+  (1183, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり番外品（純米大吟醸）', '渓流朝しぼり番外品(純米大吟醸)', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 2090, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-bangai.png', 'https://www.keiryu.jp/c/asashibori/K-290'),
+  (1184, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり純米吟醸', '渓流朝しぼり純米吟醸', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 1672, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-jyunmaigin.png', 'https://www.keiryu.jp/c/asashibori/K-119'),
+  (1185, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 朝しぼり純米酒', '渓流朝しぼり純米酒', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 1562, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_asa-jyunmai.png', 'https://www.keiryu.jp/c/asashibori/K-008'),
+  (1186, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 純米吟醸 黒ラベル', '渓流純米吟醸黒ラベル', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 1720, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_kurolabel.png', 'https://www.keiryu.jp/c/keiryu/T-336'),
+  (1187, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 純米大吟醸', '渓流純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', NULL, NULL, 6050, 720, NULL, 'https://www.keiryu.jp/c/keiryu/K-374'),
+  (1188, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 純米酒', '渓流純米酒', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', NULL, NULL, 1430, 720, NULL, 'https://www.keiryu.jp/c/keiryu/K-149'),
+  (1189, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 蔵囲い', '渓流蔵囲い', '普通酒', 'https://endo-keiryu.com/product/', '2026-11-10', NULL, NULL, 1012, 720, NULL, 'https://www.keiryu.jp/c/keiryu/K-038'),
+  (1190, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '渓流 辛口', '渓流辛口', '普通酒', 'https://endo-keiryu.com/product/', '2026-11-10', NULL, NULL, 1012, 720, NULL, 'https://www.keiryu.jp/c/keiryu/K-033'),
+  (1191, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 別誂純米大吟醸 生酒', '直虎別誂純米大吟醸生酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 2035, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-betsuaturae.png', 'https://www.keiryu.jp/c/naotora/K-407'),
+  (1192, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 番外品純米大吟醸 生原酒', '直虎番外品純米大吟醸生原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 2090, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-bangai.png', 'https://www.keiryu.jp/c/naotora/K-338'),
+  (1193, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 直取り あらばしり純米吟醸 生原酒', '直虎直取りあらばしり純米吟醸生原酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 1925, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-arabasiri.png', 'https://www.keiryu.jp/c/naotora/K-408'),
+  (1194, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米吟醸 生原酒', '直虎純米吟醸生原酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 1870, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-kiippon.png', 'https://www.keiryu.jp/c/naotora/K-322'),
+  (1195, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米吟醸 生酒', '直虎純米吟醸生酒', '純米吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 1815, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-jyunmai.png', 'https://www.keiryu.jp/c/naotora/K-335'),
+  (1196, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '直虎 純米大吟醸 原酒', '直虎純米大吟醸原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 2530, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_naotora-junnmaidai.png', 'https://www.keiryu.jp/c/naotora/K-422'),
+  (1197, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 プレミアムフラワー 純米大吟醸', '遠藤プレミアムフラワー純米大吟醸', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 5830, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/pf.png', 'https://www.keiryu.jp/c/junmaidaiginjo/K-397'),
+  (1198, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 大吟醸', '遠藤大吟醸', '大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 18.0, '18％', 1760, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-daigin.png', 'https://www.keiryu.jp/c/endo/K-329'),
+  (1199, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 生一本 純米酒', '遠藤生一本純米酒', '純米酒', 'https://endo-keiryu.com/product/', '2026-11-10', 15.0, '15％', 1595, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-kiippon.png', 'https://www.keiryu.jp/c/endo/K-392'),
+  (1200, 20, '長野県', '株式会社遠藤酒造場', '遠藤酒造場', '遠藤 純米大吟醸 生原酒', '遠藤純米大吟醸生原酒', '純米大吟醸', 'https://endo-keiryu.com/product/', '2026-11-10', 17.0, '17％', 1925, 720, 'https://endo-keiryu.com/wp/wp-content/themes/endo-sakebrewery_Theme/assets/img/product/iph_endo-jyumaidai.png', 'https://www.keiryu.jp/c/endo/K-418');
 
 -- 21 岐阜県 / 60商品
 INSERT INTO tmp_sake_catalog_source
@@ -1456,32 +1463,32 @@ INSERT INTO tmp_sake_catalog_source
   (1501, 26, '京都府', '月桂冠株式会社', '月桂冠', '月桂冠 辛口', '月桂冠辛口', '普通酒', 'https://www.gekkeikan.co.jp/products/all/', '2026-11-10', NULL, '14度以上15度未満', NULL, NULL, 'https://www.gekkeikan.co.jp/products/lib/images/product/thumbnail/type04_karakuchi.jpg', NULL),
   (1502, 26, '京都府', '月桂冠株式会社', '月桂冠', '月桂冠 鳳麟 純米吟醸', '月桂冠鳳麟純米吟醸', '純米吟醸', 'https://www.gekkeikan.co.jp/products/all/', '2026-11-10', NULL, '16度以上17度未満', NULL, NULL, 'https://www.gekkeikan.co.jp/products/lib/images/product/thumbnail/type01_horin_ginjo.jpg', NULL),
   (1503, 26, '京都府', '月桂冠株式会社', '月桂冠', '月桂冠 鳳麟 純米大吟醸', '月桂冠鳳麟純米大吟醸', '純米大吟醸', 'https://www.gekkeikan.co.jp/products/all/', '2026-11-10', NULL, '16度以上17度未満', NULL, NULL, 'https://www.gekkeikan.co.jp/products/lib/images/product/thumbnail/type01_horin_daiginjo.jpg', NULL),
-  (1504, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米吟醸 GREEN 山田錦', '玉乃光有機純米吟醸green山田錦', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/GREENyamada.png', NULL),
-  (1505, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米吟醸 GREEN 雄町', '玉乃光有機純米吟醸green雄町', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/1044f0fe82da91c8516a355d9aea461a-1000x1000.png', NULL),
-  (1506, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米大吟醸 備前雄町100％', '玉乃光有機純米大吟醸備前雄町100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/10/d10d61055738b3c12b516d2782149ca8-1000x1000.png', NULL),
-  (1507, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 KARAKUCHI', '玉乃光純米吟醸karakuchi', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/KARAKICHI_720ml-301x1000.png', NULL),
-  (1508, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 TAMA', '玉乃光純米吟醸tama', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 12.0, '12度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-7.png', NULL),
-  (1509, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 冷蔵酒', '玉乃光純米吟醸冷蔵酒', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 14.0, '14度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/88ef799ac3c5b0bf287f5ced236e2d5e-414x1000.png', NULL),
-  (1510, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 蔵元直送なまざけ', '玉乃光純米吟醸蔵元直送なまざけ', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/e23022348ea27cf2812d16ad9a477605-310x1000.png', NULL),
-  (1511, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 酒楽', '玉乃光純米吟醸酒楽', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 14.0, '14度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/d17ce4db97f9103d57afccc6025960eb-311x1000.png', NULL),
-  (1512, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 酒魂', '玉乃光純米吟醸酒魂', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/63dbbb4369f08ff31a667f61b60a2a8e-377x1000.png', NULL),
-  (1513, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 青まねきつね', '玉乃光純米吟醸青まねきつね', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/c2bdbd1db00e4d0ebdc12209e6bbb53e.png', NULL),
-  (1514, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 Black Label', '玉乃光純米大吟醸blacklabel', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/BL720_0-1000x1000.png', NULL),
+  (1504, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米吟醸 GREEN 山田錦', '玉乃光有機純米吟醸green山田錦', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 2640, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/GREENyamada.png', 'https://ec.tamanohikari.co.jp/products/green-yamada?variant=41686187114693'),
+  (1505, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米吟醸 GREEN 雄町', '玉乃光有機純米吟醸green雄町', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 2640, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/1044f0fe82da91c8516a355d9aea461a-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/green-omati?variant=41686295773381'),
+  (1506, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 有機純米大吟醸 備前雄町100％', '玉乃光有機純米大吟醸備前雄町100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 11000, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/10/d10d61055738b3c12b516d2782149ca8-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/organic_omachi?variant=45249954054341'),
+  (1507, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 KARAKUCHI', '玉乃光純米吟醸karakuchi', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 1485, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/KARAKICHI_720ml-301x1000.png', 'https://ec.tamanohikari.co.jp/products/karakuchi?variant=39545688522949'),
+  (1508, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 TAMA', '玉乃光純米吟醸tama', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 12.0, '12度', 1980, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-7.png', 'https://ec.tamanohikari.co.jp/products/tama?variant=39530719543493'),
+  (1509, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 冷蔵酒', '玉乃光純米吟醸冷蔵酒', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 14.0, '14度', 528, 300, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/88ef799ac3c5b0bf287f5ced236e2d5e-414x1000.png', 'https://ec.tamanohikari.co.jp/products/reizoushu?variant=39530835411141'),
+  (1510, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 蔵元直送なまざけ', '玉乃光純米吟醸蔵元直送なまざけ', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 1650, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/e23022348ea27cf2812d16ad9a477605-310x1000.png', 'https://ec.tamanohikari.co.jp/products/namazake?variant=39545852985541'),
+  (1511, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 酒楽', '玉乃光純米吟醸酒楽', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 14.0, '14度', 1210, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/d17ce4db97f9103d57afccc6025960eb-311x1000.png', 'https://ec.tamanohikari.co.jp/products/shuraku?variant=39545786630341'),
+  (1512, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 酒魂', '玉乃光純米吟醸酒魂', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 1320, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/63dbbb4369f08ff31a667f61b60a2a8e-377x1000.png', 'https://ec.tamanohikari.co.jp/products/shukon?variant=39538985664709'),
+  (1513, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米吟醸 青まねきつね', '玉乃光純米吟醸青まねきつね', '純米吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 990, 300, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/c2bdbd1db00e4d0ebdc12209e6bbb53e.png', 'https://ec.tamanohikari.co.jp/products/aomanekitune300?variant=41915708702917'),
+  (1514, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 Black Label', '玉乃光純米大吟醸blacklabel', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 13200, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/BL720_0-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/blacklabel?variant=39529459581125'),
   (1516, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 ささにごり', '玉乃光純米大吟醸ささにごり', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/c6ae58ec1eb8b28c7ca0bd5c4b84fbd7.png', NULL),
   (1517, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 しぼりたて原酒', '玉乃光純米大吟醸しぼりたて原酒', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 17.0, '17度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/720-1.png', NULL),
-  (1518, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 ひやおろし', '玉乃光純米大吟醸ひやおろし', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-8-1000x1000.png', NULL),
+  (1518, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 ひやおろし', '玉乃光純米大吟醸ひやおろし', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 1650, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-8-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/hiyaoroshi?variant=43930679738565'),
   (1519, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 京のうつろい 冬', '玉乃光純米大吟醸京のうつろい冬', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/11/acf93fe21ca54033d492ee973ec1c64a-1000x1000.png', NULL),
   (1520, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 京のうつろい 夏', '玉乃光純米大吟醸京のうつろい夏', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/04/utsuroi-1000x1000.png', NULL),
   (1521, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 京のうつろい 春', '玉乃光純米大吟醸京のうつろい春', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2026/02/7b3595e07f301a9d74cc237c8f1fea5d-1000x1000.png', NULL),
-  (1522, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 京のうつろい 秋', '玉乃光純米大吟醸京のうつろい秋', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/08/1d9208585dcca1a805b3f50c6a3ace98-1000x1000.png', NULL),
-  (1523, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 備前雄町100%', '玉乃光純米大吟醸備前雄町100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/c30963613a9192824698227c3ba1cf31-605x1000.png', NULL),
-  (1524, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 備前雄町100% 熟成古酒シルバー', '玉乃光純米大吟醸備前雄町100%熟成古酒シルバー', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-4.png', NULL),
-  (1525, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 播州久米産山田錦100％', '玉乃光純米大吟醸播州久米産山田錦100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-2-1000x1000.png', NULL),
-  (1526, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 短稈渡船', '玉乃光純米大吟醸短稈渡船', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-5-1000x1000.png', NULL),
-  (1527, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 祝100％ 京の朱', '玉乃光純米大吟醸祝100%京の朱', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/05/be8632b50b41593e9be28199a937e889-1000x1000.png', NULL),
-  (1528, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 祝100% 京の紫', '玉乃光純米大吟醸祝100%京の紫', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/8f8631b504dabc41d82e171d83c2399b-1.png', NULL),
-  (1529, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 美山錦 100%', '玉乃光純米大吟醸美山錦100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2026/02/miyama-1000x1000.png', NULL),
-  (1530, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 酒鵬', '玉乃光純米大吟醸酒鵬', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', NULL, NULL, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/shuho720.png', NULL);
+  (1522, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 京のうつろい 秋', '玉乃光純米大吟醸京のうつろい秋', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 2970, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/08/1d9208585dcca1a805b3f50c6a3ace98-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/kyonoutsuroi_aki?variant=44993051132101'),
+  (1523, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 備前雄町100%', '玉乃光純米大吟醸備前雄町100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 2970, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/c30963613a9192824698227c3ba1cf31-605x1000.png', 'https://ec.tamanohikari.co.jp/products/bizennomati?variant=39537270784197'),
+  (1524, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 備前雄町100% 熟成古酒シルバー', '玉乃光純米大吟醸備前雄町100%熟成古酒シルバー', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 4400, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-4.png', 'https://ec.tamanohikari.co.jp/products/silver?variant=39530636476613'),
+  (1525, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 播州久米産山田錦100％', '玉乃光純米大吟醸播州久米産山田錦100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 5500, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-2-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/kumesan-yamada?variant=39530639425733'),
+  (1526, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 短稈渡船', '玉乃光純米大吟醸短稈渡船', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 5500, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/item-5-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/tankanwataribune?variant=39530646044869'),
+  (1527, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 祝100％ 京の朱', '玉乃光純米大吟醸祝100%京の朱', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 5500, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2025/05/be8632b50b41593e9be28199a937e889-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/kyonoaka?variant=44723053756613'),
+  (1528, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 祝100% 京の紫', '玉乃光純米大吟醸祝100%京の紫', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 16.0, '16度', 3300, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/8f8631b504dabc41d82e171d83c2399b-1.png', 'https://ec.tamanohikari.co.jp/products/kyono-murasaki?variant=39530641817797'),
+  (1529, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 美山錦 100%', '玉乃光純米大吟醸美山錦100%', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 3300, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2026/02/miyama-1000x1000.png', 'https://ec.tamanohikari.co.jp/products/miyamanishiki100?variant=45633796440261'),
+  (1530, 26, '京都府', '玉乃光酒造株式会社', '玉乃光酒造', '玉乃光 純米大吟醸 酒鵬', '玉乃光純米大吟醸酒鵬', '純米大吟醸', 'https://tamanohikari.co.jp/products', '2026-11-10', 15.0, '15度', 1650, 720, 'https://tamanohikari.co.jp/wp2024/wp-content/uploads/2023/05/shuho720.png', 'https://ec.tamanohikari.co.jp/products/shuhou?variant=39544932991173');
 
 -- 27 大阪府 / 39商品
 INSERT INTO tmp_sake_catalog_source
@@ -3427,6 +3434,8 @@ INSERT INTO tmp_sake_catalog_aliases (seq, alias_key) VALUES
   (1171, '彗donati(ドナティ)初汲み純米吟醸'),
   (1172, '彗HALLEY（ハレー）直汲み純米'),
   (1172, '彗halley(ハレー)直汲み純米'),
+  (1173, '渓流3倍どむ'),
+  (1173, '渓流３倍どむ'),
   (1174, '渓流うわずみどむろく'),
   (1175, '渓流どむろく'),
   (1176, '渓流どむろく純米'),
@@ -3441,6 +3450,10 @@ INSERT INTO tmp_sake_catalog_aliases (seq, alias_key) VALUES
   (1184, '渓流朝しぼり純米吟醸'),
   (1185, '渓流朝しぼり純米酒'),
   (1186, '渓流純米吟醸黒ラベル'),
+  (1187, '渓流純米大吟醸'),
+  (1188, '渓流純米酒'),
+  (1189, '渓流蔵囲い'),
+  (1190, '渓流辛口'),
   (1191, '直虎別誂純米大吟醸生酒'),
   (1192, '直虎番外品純米大吟醸生原酒'),
   (1193, '直虎直取りあらばしり純米吟醸生原酒'),
@@ -4562,6 +4575,9 @@ SET @sake_catalog_lock_name = CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256)
 SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);
 START TRANSACTION;
 SET @sake_catalog_inserted_rows = 0;
+SET @sake_catalog_price_detail_rows = 0;
+SET @sake_catalog_inserted_price_detail_rows = 0;
+SET @sake_catalog_abv_text_rows = 0;
 
 -- MySQL/MariaDB共通の一時キー。濁点・アクセント・ひらがな/カタカナを区別する。
 CREATE TEMPORARY TABLE tmp_sake_catalog_existing_keys (
@@ -4629,17 +4645,60 @@ WHERE @sake_catalog_lock_acquired = 1 AND (
   ((s.image_url IS NULL OR s.image_url = '') AND src.image_url IS NOT NULL));
 SET @sake_catalog_updated_rows = ROW_COUNT();
 
--- 容量・税込価格を詳細情報にも保持。既存DB詳細と同梱JSONの表示は上書きしない。
-INSERT INTO sake_page_details (sake_id, detail_json)
-SELECT s.id, JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery,
-  'prices', JSON_ARRAY(JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price)),
-  'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url ELSE '' END)
+-- 容量は公式に確認した実容量だけ。720ml以外を720mlへ換算しない。
+CREATE TEMPORARY TABLE tmp_sake_catalog_price_fallback (
+  id BIGINT UNSIGNED NOT NULL PRIMARY KEY, name VARCHAR(100) COLLATE utf8mb4_bin NOT NULL,
+  detail_json LONGTEXT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+INSERT INTO tmp_sake_catalog_price_fallback (id, name, detail_json) VALUES
+  (1, '獺祭 純米大吟醸45', CONVERT(X'7b226964223a312c226e616d65223a22e78dbae7a5ad20e7b494e7b1b3e5a4a7e5909fe986b83435222c22696e74726f64756374696f6e223a22e5b1b1e794b0e98ca6e38292e4bdbfe38184e38081e7b1b3e381aee5a496e581b4e38292e7a3a8e38184e381a6e980a0e3828be7b494e7b1b3e5a4a7e5909fe986b8e38082e3818ae7b1b3e3818be38289e7949fe381bee3828ce3828be381bbe381aee3818be381aae79498e38195e381a8e38081e5ba83e3818ce3828be9a699e3828ae3818ce68c81e381a1e591b3e381a7e38199e38082e9a699e3828ae381a8e79498e381bfe38292e6a5bde38197e381bfe3819fe38184e696b9e381aee69c80e5889de381aee4b880e69cace381abe38082e5b091e38197e586b7e38284e38197e381a6e38081e5b08fe381b6e3828ae381aee383afe382a4e383b3e382b0e383a9e382b9e381a7e38282e6a5bde38197e38281e381bee38199e38082222c2262726577657279223a22e6a0aae5bc8fe4bc9ae7a4be20e78dbae7a5ad222c227461737465223a5b22e3818ae7b1b3e381aee38284e38195e38197e38184e79498e381bf225d2c2261726f6d61223a5b22e88fafe38284e3818b225d2c22707269636573223a5b7b22766f6c756d65223a223732306d6c222c2279656e223a323437357d5d2c226472696e6b696e67223a5b223130e3809c3132e28483e38292e79baee5ae89e381abe38081e5b091e38197e586b7e38284e38197e381a6222c22e5b08fe381b6e3828ae381aee383afe382a4e383b3e382b0e383a9e382b9e381a7e9a699e3828ae38292e6a5bde38197e38280225d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b22e697a5e69cace98592e381aee9a699e3828ae381a8e38081e3818ae7b1b3e381aee79498e381bfe38292e6a5bde38197e38293e381a7e381bfe3819fe38184e4baba225d2c226f6666696369616c55726c223a2268747470733a2f2f6461737361692e636f6d2f70726f647563742f6d61696e2f34352e68746d6c222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b7b226c6162656c223a22e78dbae7a5ad20e79bb4e8b2a9e382b5e382a4e38388efbc883732306d6cefbc89222c2275726c223a2268747470733a2f2f7777772e64617373616973746f72652e636f6d2f70726f647563742d64657461696c2f3437222c226f6666696369616c223a747275657d5d7d' USING utf8mb4)),
+  (2, '新政 No.6', CONVERT(X'7b226964223a322c226e616d65223a22e696b0e694bf204e6f2e36222c22696e74726f64756374696f6e223a22e788bde38284e3818be381aae985b8e591b3e381a8e381bfe3819ae381bfe3819ae38197e38184e58fa3e5bd93e3819fe3828ae38292e6a5bde38197e38281e3828be7949fe98592e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (3, '十四代 本丸', CONVERT(X'7b226964223a332c226e616d65223a22e58d81e59b9be4bba320e69cace4b8b8222c22696e74726f64756374696f6e223a22e38284e38195e38197e38184e697a8e381bfe381a8e4b88ae59381e381aae79498e381bfe3818ce5ba83e3818ce3828be38081e381aae38281e38289e3818be381aae591b3e3828fe38184e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (4, '黒龍 いっちょらい', CONVERT(X'7b226964223a342c226e616d65223a22e9bb92e9be8d20e38184e381a3e381a1e38287e38289e38184222c22696e74726f64756374696f6e223a22e38199e381a3e3818de3828ae381a8e38197e3819fe58887e3828ce591b3e381a8e38081e7a98fe38284e3818be381aae5909fe986b8e9a699e381aee38390e383a9e383b3e382b9e3818ce9ad85e58a9be381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (5, '而今 特別純米', CONVERT(X'7b226964223a352c226e616d65223a22e8808ce4bb8a20e789b9e588a5e7b494e7b1b3222c22696e74726f64756374696f6e223a22e69e9ce5ae9fe6849fe381aee38182e3828be9a699e3828ae381abe38081e7b1b3e381aee381b5e3818fe38289e381bfe381a8e5bf83e59cb0e38288e38184e4bd99e99fbbe3818ce7b69ae3818de381bee38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (6, '田酒 特別純米', CONVERT(X'7b226964223a362c226e616d65223a22e794b0e9859220e789b9e588a5e7b494e7b1b3222c22696e74726f64756374696f6e223a22e7b1b3e381aee697a8e381bfe38292e38197e381a3e3818be3828ae6849fe38198e38289e3828ce3828be38081e890bde381a1e79d80e38184e3819fe9a39fe4b8ade98592e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (7, '出羽桜 桜花吟醸', CONVERT(X'7b226964223a372c226e616d65223a22e587bae7bebde6a19c20e6a19ce88ab1e5909fe986b8222c22696e74726f64756374696f6e223a22e88fafe38284e3818be381aae9a699e3828ae381a8e8bbbde38284e3818be381aae9a3b2e381bfe58fa3e381a7e38081e697a5e69cace98592e585a5e99680e381abe38282e3818ae38199e38199e38281e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b7b22766f6c756d65223a223732306d6c222c2279656e223a313737317d5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a2268747470733a2f2f7777772e646577617a616b7572612e636f2e6a702f6974656d2f63617430332f6f6b612e68746d6c222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (8, '八海山 特別本醸造', CONVERT(X'7b226964223a382c226e616d65223a22e585abe6b5b7e5b1b120e789b9e588a5e69cace986b8e980a0222c22696e74726f64756374696f6e223a22e6b7a1e9ba97e381a7e382ade383ace3818ce889afe3818fe38081e69699e79086e381abe5af84e3828ae6b7bbe38186e38199e381a3e3818de3828ae38197e3819fe591b3e3828fe38184e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a2268747470733a2f2f7777772e68616b6b616973616e2e636f2e6a702f73616b652f686f6e6a796f7a6f2f222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (9, '風の森 秋津穂', CONVERT(X'7b226964223a392c226e616d65223a22e9a2a8e381aee6a3ae20e7a78be6b4a5e7a982222c22696e74726f64756374696f6e223a22e5beaee799bae6b3a1e6849fe381a8e9aeaee38284e3818be381aae985b8e591b3e38292e68c81e381a4e38081e7919ee38085e38197e38184e7b494e7b1b3e98592e381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4)),
+  (10, '鍋島 特別純米', CONVERT(X'7b226964223a31302c226e616d65223a22e98d8be5b3b620e789b9e588a5e7b494e7b1b3222c22696e74726f64756374696f6e223a22e382b8e383a5e383bce382b7e383bce381aae79498e381bfe381a8e381bbe381a9e38288e38184e985b8e591b3e38292e58299e38188e3819fe38081e8a6aae38197e381bfe38284e38199e38184e4b880e69cace381a7e38199e38082222c2262726577657279223a22222c227461737465223a5b5d2c2261726f6d61223a5b5d2c22707269636573223a5b5d2c226472696e6b696e67223a5b5d2c22666f6f64223a5b5d2c227265636f6d6d656e646564466f72223a5b5d2c226f6666696369616c55726c223a22222c2273696d696c6172496473223a5b5d2c2270757263686173654c696e6b73223a5b5d7d' USING utf8mb4));
+CREATE TEMPORARY TABLE tmp_sake_catalog_price_pages AS
+SELECT s.id, s.name, s.price AS current_price, src.price AS verified_price, src.volume_ml,
+  d.sake_id IS NULL AS is_new,
+  CASE WHEN d.sake_id IS NOT NULL THEN COALESCE(JSON_VALID(d.detail_json), FALSE) ELSE TRUE END AS valid_json,
+  CASE WHEN d.sake_id IS NOT NULL THEN CASE WHEN JSON_VALID(d.detail_json) THEN d.detail_json ELSE '{}' END
+       WHEN f.id IS NOT NULL THEN f.detail_json
+       ELSE JSON_OBJECT('id', s.id, 'name', s.name, 'brewery', src.brewery, 'prices', JSON_ARRAY(),
+         'officialUrl', CASE WHEN src.price_source_url LIKE 'https://%' THEN src.price_source_url ELSE '' END) END AS detail_json,
+  FALSE AS fillable
 FROM tmp_sake_catalog_matches m JOIN sake s ON s.id = m.id
 JOIN tmp_sake_catalog_source src ON src.seq = m.seq
-WHERE @sake_catalog_lock_acquired = 1 AND src.price IS NOT NULL AND src.volume_ml IS NOT NULL
-  AND s.price = src.price AND NOT EXISTS (SELECT 1 FROM sake_page_details d WHERE d.sake_id = s.id)
-  AND s.id NOT IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+LEFT JOIN sake_page_details d ON d.sake_id = s.id
+LEFT JOIN tmp_sake_catalog_price_fallback f ON f.id = s.id AND f.name = s.name COLLATE utf8mb4_bin
+WHERE @sake_catalog_lock_acquired = 1 AND src.price IS NOT NULL AND src.volume_ml IS NOT NULL;
+UPDATE tmp_sake_catalog_price_pages SET fillable = COALESCE(current_price = verified_price
+  AND valid_json AND JSON_TYPE(detail_json) = 'OBJECT'
+  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.id')) = 'INTEGER'
+  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.id')) = CAST(id AS CHAR)
+  AND JSON_TYPE(JSON_EXTRACT(detail_json, '$.name')) = 'STRING'
+  AND JSON_UNQUOTE(JSON_EXTRACT(detail_json, '$.name')) COLLATE utf8mb4_bin = name COLLATE utf8mb4_bin
+  AND (JSON_EXTRACT(detail_json, '$.prices') IS NULL
+       OR JSON_TYPE(JSON_EXTRACT(detail_json, '$.prices')) = 'NULL'
+       OR (JSON_TYPE(JSON_EXTRACT(detail_json, '$.prices')) = 'ARRAY'
+           AND JSON_LENGTH(JSON_EXTRACT(detail_json, '$.prices')) = 0)), FALSE);
+UPDATE sake_page_details d JOIN tmp_sake_catalog_price_pages p ON p.id = d.sake_id
+JOIN sake s ON s.id = p.id AND s.price = p.verified_price
+SET d.detail_json = JSON_SET(d.detail_json, '$.prices',
+  JSON_ARRAY(JSON_OBJECT('volume', CONCAT(p.volume_ml, 'ml'), 'yen', p.verified_price)))
+WHERE @sake_catalog_lock_acquired = 1 AND p.fillable = TRUE AND p.is_new = FALSE
+  AND d.detail_json COLLATE utf8mb4_bin = p.detail_json COLLATE utf8mb4_bin;
 SET @sake_catalog_price_detail_rows = ROW_COUNT();
+INSERT INTO sake_page_details (sake_id, detail_json)
+SELECT p.id, JSON_SET(p.detail_json, '$.prices',
+  JSON_ARRAY(JSON_OBJECT('volume', CONCAT(p.volume_ml, 'ml'), 'yen', p.verified_price)))
+FROM tmp_sake_catalog_price_pages p JOIN sake s ON s.id = p.id AND s.price = p.verified_price
+WHERE @sake_catalog_lock_acquired = 1 AND p.fillable = TRUE AND p.is_new = TRUE;
+SET @sake_catalog_inserted_price_detail_rows = ROW_COUNT();
+SET @sake_catalog_price_detail_rows = @sake_catalog_price_detail_rows + @sake_catalog_inserted_price_detail_rows;
 
 -- 同梱紹介JSONはIDと商品名が一致する場合だけ丸ごと保持する。
 CREATE TEMPORARY TABLE tmp_sake_catalog_abv_fallback (
@@ -4697,7 +4756,8 @@ SELECT CASE WHEN @sake_catalog_lock_acquired = 1 THEN 'completed'
             ELSE 'not_applied_lock_unavailable' END AS status,
        @sake_catalog_inserted_rows AS inserted_products,
        @sake_catalog_updated_rows AS filled_existing_products,
-       @sake_catalog_price_detail_rows AS inserted_price_details,
+       @sake_catalog_inserted_price_detail_rows AS inserted_price_details,
+       @sake_catalog_price_detail_rows AS filled_price_details,
        @sake_catalog_abv_text_rows AS filled_abv_text_details;
 SELECT COUNT(*) AS source_products, COUNT(src.abv) AS verified_abv,
        SUM(src.abv IS NULL AND src.abv_text IS NOT NULL) AS verified_abv_text,
@@ -4721,9 +4781,26 @@ WHERE src.abv IS NULL AND src.abv_text IS NOT NULL AND src.abv_text <> ''
     AND CASE WHEN JSON_VALID(d.detail_json) THEN
     COALESCE(JSON_UNQUOTE(JSON_EXTRACT(d.detail_json, '$.abvText')) COLLATE utf8mb4_bin = src.abv_text COLLATE utf8mb4_bin, FALSE)
     ELSE FALSE END, FALSE) = FALSE ORDER BY src.seq;
+SELECT s.id, s.name, src.volume_ml AS verified_volume_ml, src.price AS verified_tax_included_yen,
+       'existing_price_or_invalid_or_mismatched_or_nonempty_detail' AS reason
+FROM tmp_sake_catalog_source src JOIN tmp_sake_catalog_matches m ON m.seq = src.seq
+JOIN sake s ON s.id = m.id LEFT JOIN sake_page_details d ON d.sake_id = s.id
+JOIN tmp_sake_catalog_price_pages p ON p.id = s.id
+WHERE src.price IS NOT NULL AND src.volume_ml IS NOT NULL
+  AND COALESCE(s.price = src.price AND p.valid_json AND JSON_TYPE(p.detail_json) = 'OBJECT'
+    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.id')) = 'INTEGER'
+    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.id')) = CAST(s.id AS CHAR)
+    AND JSON_TYPE(JSON_EXTRACT(p.detail_json, '$.name')) = 'STRING'
+    AND JSON_UNQUOTE(JSON_EXTRACT(p.detail_json, '$.name')) COLLATE utf8mb4_bin = s.name COLLATE utf8mb4_bin
+    AND CASE WHEN JSON_VALID(COALESCE(d.detail_json, p.detail_json)) THEN
+      JSON_TYPE(JSON_EXTRACT(COALESCE(d.detail_json, p.detail_json), '$.prices')) = 'ARRAY'
+      AND JSON_CONTAINS(COALESCE(d.detail_json, p.detail_json), JSON_OBJECT('volume', CONCAT(src.volume_ml, 'ml'), 'yen', src.price), '$.prices')
+      ELSE FALSE END, FALSE) = FALSE ORDER BY src.seq;
 SELECT RELEASE_LOCK(@sake_catalog_lock_name) AS released_catalog_lock;
 DROP TEMPORARY TABLE tmp_sake_catalog_abv_pages;
 DROP TEMPORARY TABLE tmp_sake_catalog_abv_fallback;
+DROP TEMPORARY TABLE tmp_sake_catalog_price_pages;
+DROP TEMPORARY TABLE tmp_sake_catalog_price_fallback;
 DROP TEMPORARY TABLE tmp_sake_catalog_matches;
 DROP TEMPORARY TABLE tmp_sake_catalog_source_keys;
 DROP TEMPORARY TABLE tmp_sake_catalog_existing_keys;

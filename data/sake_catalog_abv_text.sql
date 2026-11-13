@@ -524,6 +524,9 @@ SET @sake_catalog_lock_name = CONCAT('sake_catalog_', LEFT(SHA2(DATABASE(), 256)
 SET @sake_catalog_lock_acquired = GET_LOCK(@sake_catalog_lock_name, 30);
 START TRANSACTION;
 SET @sake_catalog_inserted_rows = 0;
+SET @sake_catalog_price_detail_rows = 0;
+SET @sake_catalog_inserted_price_detail_rows = 0;
+SET @sake_catalog_abv_text_rows = 0;
 
 -- MySQL/MariaDB共通の一時キー。濁点・アクセント・ひらがな/カタカナを区別する。
 CREATE TEMPORARY TABLE tmp_sake_catalog_existing_keys (
@@ -582,7 +585,6 @@ SELECT seq, id FROM (
   ) pairs
 ) ranked WHERE source_matches = 1 AND target_matches = 1;
 SET @sake_catalog_updated_rows = 0;
-SET @sake_catalog_price_detail_rows = 0;
 
 -- 同梱紹介JSONはIDと商品名が一致する場合だけ丸ごと保持する。
 CREATE TEMPORARY TABLE tmp_sake_catalog_abv_fallback (
@@ -640,7 +642,8 @@ SELECT CASE WHEN @sake_catalog_lock_acquired = 1 THEN 'completed'
             ELSE 'not_applied_lock_unavailable' END AS status,
        @sake_catalog_inserted_rows AS inserted_products,
        @sake_catalog_updated_rows AS filled_existing_products,
-       @sake_catalog_price_detail_rows AS inserted_price_details,
+       @sake_catalog_inserted_price_detail_rows AS inserted_price_details,
+       @sake_catalog_price_detail_rows AS filled_price_details,
        @sake_catalog_abv_text_rows AS filled_abv_text_details;
 SELECT COUNT(*) AS source_products, COUNT(src.abv) AS verified_abv,
        SUM(src.abv IS NULL AND src.abv_text IS NOT NULL) AS verified_abv_text,

@@ -140,4 +140,63 @@ class SakePageServiceTests {
         assertThat(service.abvLabelsFor(List.of(numeric))).containsEntry(1L, "15.5%");
         verifyNoInteractions(jdbc);
     }
+
+    @Test void priceLabelsPrefer720mlAndRetainAlternateCapacityAndSourceOrder() {
+        var prices = List.of(new SakePage.Price("1800ml", 6600), new SakePage.Price("500ml", 2400),
+                new SakePage.Price("720 ml", 2750), new SakePage.Price("720ml", 2200));
+        assertThat(SakePage.formatPrice(0, prices)).isEqualTo("720 ml 2,750円（税込）");
+        assertThat(SakePage.formatPrice(2400, prices)).isEqualTo("500ml 2,400円（税込）");
+        assertThat(SakePage.formatPrice(0, prices.subList(0, 2))).isEqualTo("1800ml 6,600円（税込）");
+        var page = new SakePage(1, "", "", "", null, null, prices, null, null, null, null, null, null);
+        assertThat(page.orderedPrices()).containsExactly(prices.get(2), prices.get(3), prices.get(0), prices.get(1));
+        assertThat(page.prices()).containsExactlyElementsOf(prices);
+    }
+
+    @Test void priceLabelsNeverGuessCapacityOrInventZeroPrices() {
+        assertThat(SakePage.formatPrice(2180, List.of(new SakePage.Price("720ml", 2475))))
+                .isEqualTo("参考価格：2,180円（対象容量：未確認）");
+        assertThat(SakePage.formatPrice(2500, List.of(new SakePage.Price("", 2500))))
+                .isEqualTo("対象容量：未確認 2,500円（税込）");
+        assertThat(SakePage.formatPrice(0, List.of(new SakePage.Price("720ml", null))))
+                .isEqualTo("価格：未確認");
+        assertThat(SakePage.formatPrice(0, List.of())).isEqualTo("価格：未確認");
+    }
+
+    @Test void displayingCapacityDoesNotAddDerivedFieldsToSavedPriceJson() {
+        var mapper = JsonMapper.builder().build();
+        String json = mapper.writeValueAsString(new SakePage.Price("500ml", 2400));
+        assertThat(mapper.readTree(json)).isEqualTo(mapper.readTree("{\"volume\":\"500ml\",\"yen\":2400}"));
+    }
+
+    @Test void searchGetsAbvAndCapacityPricesInASingleQueryAndGuardsInvalidPrices() throws Exception {
+        var jdbc = mock(JdbcTemplate.class);
+        var service = new SakePageService(JsonMapper.builder().build(), new ByteArrayResource("[]".getBytes(StandardCharsets.UTF_8)), jdbc);
+        var json = List.of(
+                "{\"id\":1,\"name\":\"元の銘柄名\",\"abvText\":\"15度〜16度\",\"prices\":[{\"volume\":\"500ml\",\"yen\":2400}]}",
+                "{\"prices\":[{\"volume\":\"1800ml\",\"yen\":6600},{\"volume\":\"720ml\",\"yen\":2750}]}",
+                "{\"prices\":[{\"volume\":\"500ml\",\"yen\":0},{\"volume\":\"720ml\",\"yen\":\"2000\"},{\"volume\":500,\"yen\":2400}]}",
+                "{\"id\":99,\"prices\":[{\"volume\":\"720ml\",\"yen\":2000}]}"
+        );
+        when(jdbc.query(anyString(), any(RowMapper.class), any(Object[].class))).thenAnswer(invocation -> {
+            RowMapper<?> rowMapper = invocation.getArgument(1);
+            var values = new java.util.ArrayList<>();
+            for (int index = 0; index < json.size(); index++) {
+                var row = mock(java.sql.ResultSet.class);
+                when(row.getLong("sake_id")).thenReturn((long) index + 1);
+                when(row.getString("detail_json")).thenReturn(json.get(index));
+                values.add(rowMapper.mapRow(row, index));
+            }
+            return values;
+        });
+        var labels = service.specificationsFor(List.of(sake(1), sake(2), sake(3), sake(4)));
+        assertThat(labels.get(1L)).isEqualTo(new SakePageService.SpecificationLabels("15度〜16度", "500ml 2,400円（税込）"));
+        assertThat(labels.get(2L).price()).isEqualTo("720ml 2,750円（税込）");
+        assertThat(labels.get(3L).price()).isEqualTo("価格：未確認");
+        assertThat(labels.get(4L).price()).isEqualTo("価格：未確認");
+        verify(jdbc).query(anyString(), any(RowMapper.class), eq(1L), eq(2L), eq(3L), eq(4L));
+        verifyNoMoreInteractions(jdbc);
+        assertThat(service.specificationsFor(List.of())).isEmpty();
+        verifyNoMoreInteractions(jdbc);
+    }
+
 }

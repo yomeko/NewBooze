@@ -61,12 +61,29 @@ public class SakePageService {
                 page.recommendedFor(), page.officialUrl(), page.similarIds(), page.purchaseLinks(), page.abvText());
     }
 
-    /** 検索結果1ページ分の度数を一括取得し、詳細と同じ優先順で表示する。 */
+    /** 検索結果の度数と容量付き価格。1ページ分の詳細JSONを一度だけ取得する。 */
+    public record SpecificationLabels(String abv, String price) { }
+
+    private record SavedSpecifications(String abvText, List<SakePage.Price> prices) {
+        private static final SavedSpecifications EMPTY = new SavedSpecifications("", List.of());
+    }
+
+    public Map<Long, SpecificationLabels> specificationsFor(List<Sake> sakeList) {
+        return specificationsFor(sakeList, true);
+    }
+
+    /** 度数だけを必要とする既存の呼出元とも互換性を保つ。 */
     public Map<Long, String> abvLabelsFor(List<Sake> sakeList) {
+        Map<Long, String> labels = new LinkedHashMap<>();
+        specificationsFor(sakeList, false).forEach((id, value) -> labels.put(id, value.abv()));
+        return Map.copyOf(labels);
+    }
+
+    private Map<Long, SpecificationLabels> specificationsFor(List<Sake> sakeList, boolean includePrices) {
         if (sakeList.isEmpty()) return Map.of();
-        Map<Long, String> saved = new LinkedHashMap<>();
+        Map<Long, SavedSpecifications> saved = new LinkedHashMap<>();
         List<Long> ids = sakeList.stream()
-                .filter(sake -> !Double.isFinite(sake.abv()) || sake.abv() <= 0)
+                .filter(sake -> includePrices || !Double.isFinite(sake.abv()) || sake.abv() <= 0)
                 .map(Sake::id).distinct().toList();
         if (jdbc != null && !ids.isEmpty()) {
             Map<Long, String> names = new LinkedHashMap<>();
@@ -75,38 +92,60 @@ public class SakePageService {
             jdbc.query("SELECT sake_id, detail_json FROM sake_page_details WHERE sake_id IN (" + placeholders + ")",
                     (row, index) -> {
                         long id = row.getLong("sake_id");
-                        return Map.entry(id, abvTextFromJson(row.getString("detail_json"), id, names.get(id)));
+                        return Map.entry(id, specificationsFromJson(row.getString("detail_json"), id, names.get(id)));
                     },
                     ids.toArray()).forEach(entry -> saved.put(entry.getKey(), entry.getValue()));
         }
-        Map<Long, String> labels = new LinkedHashMap<>();
+        Map<Long, SpecificationLabels> labels = new LinkedHashMap<>();
         for (Sake sake : sakeList) {
             SakePage fallback = pages.get(sake.id());
-            String text = saved.getOrDefault(sake.id(), fallback == null ? "" : fallback.abvText());
-            labels.put(sake.id(), SakePage.formatAbv(sake.abv(), text));
+            var details = saved.getOrDefault(sake.id(), fallback == null ? SavedSpecifications.EMPTY
+                    : new SavedSpecifications(fallback.abvText(), fallback.prices()));
+            labels.put(sake.id(), new SpecificationLabels(SakePage.formatAbv(sake.abv(), details.abvText()),
+                    SakePage.formatPrice(sake.price(), details.prices())));
         }
         return Map.copyOf(labels);
     }
 
-    /** 紹介文や外部URLの不備で検索全体を止めず、表示用の度数だけを読む。 */
-    private String abvTextFromJson(String json, long sakeId, String sakeName) {
-        if (json == null || json.isBlank()) return "";
+    /** 紹介文や外部URLの不備で検索全体を止めず、度数と容量別価格だけを読む。 */
+    private SavedSpecifications specificationsFromJson(String json, long sakeId, String sakeName) {
+        if (json == null || json.isBlank()) return SavedSpecifications.EMPTY;
         try {
             var details = mapper.readTree(json);
-            if (details == null || !details.isObject()) return "";
+            if (details == null || !details.isObject()) return SavedSpecifications.EMPTY;
             var id = details.get("id");
             if (id != null && !id.isNull()
-                    && (!id.isIntegralNumber() || !id.canConvertToLong() || id.longValue() != sakeId)) return "";
+                    && (!id.isIntegralNumber() || !id.canConvertToLong() || id.longValue() != sakeId))
+                return SavedSpecifications.EMPTY;
             var name = details.get("name");
             if (name != null && !name.isNull()
                     && (!name.isString() || (!SakePage.clean(name.stringValue()).isEmpty()
-                        && !SakePage.clean(name.stringValue()).equals(SakePage.clean(sakeName))))) return "";
+                        && !SakePage.clean(name.stringValue()).equals(SakePage.clean(sakeName)))))
+                return SavedSpecifications.EMPTY;
+            String text = "";
             var value = details.get("abvText");
-            if (value == null || !value.isString()) return "";
-            String text = SakePage.clean(value.stringValue());
-            return text.codePointCount(0, text.length()) <= 120 ? text : "";
+            if (value != null && value.isString()) {
+                String candidate = SakePage.clean(value.stringValue());
+                if (candidate.codePointCount(0, candidate.length()) <= 120) text = candidate;
+            }
+            var prices = new java.util.ArrayList<SakePage.Price>();
+            var values = details.get("prices");
+            if (values != null && values.isArray()) {
+                for (var price : values) {
+                    if (!price.isObject()) continue;
+                    var amount = price.get("yen");
+                    var volume = price.get("volume");
+                    if (amount == null || !amount.isIntegralNumber() || !amount.canConvertToInt()
+                            || amount.intValue() <= 0) continue;
+                    if (volume != null && !volume.isNull() && !volume.isString()) continue;
+                    String capacity = volume != null && volume.isString() ? SakePage.clean(volume.stringValue()) : "";
+                    if (capacity.codePointCount(0, capacity.length()) > 120) continue;
+                    prices.add(new SakePage.Price(capacity, amount.intValue()));
+                }
+            }
+            return new SavedSpecifications(text, List.copyOf(prices));
         } catch (JacksonException ignored) {
-            return "";
+            return SavedSpecifications.EMPTY;
         }
     }
 

@@ -123,16 +123,20 @@ class SakeSearchRenderingTests {
                 product(13, "度数未確認の銘柄", 0), product(14, "文字表示の銘柄", 0));
         when(catalog.search("", "", "", null, null, "", "recommended", 0))
                 .thenReturn(new SakePageDto(products, 0, 1, products.size()));
-        when(pages.abvLabelsFor(products)).thenReturn(Map.of(
-                11L, "15度以上16度未満", 12L, "15.5%", 13L, "未確認",
-                14L, "15度〜16度<script>alert(1)</script>"));
+        when(pages.specificationsFor(products)).thenReturn(Map.of(
+                11L, new SakePageService.SpecificationLabels("15度以上16度未満", "500ml 2,400円（税込）"),
+                12L, new SakePageService.SpecificationLabels("15.5%", "720ml 1,500円（税込）"),
+                13L, new SakePageService.SpecificationLabels("未確認", "価格：未確認"),
+                14L, new SakePageService.SpecificationLabels("15度〜16度<script>alert(1)</script>",
+                        "300ml<script>alert(2)</script> 900円（税込）")));
 
         String html = mvc.perform(get("/search")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         assertThat(html).contains("15度以上16度未満", "15.5%", "未確認",
-                "15度〜16度&lt;script&gt;alert(1)&lt;/script&gt;")
-                .doesNotContain("15度以上16度未満%", "15.5%%", "0.0%", "<script>alert(1)</script>");
-        verify(pages).abvLabelsFor(products);
+                "15度〜16度&lt;script&gt;alert(1)&lt;/script&gt;", "500ml 2,400円（税込）",
+                "720ml 1,500円（税込）", "価格：未確認", "300ml&lt;script&gt;alert(2)&lt;/script&gt; 900円（税込）")
+                .doesNotContain("15度以上16度未満%", "15.5%%", "0.0%", "<script>alert(1)</script>", "<script>alert(2)</script>");
+        verify(pages).specificationsFor(products);
     }
 
     private Sake product(long id, String name, double abv) {
