@@ -14,9 +14,9 @@ XAMPP付属のMySQLクライアントでこのファイルを読み込んでく�
 spring.datasource.url=jdbc:mysql://localhost:3306/issho_no_deai?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Tokyo
 ```
 
-アプリはこのファイルを任意で読み込みます。ファイルがない環境の既定接続先は引き続き `newbooze` です。別の作業ディレクトリで起動する場合は `SPRING_DATASOURCE_URL` 環境変数で同じ接続先を指定してください。既に起動中のアプリには再起動が必要です。
+アプリはこのファイルを任意で読み込みます。ファイルがない環境の既定接続先も `issho_no_deai` です。別のDBを使う環境は、このファイルまたは `SPRING_DATASOURCE_URL` 環境変数で接続先を指定してください。別の作業ディレクトリで起動すると、このローカル設定ファイルは読み込まれないため、必要な上書きは環境変数で指定してください。既に起動中のアプリには再起動が必要です。
 
-接続設定後、`./gradlew test bootJar` で起動と動作を確認できます。元の接続先に戻す場合はローカル設定ファイルを退避して再起動してください（旧DBの不整合自体は修復されません）。
+接続設定後、`./gradlew test bootJar` で起動と動作を確認できます。旧DBへ接続する場合は、接続先DBの存在と構造を確認した上でローカル設定または環境変数にそのDBのURLを指定し、再起動してください。
 
 ## 削除を伴う旧手順
 

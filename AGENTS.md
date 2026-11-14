@@ -28,7 +28,7 @@
 
 ## 4. DB・設定・既存データ
 
-- DBの変更前に実際の接続先を確認する。既定は `newbooze`、ローカル上書きは `application-local.properties` や環境変数によって異なる。設計書に記載された過去の実DB確認を、今回の確認として報告しない。
+- DBの変更前に実際の接続先を確認する。既定は `issho_no_deai`、ローカル上書きは `application-local.properties` や環境変数によって異なる。設計書に記載された過去の実DB確認を、今回の確認として報告しない。
 - `spring.jpa.hibernate.ddl-auto=validate` を維持する。スキーマ変更は作成SQLと必要な差分SQLに反映し、既存データを保持する適用手順を示す。
 - DBの削除・初期化、既存データの一括削除、破壊的SQLは、その操作が明示的に依頼されていない限り実行しない。テストを通すために `data/reset_newbooze.sql` を実行しない。
 - パスワード、APIキー、SMTP認証情報、個人情報をログ・報告・コミットに出さない。`application-local.properties` と `uploads/` はGit管理対象外のまま扱う。

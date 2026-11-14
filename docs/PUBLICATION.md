@@ -56,7 +56,7 @@ Google Fontsへの接続先はfonts.googleapis.comとfonts.gstatic.comです。�
 
 ## 2026年10月21日の実DB確認
 
-接続先はローカルの `issho_no_deai`、MariaDB 10.11.19です。既定のnewbooze DBや別環境への適用は確認していません。
+接続先はローカルの `issho_no_deai`、MariaDB 10.11.19です。当時の既定のnewbooze DBや別環境への適用は確認していません。
 
 - 10銘柄のIDと名称が本文JSONと一致。
 - sake_page_detailsの上書きは0件で、今回のJSON更新が表示に利用される状態。
