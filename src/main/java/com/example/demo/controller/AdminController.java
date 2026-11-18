@@ -44,12 +44,6 @@ public class AdminController {
     }
 
     /**
-     * 管理メニューのHTML（templates/admin/index.html）を表示する。
-     */
-    @GetMapping
-    public String index() { return "admin/index"; }
-
-    /**
      * 入力された名前の一部で検索し、名前・ID順で30人ずつ表示する。
      * ページ番号は0始まり。負の番号が届いた場合は最初のページとして扱う。
      */

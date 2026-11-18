@@ -85,7 +85,7 @@ class SakeDetailTests {
             .andExpect(content().string(containsString("720ml")))
             .andExpect(content().string(containsString("2,475円（税込）")))
             .andExpect(content().string(not(containsString("価格・購入先"))))
-            .andExpect(content().string(containsString("href=\"https://www.dassaistore.com/product-detail/47\"")))
+            .andExpect(content().string(containsString("href=\"/sake/1/outbound/purchase\"")))
             .andExpect(content().string(not(containsString("href=\"#purchase\""))))
             .andExpect(content().string(not(containsString("class=\"sake-product-photo\""))))
             .andExpect(content().string(containsString("class=\"logo-mark\"")))
@@ -135,9 +135,9 @@ class SakeDetailTests {
             assertThat(end).isGreaterThan(start);
             String sidebar = html.substring(start, end);
             assertThat(sidebar).contains("sake-header-actions", "sake-favorite",
-                    "https://www.dassaistore.com/product-detail/47");
+                    "/sake/1/outbound/purchase");
             assertThat(sidebar.indexOf("sake-favorite"))
-                    .isLessThan(sidebar.indexOf("https://www.dassaistore.com/product-detail/47"));
+                    .isLessThan(sidebar.indexOf("/sake/1/outbound/purchase"));
             assertThat(html).doesNotContain("sake-purchase-bar");
         }
     }

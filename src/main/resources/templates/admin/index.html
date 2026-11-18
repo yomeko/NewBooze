@@ -1,12 +1,92 @@
-<!--
-  管理者向けの入口。日本酒の登録画面とユーザーの検索画面へのリンクを表示する。
-  アクセスできるのはSecurityConfigでROLE_ADMINの権限を確認できたユーザーだけ。
--->
-<!doctype html><html lang="ja" xmlns:th="http://www.thymeleaf.org"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>管理画面 - 一升の出会い</title><link rel="stylesheet" th:href="@{/css/style.css}">
-<link rel="stylesheet" th:href="@{/css/admin.css}">
-</head><body><header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
-<!-- 管理者が行う操作への入口を並べる。共通ヘッダー以外の管理画面の見た目はadmin.cssで指定する。 -->
-<main class="admin-page"><h1>管理画面</h1><nav class="admin-nav" aria-label="管理メニュー"><a th:href="@{/admin}" aria-current="page">管理トップ</a><a th:href="@{/admin/sake/new}">日本酒を登録</a><a th:href="@{/admin/users}">ユーザー一覧・検索</a><a th:href="@{/admin/post-reports}">飲酒投稿の通報</a></nav>
-<h2>管理者メニュー</h2><p>日本酒の登録、ユーザーの検索、飲酒投稿への通報の確認ができます。</p></main><script th:src="@{/js/main.js}"></script></body></html>
+<!doctype html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>管理画面 - 一升の出会い</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+  <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+<header th:replace="~{fragments/site-header :: siteHeader('admin')}"></header>
+<main class="admin-page admin-dashboard">
+  <h1>管理画面</h1>
+  <nav class="admin-nav" aria-label="管理メニュー">
+    <a th:href="@{/admin}" aria-current="page">管理トップ</a>
+    <a th:href="@{/admin/sake/new}">日本酒を登録</a>
+    <a th:href="@{/admin/users}">ユーザー一覧・検索</a>
+    <a th:href="@{/admin/post-reports}">飲酒投稿の通報</a>
+  </nav>
+
+  <div class="admin-analytics-unavailable" role="status" th:unless="${analyticsAvailable}">
+    <h2>集計情報を取得できませんでした</h2>
+    <p>時間をおいてページを再読み込みしてください。日本酒の登録やユーザーの検索は、上の管理メニューから利用できます。</p>
+  </div>
+
+  <th:block th:if="${analyticsAvailable}">
+    <div class="admin-dashboard-heading">
+      <div><h2>サイトの利用状況</h2><p>閲覧数と公式サイトへの遷移数から、人気の傾向を確認できます。</p></div>
+      <span class="admin-period-label">集計開始からの累計</span>
+    </div>
+
+    <dl class="admin-stat-grid">
+      <div class="admin-stat"><dt>サイト閲覧数（PV）</dt><dd><strong th:text="${#numbers.formatInteger(analytics.totalViews, 1, 'COMMA')}">0</strong><span>PV</span></dd></div>
+      <div class="admin-stat"><dt>今日の閲覧数</dt><dd><strong th:text="${#numbers.formatInteger(analytics.todayViews, 1, 'COMMA')}">0</strong><span>PV</span></dd></div>
+      <div class="admin-stat"><dt>公式サイトへの遷移数</dt><dd><strong th:text="${#numbers.formatInteger(analytics.totalClicks, 1, 'COMMA')}">0</strong><span>回</span></dd></div>
+    </dl>
+
+    <div class="admin-analytics-grid">
+      <section class="admin-analytics-panel" aria-labelledby="page-views-title">
+        <div class="admin-panel-heading"><h2 id="page-views-title">閲覧数の推移</h2><span>直近14日間</span></div>
+        <p class="admin-chart-note">日本時間の日付で集計しています。数字はその日のPVです。</p>
+        <ol class="admin-view-chart" aria-label="日別のサイト閲覧数">
+          <li th:each="day : ${analytics.dailyViews}">
+            <time th:datetime="${day.date}" th:text="${#temporals.format(day.date, 'M/d')}">11/18</time>
+            <span class="admin-view-track" aria-hidden="true"><span class="admin-view-bar" th:style="|width:${day.percentage}%|"></span></span>
+            <span class="admin-view-value" th:text="|${#numbers.formatInteger(day.count, 1, 'COMMA')} PV|">0 PV</span>
+          </li>
+        </ol>
+        <p class="admin-chart-note">ページを開くたびに1PVとして数えます。管理画面・ログイン画面などは集計に含めません。</p>
+      </section>
+
+      <section class="admin-analytics-panel" aria-labelledby="sake-ranking-title">
+        <div class="admin-panel-heading"><h2 id="sake-ranking-title">人気の日本酒トップ10</h2><span>公式サイトへの遷移数順</span></div>
+        <p class="admin-empty-state" th:if="${#lists.isEmpty(analytics.topSakes)}">まだ公式サイトへの遷移がありません。利用されると、ここに人気の日本酒が表示されます。</p>
+        <ol class="admin-sake-ranking" th:unless="${#lists.isEmpty(analytics.topSakes)}" aria-label="公式サイトへの遷移数が多い日本酒">
+          <li th:each="item, rank : ${analytics.topSakes}">
+            <span class="admin-rank" th:text="${rank.count}">1</span>
+            <a th:href="@{/sake/{id}(id=${item.sakeId})}" th:text="${item.name}">日本酒名</a>
+            <span class="admin-count" th:text="|${#numbers.formatInteger(item.count, 1, 'COMMA')}回|">0回</span>
+          </li>
+        </ol>
+      </section>
+    </div>
+
+    <section class="admin-analytics-panel admin-tag-analytics" aria-labelledby="tag-ranking-title">
+      <div class="admin-panel-heading"><h2 id="tag-ranking-title">タグごとの人気</h2><span>累計遷移数順</span></div>
+      <p class="admin-chart-note">タグ名を開くと、そのタグの日本酒トップ5を確認できます。</p>
+      <p class="admin-empty-state" th:if="${#lists.isEmpty(analytics.tags)}">登録されているタグがありません。</p>
+      <div class="admin-tag-rankings" th:unless="${#lists.isEmpty(analytics.tags)}">
+        <details class="admin-tag-ranking" th:each="tag, tagStat : ${analytics.tags}" th:open="${tagStat.first}">
+          <summary>
+            <span class="admin-tag-name" th:text="${tag.name}">辛口</span>
+            <span class="admin-count" th:text="|${#numbers.formatInteger(tag.count, 1, 'COMMA')}回|">0回</span>
+            <span class="admin-tag-expand">トップ5<span aria-hidden="true"> ＋</span></span>
+          </summary>
+          <p class="admin-empty-state" th:if="${#lists.isEmpty(tag.topSakes)}">このタグの公式サイトへの遷移はまだありません。</p>
+          <ol class="admin-sake-ranking admin-tag-sakes" th:unless="${#lists.isEmpty(tag.topSakes)}" th:attr="aria-label=|${tag.name}の日本酒トップ5|">
+            <li th:each="item, rank : ${tag.topSakes}">
+              <span class="admin-rank" th:text="${rank.count}">1</span>
+              <a th:href="@{/sake/{id}(id=${item.sakeId})}" th:text="${item.name}">日本酒名</a>
+              <span class="admin-count" th:text="|${#numbers.formatInteger(item.count, 1, 'COMMA')}回|">0回</span>
+            </li>
+          </ol>
+        </details>
+      </div>
+      <p class="admin-chart-note admin-count-definition">公式サイトへ移動した時点で付いている各タグに、1回ずつ加算します。複数のタグが付く日本酒があるため、タグの合計は全体の遷移数を上回ることがあります。タグの重みは件数に影響しません。</p>
+    </section>
+  </th:block>
+</main>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

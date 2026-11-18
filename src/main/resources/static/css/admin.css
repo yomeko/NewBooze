@@ -57,3 +57,71 @@
   .admin-detail-panel { padding: 18px; }
   .admin-save-actions .button { width: 100%; }
 }
+
+/* 管理トップの集計。数値・日付・ランキングはJavaScriptなしでも読める。 */
+.admin-dashboard { max-width: 1200px; }
+.admin-dashboard-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin: 32px 0 20px; }
+.admin-dashboard-heading h2 { margin: 0 0 8px; font-family: inherit; font-size: 24px; }
+.admin-dashboard-heading p { margin: 0; color: var(--muted, #626a65); font-size: 14px; }
+.admin-period-label { padding: 6px 12px; border: 1px solid var(--line); border-radius: 20px; font-size: 12px; color: var(--muted, #626a65); }
+.admin-stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0 0 28px; }
+.admin-stat { padding: 22px 24px; border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 8px; background: var(--cream); }
+.admin-stat dt { font-size: 14px; }
+.admin-stat dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; }
+.admin-stat strong { font-size: clamp(28px, 3.5vw, 40px); font-variant-numeric: tabular-nums; line-height: 1.4; overflow-wrap: anywhere; }
+.admin-stat dd > span { font-size: 13px; color: var(--muted, #626a65); }
+.admin-analytics-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 24px; }
+.admin-analytics-panel { min-width: 0; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--cream); }
+.admin-panel-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 12px; }
+.admin-panel-heading h2 { margin: 0; font-family: inherit; font-size: 20px; }
+.admin-panel-heading > span { font-size: 12px; color: var(--muted, #626a65); }
+.admin-chart-note { margin: 10px 0; font-size: 12px; color: var(--muted, #626a65); line-height: 1.8; }
+.admin-view-chart { display: grid; gap: 10px; margin: 22px 0; padding: 0; list-style: none; }
+.admin-view-chart li { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) minmax(4rem, auto); align-items: center; gap: 12px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.admin-view-track { display: block; height: 14px; border-radius: 3px; background: #eee8df; overflow: hidden; }
+.admin-view-bar { display: block; height: 100%; max-width: 100%; background: var(--red); border-radius: inherit; }
+.admin-view-value { text-align: right; white-space: nowrap; }
+.admin-sake-ranking { margin: 12px 0 0; padding: 0; list-style: none; }
+.admin-sake-ranking li { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.admin-sake-ranking li:last-child { border-bottom: 0; }
+.admin-rank { color: var(--muted, #626a65); font-size: 13px; font-variant-numeric: tabular-nums; text-align: center; }
+.admin-sake-ranking li:first-child .admin-rank { font-weight: 700; color: var(--red); }
+.admin-sake-ranking a { min-width: 0; font-size: 14px; overflow-wrap: anywhere; text-underline-offset: 3px; }
+.admin-count { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.admin-empty-state { margin: 18px 0; padding: 18px; background: #f3eee5; border-radius: 4px; font-size: 14px; color: var(--muted, #626a65); }
+.admin-tag-analytics { margin-top: 24px; }
+.admin-tag-rankings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px 20px; margin: 20px 0; }
+.admin-tag-ranking { min-width: 0; border: 1px solid var(--line); border-radius: 6px; }
+.admin-tag-ranking summary { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 14px 16px; border-radius: 6px; cursor: pointer; list-style: none; }
+.admin-tag-ranking summary::-webkit-details-marker { display: none; }
+.admin-tag-ranking summary:hover { background: #f3eee5; }
+.admin-tag-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 15px; font-weight: 700; }
+.admin-tag-expand { flex-shrink: 0; color: var(--muted, #626a65); font-size: 11px; }
+.admin-tag-expand > span { display: inline-block; transition: transform .15s; }
+.admin-tag-ranking[open] .admin-tag-expand > span { transform: rotate(45deg); }
+.admin-tag-ranking[open] summary { background: #f3eee5; border-bottom: 1px solid var(--line); border-radius: 6px 6px 0 0; }
+.admin-tag-sakes { margin: 0; padding: 4px 16px; }
+.admin-tag-ranking > .admin-empty-state { margin: 12px; }
+.admin-count-definition { padding-top: 14px; border-top: 1px solid var(--line); }
+.admin-analytics-unavailable { padding: 24px; background: var(--cream); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 6px; }
+.admin-analytics-unavailable h2 { margin: 0 0 10px; font-family: inherit; font-size: 20px; }
+.admin-analytics-unavailable p { margin: 0; }
+.admin-dashboard a:focus-visible, .admin-tag-ranking summary:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+@media (max-width: 850px) {
+  .admin-analytics-grid, .admin-tag-rankings { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .admin-dashboard { padding: 16px; }
+  .admin-stat-grid { grid-template-columns: 1fr; gap: 10px; }
+  .admin-stat { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; }
+  .admin-stat dd { justify-content: flex-end; margin: 0; }
+  .admin-stat strong { font-size: 28px; }
+  .admin-analytics-panel { padding: 18px 16px; }
+  .admin-panel-heading h2 { font-size: 18px; }
+  .admin-sake-ranking li { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; }
+  .admin-view-chart li { grid-template-columns: 2.75rem minmax(0, 1fr) minmax(3.5rem, auto); gap: 8px; }
+  .admin-tag-ranking summary { gap: 10px; padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-tag-expand > span { transition: none; }
+}

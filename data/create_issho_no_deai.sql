@@ -95,6 +95,31 @@ CREATE TABLE IF NOT EXISTS sake_page_details (
   CONSTRAINT fk_sake_page_details FOREIGN KEY (sake_id) REFERENCES sake(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 公式サイトへの遷移数。タグの変更後も遷移時点の属性ごとの件数を保持する。
+CREATE TABLE IF NOT EXISTS analytics_sake_clicks (
+  sake_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+  click_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  CONSTRAINT fk_analytics_sake_clicks_sake FOREIGN KEY (sake_id) REFERENCES sake(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS analytics_tag_clicks (
+  tag_id BIGINT UNSIGNED NOT NULL,
+  sake_id BIGINT UNSIGNED NOT NULL,
+  click_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (tag_id, sake_id),
+  KEY idx_analytics_tag_clicks_sake (sake_id),
+  CONSTRAINT fk_analytics_tag_clicks_tag FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+  CONSTRAINT fk_analytics_tag_clicks_sake FOREIGN KEY (sake_id) REFERENCES sake(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 日本時間の日別PV。会員ID・IP・クエリー文字列などの個人情報を保存しない。
+CREATE TABLE IF NOT EXISTS analytics_page_views (
+  view_date DATE NOT NULL,
+  page_path VARCHAR(255) NOT NULL,
+  view_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  PRIMARY KEY (view_date, page_path)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `diagnosis_choices` (
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   `question_id` BIGINT UNSIGNED NOT NULL,

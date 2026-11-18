@@ -87,7 +87,7 @@ class ProductImageRenderingTests {
     @Test void detailKeepsOfficialPageLinkAndSiteIconWhileOmittingUnapprovedPhoto() throws Exception {
         String html = mvc.perform(get("/sake/1")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        assertThat(html).contains(OFFICIAL_PAGE, "href=\"/images/site-icon.png\"")
+        assertThat(html).contains("href=\"/sake/1/outbound/official\"", "href=\"/images/site-icon.png\"")
                 .doesNotContain(IMAGE, "class=\"sake-product-photo\"");
         assertThat(entity.getImageUrl()).isEqualTo(IMAGE);
     }

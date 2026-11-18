@@ -1,8 +1,8 @@
 # 一升の出会い 内部設計書
 
-版数 第1.7版　更新日 2026年11月14日
+版数 第1.7版　更新日 2026年11月18日
 
-本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは19テーブルで、従来18テーブルにsake_page_detailsを追加している。
+本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは22テーブルで、従来18テーブルにsake_page_detailsと人気・閲覧数集計用3テーブルを追加している。
 
 ## 1 文書の位置づけ
 
@@ -36,26 +36,28 @@ Spring SecurityがURL権限とCSRFを確認し、Controllerが入力を受け付
 
 JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録・公開集計や詳細紹介JSONを扱う。管理銘柄登録はJPAとJDBCの処理を同じトランザクションに含める。静的ガイドの本文と出典はguide.htmlで管理する。SakeCollectionControllerはcollection.htmlへページ種別と表示データを渡す。ランキングは検索と同じ公開レビュー集計を使い、1〜2件の銘柄に「参考評価」を表示する。空表示には/diagnosisと/searchへのリンクを出す。SakeCollectionServiceは詳細紹介の料理データを使用し、登録された酒蔵名と都道府県をURLエンコードしてGoogle マップの検索リンクを作る。酒種とタグはカタログの検索条件を使う。
 
+人気・閲覧数はAnalyticsServiceとAnalyticsRepositoryのJdbcTemplateで集計する。SakeOutboundControllerは登録済みの公式URLへの転送時に銘柄と各タグへ加算し、PageViewAnalyticsConfigのInterceptorはHTML描画成功後に日付・パス別PVへ加算する。AdminAnalyticsControllerはADMIN専用トップへ集計用recordを渡す。
+
 ### 2.3 パッケージ構成
 
 | パッケージ | 主なクラスと役割 |
 |---|---|
 | com.example.demo | IsshoNoDeaiApplication |
 | controller | Home、SakeSearch、Diagnosis、Auth、MyPage、Admin等のController |
-| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、ProductImagePublication、会員登録・メール認証、PasswordReset等のService |
-| repository | Spring Data JPA Repository 17クラス |
+| service | SakeCatalog、SakeDiscovery、SakePage、SakeInteraction、ProductImagePublication、会員登録・メール認証、PasswordReset、Analytics等のService、AnalyticsRequestPolicy |
+| repository | Spring Data JPA Repository 17クラスとJdbcTemplateのAnalyticsRepository |
 | entity | JPA Entity 17クラスと複合IDクラス |
 | model | 表示用Sake、詳細紹介SakePage、旧診断モデル |
 | dto | SakePageDto、診断表示、入力フォーム、TastePresentation |
 | security | CustomUserDetails、CustomUserDetailsService、AccountSessionValidationFilter、AuthenticationRateLimiterとFilter |
 | validation | Utf8InputLength、Utf8ByteLength、BoundedImageDecoder等の入力検証 |
-| config | SecurityConfig、AdminAccountInitializer、PublicationInformation |
+| config | SecurityConfig、AdminAccountInitializer、PublicationInformation、PageViewAnalyticsConfig |
 
 ## 3 データベース設計
 
 ### 3.1 方針とテーブル一覧
 
-DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validateは構造を検証する。起動時にテーブルを作成・変更しない。SQLの19テーブルは、過去のDB設計書の18テーブルに詳細紹介を加えたもの。19テーブルにJPA Entityが19クラス必要という意味ではなく、レビューと詳細紹介はJDBCで扱う。
+DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validateはEntityに対応する構造を検証する。起動時にテーブルを作成・変更しない。SQLの22テーブルは、過去のDB設計書の18テーブルに詳細紹介と集計用3テーブルを加えたもの。テーブル数とJPA Entity数は一致せず、レビュー・詳細紹介・人気と閲覧数はJDBCで扱う。JPAの検証だけではJDBC専用テーブルの適用確認にならない。
 
 | テーブル | 主キー | 主な役割 |
 |---|---|---|
@@ -78,12 +80,15 @@ DDLをdata/create_issho_no_deai.sqlで管理し、Hibernateのddl-auto=validate�
 | drink_post_likes | user_idとpost_id | 投稿のいいね |
 | drink_post_reports | id | 通報者、対象投稿、理由 |
 | user_profile_images | user_id | 画像本体・MIME・位置・拡大率 |
+| analytics_sake_clicks | sake_id | 銘柄別の公式サイト遷移数 |
+| analytics_tag_clicks | tag_idとsake_id | 計測時点のタグ・銘柄別の遷移数 |
+| analytics_page_views | view_dateとpage_path | 日本時間の日付・ページパス別PV |
 
 ### 3.2 関係と制約
 
 sakeは任意のbreweriesと必須のsake_typesを参照する。sake_tagsとchoice_tagsが共通tagsを介して銘柄と回答を比較する。会員の診断はsessionsからanswersへ、嗜好はuser_preferencesへ保存する。レビューは星1〜5のCHECKと複合主キーを使う。同じ投稿への同じユーザーの通報は一意制約を持つ。
 
-sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キー・外部キー、detail_jsonはLONGTEXT NOT NULL。銘柄削除時はCASCADE。全DDLの外部キーは24本。カラム・索引・削除規則の詳細はDB_DESIGN.mdを参照する。
+sake_page_detailsはsakeと最大1対1で、sake_idはBIGINT UNSIGNEDの主キー・外部キー、detail_jsonはLONGTEXT NOT NULL。銘柄削除時はCASCADE。analytics_sake_clicksはsake、analytics_tag_clicksはsakeとtagsを参照し、親削除時はCASCADEとする。現在のsake_tagsへ外部キーを付けず、タグの付け替え後も計測時点の組み合わせを保持する。全DDLの外部キーは27本。カラム・索引・削除規則の詳細はDB_DESIGN.mdを参照する。
 
 ### 3.3 保存ルール
 
@@ -110,7 +115,7 @@ DrinkPostControllerとAdminPostReportControllerはDrinkPostServiceを使う。�
 | 診断履歴 diagnosis-history.html | 本人の診断日時と設問・回答 |
 | 飲酒投稿 drink-posts.html | 会員向けの一覧と投稿、いいね、通報、本人による削除 |
 | 設定 account-settings.html | プロフィール、画像、パスワード、退会 |
-| 管理 admin配下 | 管理トップ、ユーザー検索、銘柄登録、飲酒投稿の通報と対応 |
+| 管理 admin配下 | タグ別件数・銘柄トップ10・タグ別トップ5・日別PVの管理トップ、ユーザー検索、銘柄登録、飲酒投稿の通報と対応 |
 | 特集 collection.html | ランキング、食事と酒器、関連商品、酒蔵、酒種、タグの案内 |
 | 公開案内 about.html、contact.html、external-transmission.html | 研究と終了予定、運営者・窓口の設定状態、外部接続の説明 |
 | プライバシー privacy.html | 登録前にも読める情報の利用目的、公開範囲、保存と終了時の扱い |
@@ -188,6 +193,18 @@ about、contact、privacy、external-transmissionは認証不要の専用ペー�
 
 卒業研究終了時にサービスを終了する方針を表示する。終了日、データ削除日、バックアップ保持期間と事前告知・処理手順は未確定で、公開前に運営者が決定する。退会は既存の本人確認付き削除処理を利用し、連動する会員データの削除とバックアップの扱いを分けて説明する。サービスの自動停止や全データの自動削除を行う機構は今回追加しない。
 
+### 5.6 公式リンクの人気と閲覧数
+
+SakeOutboundControllerはGET /sake/{id}/outbound/officialで公式URL、/purchaseで最初の公式購入先または公式URLをサーバー側で解決する。存在しない銘柄・未登録の遷移先は404とし、利用者から任意の転送先URLを受け付けない。302にCache-Control: no-storeを付け、次回のクリックがアプリを通らずキャッシュで転送されるのを防ぐ。
+
+AnalyticsService.recordOfficialClickは@Transactionalで銘柄と、その時点のsake_tags.score > 0の各タグへ1件ずつ加算する。タグの重みは件数に掛けない。AnalyticsRepositoryは加算付きupsertを使用するため、同時アクセスで読取後の上書きによる件数欠落を避ける。現在のタグ対応へ結び直さず記録済みのタグ・銘柄で集計し、DBのORDER BYとLIMIT、タグ別のROW_NUMBERで上位10件・各タグ上位5件に絞る。同数は銘柄IDの昇順とする。
+
+PageViewAnalyticsConfig.PageViewInterceptorは、対象パスのControllerがHTMLを描画した後、例外なし・HTTP 200・text/htmlの場合にだけPVを加算する。AnalyticsRequestPolicyはGETだけを対象とし、Purpose等の先読みヘッダーとbot・spider・crawler・slurp・headlessを含むUser-Agentを除外する。対象ページはANALYTICS.mdに定義し、管理・認証・静的ファイル・転送は含めない。保存パスからクエリを除き、IP・会員ID・User-Agent等は保存しない。ClockをAsia/Tokyoに合わせ、日別集計と直近14日間の0件補完を行う。
+
+AdminAnalyticsControllerは/adminと/admin/でAnalyticsService.Dashboardを取得する。累計遷移数、累計・当日PV、銘柄トップ10、各タグの件数とトップ5、直近14日間の件数とグラフ比率を同じ表示用recordにまとめる。タグごとのトップ5は標準detailsで開閉し、PVの横棒はThymeleafとCSSで件数とともに描画する。集計はDBへ保持し、アプリ再起動後も引き継ぐ。
+
+転送・PV・管理トップの呼出側はDataAccessExceptionとTransactionExceptionを処理する。転送と表示は継続し、管理トップは取得失敗を0件に置き換えず案内を出す。失敗した集計の種類だけをログに残す。導入前や障害中の過去件数を復元する処理は設けない。
+
 ## 6 エンドポイントと権限
 
 Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する。保存操作はPOSTとCSRFトークンを使う。公開URL、認証必須URL、ADMIN必須URLはSecurityConfigで区別する。
@@ -200,6 +217,8 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 | GET | /guide | 初心者ガイド |
 | GET | /search | keyword、name、type、taste、priceRange、sort、page |
 | GET | /sake/{id} | 商品と公開レビュー、reviewSort、reviewPage |
+| GET | /sake/{id}/outbound/official | 登録済みの公式サイトへ転送し、銘柄と各タグを計測 |
+| GET | /sake/{id}/outbound/purchase | 最初の公式購入先、未登録なら公式URLへ転送し計測 |
 | GET | /sake/images/{filename} | 商品画像 |
 | GET | /sake/reviewers/{userId}/profile-image | 公開レビュー投稿者のプロフィール画像 |
 | GET | /diagnosis | 診断設問 |
@@ -243,7 +262,7 @@ Thymeleafの画面遷移を伴うHTTPエンドポイントとして定義する�
 
 | メソッド | URL | 権限と処理 |
 |---|---|---|
-| GET | /admin | ADMIN、管理トップ |
+| GET | /admin、/admin/ | ADMIN、人気・閲覧数の集計と管理メニュー |
 | GET | /admin/users | ADMIN、keywordとpage、30件ずつ |
 | GETとPOST | /admin/sake/new | ADMIN、銘柄登録 |
 | GET | /admin/post-reports | ADMIN、対応待ち通報を20件ずつ確認 |
@@ -283,6 +302,8 @@ application-local.propertiesで接続設定を上書きできる。DB_USERNAME�
 
 パスワード再設定では起動前にdata/password_reset_token_schema.sqlでusersのNULL許容3列とハッシュの一意索引を追加する。既存ユーザー・パスワードは変更しない。対象DBとバックアップを確認し、未適用のDBに一度だけ実行する。今回の文書更新自体は実DB適用・再照合の完了を意味しない。
 
+人気・閲覧数集計は実際の接続先とバックアップを確認し、起動前にdata/analytics_schema.sqlで3テーブルを追加する。既存テーブルと行を変更・削除しない。定義の適用確認と公開経路での計測確認はANALYTICS.mdの手順で行う。
+
 Gmail SMTPはsmtp.gmail.comの587番、認証有効、STARTTLS必須とし、接続・読み取り・書き込みのタイムアウトを各5000ミリ秒にする。送信元とアプリパスワードはGit管理外のapplication-local.propertiesへローカル入力し、scripts/configure-gmail.pyを使える。通常のGoogleログイン用パスワードは使わない。固定app.base-urlは開発環境でhttp://localhost:8080、公開環境では利用者が到達できるHTTPS URLを設定する。手順と実送信の確認項目はemail-verification.mdを参照する。
 
 AdminAccountInitializerは既定で無効。初回だけADMIN_BOOTSTRAP_ENABLED=trueとADMIN_EMAIL・ADMIN_PASSWORD・ADMIN_NAMEを設定する。メールアドレスと表示名を検証し、パスワードは12文字以上・UTF-8で72バイト以内、英大文字・英小文字・数字・記号のうち3種類以上とし、既知の既定値や単純な繰り返しを拒否する。同じメールアドレスが存在すればパスワード・権限を変更しない。制限した環境で一意のメールアドレスを持つ新管理者を作成し、動作確認後に初期作成を無効にして資格情報設定を除く。旧既定パスワードの管理者はログイン・セッションを拒否するがレコードは自動変更しないため、公開前に旧権限の解除などを明示的に行う。手順はadmin.mdとSECURITY.mdを参照する。
@@ -295,6 +316,8 @@ DBとuploads/sake、利用する外部JSONをバックアップする。接続�
 
 Gradleの全テストでDB接続・表示・権限・保存・画像等を検証する。追加テストはメジャー候補限定、本人除外、タグ比率、同点、タグ不足、空・1件カタログ、匿名ガイドと比較画面を扱う。JSテストは診断、トピック、プロフィール画像を確認する。PC・スマートフォン幅で目次と比較表示を確認する。
 
+人気・閲覧数のテストはタグ重みによらない加算、タグ変更後の過去集計、ランキングの上限と同点順、日本時間の日付境界と14日間の0件補完、登録済み転送先、管理者権限、ボット・先読み・エラー等の除外、集計障害時の継続を対象とする。ブラウザでは管理トップのPC・スマートフォン表示、タグ別の開閉、日別の横棒を確認する。実行済みの結果は作業完了報告と検証記録で示す。
+
 残課題は公開環境の接続・運用確認、サービス終了・データ削除の実施計画、酒蔵と商品の情報・写真利用条件の確認、利用者調査と評価である。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を見直す。公開準備の状況はPUBLICATION.mdを参照する。
 
-参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、data/create_issho_no_deai.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md。
+参照資料：REQUIREMENTS.md、DB_DESIGN.md、BEGINNER_DISCOVERY.md、ANALYTICS.md、data/create_issho_no_deai.sql、data/analytics_schema.sql、data/SAKE_PAGES.md、data/SAKE_IMAGES.md、data/catalog-publication-audit.csv、docs/admin.md、docs/SECURITY.md、docs/PUBLICATION.md。
