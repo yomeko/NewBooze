@@ -222,6 +222,21 @@ h1, h2, h3 {
 }
 /* 現在表示中のページ番号を強調（search.htmlのth:classappendで付与される） */
 .pagination a.current { background: var(--ink); color: #fff; }
+/* 検索のページ送りは1行を保ち、狭い画面ではボタンを縮めず横にスクロールする。 */
+.search-pagination {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: 6px;
+}
+.pagination.search-pagination a {
+  flex-shrink: 0;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  padding: 8px 12px;
+}
+.search-pagination > :first-child { margin-left: auto; }
+.search-pagination > :last-child { margin-right: auto; }
 .empty { padding: 40px; background: var(--cream); }
 
 /* ---- 汎用テキストスタイル ---- */

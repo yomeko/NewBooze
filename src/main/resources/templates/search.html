@@ -110,17 +110,16 @@
     現在の検索条件を維持したまま、pageだけを変えたリンクを組み立てる。
     result.totalPagesが1以下（＝ページ分割不要）の場合は表示自体をスキップする。
   -->
-  <nav class="pagination" aria-label="検索結果のページ" th:if="${result.totalPages > 1}">
+  <nav class="pagination search-pagination" aria-label="検索結果のページ" th:if="${result.totalPages > 1}">
     <a th:if="${result.hasPrevious}"
        th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${result.pageNumber - 1})}">← 前へ</a>
 
-    <!-- #numbers.sequence(0, N-1) で 0〜(総ページ数-1) の連番を生成し、ページ番号リンクを並べる -->
-    <span th:each="number : ${#numbers.sequence(0, result.totalPages - 1)}">
-      <a th:classappend="${number == result.pageNumber} ? ' current'"
-         th:attr="aria-current=${number == result.pageNumber} ? 'page' : null"
-         th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${number})}"
-         th:text="${number + 1}"></a>
-    </span>
+    <!-- 現在ページから次の5ページまでを表示し、最終ページを超えないようにする。 -->
+    <a th:each="number : ${#numbers.sequence(result.pageNumber, result.pageNumber + 5 < result.totalPages ? result.pageNumber + 5 : result.totalPages - 1)}"
+       th:classappend="${number == result.pageNumber} ? ' current'"
+       th:attr="aria-current=${number == result.pageNumber} ? 'page' : null"
+       th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${number})}"
+       th:text="${number + 1}"></a>
 
     <a th:if="${result.hasNext}"
        th:href="@{/search(name=${name},keyword=${keyword},type=${selectedType},taste=${selectedTaste},priceRange=${selectedPriceRange},sort=${selectedSort},page=${result.pageNumber + 1})}">次へ →</a>

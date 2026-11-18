@@ -15,6 +15,8 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -93,11 +95,10 @@ class SakeSearchRenderingTests {
                 .param("type", "純米").param("taste", "辛口").param("priceRange", "1500-2999")
                 .param("sort", "priceAsc").param("page", "1"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        String pagination = Pattern.compile("<nav class=\"pagination\".*?</nav>", Pattern.DOTALL)
-                .matcher(html).results().findFirst().orElseThrow().group();
+        String pagination = paginationMarkup(html).orElseThrow();
         assertThat(pagination).contains("aria-label=\"検索結果のページ\"", "aria-current=\"page\"", "← 前へ", "次へ →");
         var links = Pattern.compile("href=\"([^\"]+)\"").matcher(pagination).results().toList();
-        assertThat(links).hasSize(5);
+        assertThat(links).hasSize(4);
         for (var link : links) {
             String url = java.net.URLDecoder.decode(link.group(1).replace("&amp;", "&"), StandardCharsets.UTF_8);
             var query = UriComponentsBuilder.fromUriString(url).build().getQueryParams();
@@ -106,6 +107,44 @@ class SakeSearchRenderingTests {
                     .containsEntry("taste", List.of("辛口")).containsEntry("priceRange", List.of("1500-2999"))
                     .containsEntry("sort", List.of("priceAsc"));
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0, 100, '1 2 3 4 5 6'",
+            "48, 100, '49 50 51 52 53 54'",
+            "9, 12, '10 11 12'",
+            "11, 12, '12'",
+            "0, 1, ''",
+            "0, 0, ''"
+    })
+    void paginationShowsCurrentAndAtMostFiveFollowingPages(int page, int totalPages, String expectedNumbers)
+            throws Exception {
+        when(catalog.search("", "", "", null, null, "", "recommended", page))
+                .thenReturn(new SakePageDto(List.of(), page, totalPages, totalPages * 6L));
+
+        String html = mvc.perform(get("/search").param("page", Integer.toString(page)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+        var markup = paginationMarkup(html);
+        if (totalPages <= 1) {
+            assertThat(markup).isEmpty();
+            return;
+        }
+
+        String pagination = markup.orElseThrow();
+        var numberLinks = Pattern.compile("<a\\b[^>]*href=\"([^\"]+)\"[^>]*>\\s*(\\d+)\\s*</a>")
+                .matcher(pagination).results().toList();
+        assertThat(numberLinks).extracting(link -> link.group(2)).containsExactly(expectedNumbers.split(" "));
+        for (var link : numberLinks) {
+            var query = UriComponentsBuilder.fromUriString(link.group(1).replace("&amp;", "&"))
+                    .build().getQueryParams();
+            assertThat(query.getFirst("page")).isEqualTo(Integer.toString(Integer.parseInt(link.group(2)) - 1));
+        }
+        var current = Pattern.compile("<a\\b[^>]*aria-current=\"page\"[^>]*>\\s*(\\d+)\\s*</a>")
+                .matcher(pagination).results().map(link -> link.group(1)).toList();
+        assertThat(current).containsExactly(Integer.toString(page + 1));
+        assertThat(pagination.contains("← 前へ")).isEqualTo(page > 0);
+        assertThat(pagination.contains("次へ →")).isEqualTo(page + 1 < totalPages);
     }
 
     @Test void keywordIsEscapedAndRecognizedTasteUsesTasteSelection() throws Exception {
@@ -158,6 +197,11 @@ class SakeSearchRenderingTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("class=\"back\" href=\"/search\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("https://example.invalid/"))));
+    }
+
+    private Optional<String> paginationMarkup(String html) {
+        return Pattern.compile("<nav\\b[^>]*aria-label=\"検索結果のページ\"[^>]*>.*?</nav>", Pattern.DOTALL)
+                .matcher(html).results().map(match -> match.group()).findFirst();
     }
 
     /** ブラウザのGET送信と同じく、実際に描画されたinputと選択中のoptionを集める。 */
