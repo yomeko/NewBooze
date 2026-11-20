@@ -38,14 +38,37 @@
     <div class="admin-analytics-grid">
       <section class="admin-analytics-panel" aria-labelledby="page-views-title">
         <div class="admin-panel-heading"><h2 id="page-views-title">閲覧数の推移</h2><span>直近14日間</span></div>
-        <p class="admin-chart-note">日本時間の日付で集計しています。数字はその日のPVです。</p>
-        <ol class="admin-view-chart" aria-label="日別のサイト閲覧数">
-          <li th:each="day : ${analytics.dailyViews}">
-            <time th:datetime="${day.date}" th:text="${#temporals.format(day.date, 'M/d')}">11/18</time>
-            <span class="admin-view-track" aria-hidden="true"><span class="admin-view-bar" th:style="|width:${day.percentage}%|"></span></span>
-            <span class="admin-view-value" th:text="|${#numbers.formatInteger(day.count, 1, 'COMMA')} PV|">0 PV</span>
-          </li>
-        </ol>
+        <p class="admin-chart-note">横軸は日付、縦軸はPVです。日本時間で集計しています。</p>
+        <figure class="admin-view-chart">
+          <svg class="admin-view-line-chart" viewBox="0 0 600 260" role="img" aria-labelledby="views-chart-title views-chart-description">
+            <title id="views-chart-title">直近14日間のサイト閲覧数の折れ線グラフ</title>
+            <desc id="views-chart-description">横軸は日付、縦軸は閲覧数（PV）。閲覧のない日は0PVです。各日の件数は下の日別一覧でも確認できます。</desc>
+            <text class="admin-chart-unit" x="56" y="14">PV</text>
+            <g th:each="tick : ${pageViewChart.ticks}">
+              <line class="admin-chart-grid" x1="56" x2="584" th:attr="y1=${tick.y},y2=${tick.y}"></line>
+              <text class="admin-chart-label" x="48" text-anchor="end" dy="4" th:attr="y=${tick.y}" th:text="${#numbers.formatInteger(tick.value, 1, 'COMMA')}">0</text>
+            </g>
+            <polyline class="admin-view-line" th:unless="${#lists.isEmpty(pageViewChart.points)}" th:attr="points=${pageViewChart.polyline}"></polyline>
+            <circle class="admin-view-point" r="4" th:each="point : ${pageViewChart.points}" th:attr="cx=${point.x},cy=${point.y}">
+              <title th:text="|${#temporals.format(point.date, 'M/d')}：${#numbers.formatInteger(point.count, 1, 'COMMA')} PV|">0 PV</title>
+            </circle>
+            <text class="admin-chart-label admin-chart-date" y="240" th:each="point, day : ${pageViewChart.points}"
+                  th:if="${day.first or day.last or (day.index % 3 == 0 and day.index < day.size - 2)}"
+                  th:attr="x=${point.x},text-anchor=${day.last ? 'end' : (day.first ? 'start' : 'middle')}"
+                  th:text="${#temporals.format(point.date, 'M/d')}">11/20</text>
+          </svg>
+        </figure>
+        <details class="admin-view-daily-details">
+          <summary>日別の閲覧数を確認</summary>
+          <table class="admin-view-daily-table">
+            <caption class="visually-hidden">直近14日間の日別閲覧数</caption>
+            <thead><tr><th scope="col">日付</th><th scope="col">閲覧数</th></tr></thead>
+            <tbody><tr th:each="day : ${analytics.dailyViews}">
+              <th scope="row"><time th:datetime="${day.date}" th:text="${#temporals.format(day.date, 'M/d')}">11/20</time></th>
+              <td th:text="|${#numbers.formatInteger(day.count, 1, 'COMMA')} PV|">0 PV</td>
+            </tr></tbody>
+          </table>
+        </details>
         <p class="admin-chart-note">ページを開くたびに1PVとして数えます。管理画面・ログイン画面などは集計に含めません。</p>
       </section>
 

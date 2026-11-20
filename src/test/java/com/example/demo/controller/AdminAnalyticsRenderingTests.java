@@ -40,27 +40,30 @@ class AdminAnalyticsRenderingTests {
                 .setViewResolvers(views).build();
     }
 
-    @Test void rendersCountsFourteenDailyBarsAndBothRankingsWithoutJavaScript() throws Exception {
+    @Test void rendersDailyLineChartAndBothRankingsWithoutJavaScript() throws Exception {
         var today = LocalDate.of(2026, 11, 18);
         var sakes = IntStream.rangeClosed(1, 10)
                 .mapToObj(id -> new AnalyticsService.SakeCount(id, "銘柄" + id, 12 - id)).toList();
         var tags = List.of(new AnalyticsService.TagCount(1, "辛口", 1500, sakes.subList(0, 5)),
                 new AnalyticsService.TagCount(2, "甘口", 0, List.of()));
         var days = IntStream.range(0, 14).mapToObj(offset ->
-                new AnalyticsService.DailyViews(today.minusDays(13 - offset), offset == 13 ? 200 : 0,
+                new AnalyticsService.DailyViews(today.minusDays(13 - offset), offset == 13 ? 200 : offset % 3 * 20,
                         offset == 13 ? 100 : 0)).toList();
         when(analytics.dashboard()).thenReturn(new AnalyticsService.Dashboard(1500, 12345, 200, sakes, tags, days));
 
         String html = render("/admin");
         assertThat(html).contains("12,345", "1,500回", "200 PV", "人気の日本酒トップ10", "辛口の日本酒トップ5",
-                "href=\"/sake/10\"", "datetime=\"2026-11-18\"", "width:100%", "width:0%",
+                "href=\"/sake/10\"", "datetime=\"2026-11-18\"", "直近14日間のサイト閲覧数の折れ線グラフ",
+                "class=\"admin-view-line\"", "cx=\"584.0\" cy=\"24.0\"", "横軸は日付、縦軸はPVです。",
+                "日別の閲覧数を確認", "<td>200 PV</td>",
                 "このタグの公式サイトへの遷移はまだありません。", "タグの合計は全体の遷移数を上回ることがあります。");
-        assertThat(occurrences(html, "class=\"admin-view-bar\"")).isEqualTo(14);
+        assertThat(occurrences(html, "class=\"admin-view-point\"")).isEqualTo(14);
+        assertThat(occurrences(html, "class=\"admin-chart-label admin-chart-date\"")).isEqualTo(5);
         assertThat(occurrences(html, "class=\"admin-tag-ranking\"")).isEqualTo(2);
         assertThat(occurrences(html, "class=\"admin-tag-ranking\" open=\"open\"")).isEqualTo(1);
         assertThat(occurrences(html, "href=\"/sake/1\"")).isEqualTo(2);
         assertThat(occurrences(html, "href=\"/sake/6\"")).isEqualTo(1);
-        assertThat(html).doesNotContain("集計情報を取得できませんでした");
+        assertThat(html).doesNotContain("集計情報を取得できませんでした", "admin-view-bar", "admin-view-track");
     }
 
     @Test void zeroCountsHaveAnExplanationAndNamesAreEscaped() throws Exception {
@@ -68,7 +71,7 @@ class AdminAnalyticsRenderingTests {
         when(analytics.dashboard()).thenReturn(new AnalyticsService.Dashboard(0, 0, 0, List.of(), List.of(tag),
                 List.of(new AnalyticsService.DailyViews(LocalDate.of(2026, 11, 18), 0, 0))));
         assertThat(render("/admin/"))
-                .contains("まだ公式サイトへの遷移がありません。", "&lt;script&gt;alert(1)&lt;/script&gt;", "0 PV", "width:0%")
+                .contains("まだ公式サイトへの遷移がありません。", "&lt;script&gt;alert(1)&lt;/script&gt;", "0 PV", "cy=\"208.0\"")
                 .doesNotContain("<script>alert(1)</script>", "NaN", "Infinity");
     }
 

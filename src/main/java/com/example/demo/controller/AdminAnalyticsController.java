@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.service.AnalyticsService;
+import com.example.demo.dto.PageViewChart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
@@ -22,7 +23,9 @@ public class AdminAnalyticsController {
     @GetMapping({"/admin", "/admin/"})
     public String index(Model model) {
         try {
-            model.addAttribute("analytics", analytics.dashboard());
+            var dashboard = analytics.dashboard();
+            model.addAttribute("analytics", dashboard);
+            model.addAttribute("pageViewChart", PageViewChart.from(dashboard.dailyViews()));
             model.addAttribute("analyticsAvailable", true);
         } catch (DataAccessException | TransactionException ex) {
             // 集計の障害をゼロ件と表示せず、管理メニューは引き続き使えるようにする。

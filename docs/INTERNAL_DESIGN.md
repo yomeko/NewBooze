@@ -1,6 +1,6 @@
 # 一升の出会い 内部設計書
 
-版数 第1.7版　更新日 2026年11月18日
+版数 第1.7版　更新日 2026年11月20日
 
 本書はNewBoozeの現行コードを根拠に、DBアクセス、画面、クラス、エンドポイント、推薦処理を説明する。初期の暫定設計を置き換え、DB接続・JPA Entity・会員・レビュー・管理画面の実装を反映する。現行DDLは22テーブルで、従来18テーブルにsake_page_detailsと人気・閲覧数集計用3テーブルを追加している。
 
@@ -48,7 +48,7 @@ JPAは基本情報と会員等を扱い、JdbcTemplateはレビューの登録�
 | repository | Spring Data JPA Repository 17クラスとJdbcTemplateのAnalyticsRepository |
 | entity | JPA Entity 17クラスと複合IDクラス |
 | model | 表示用Sake、詳細紹介SakePage、旧診断モデル |
-| dto | SakePageDto、診断表示、入力フォーム、TastePresentation |
+| dto | SakePageDto、診断表示、入力フォーム、TastePresentation、日別PVのPageViewChart |
 | security | CustomUserDetails、CustomUserDetailsService、AccountSessionValidationFilter、AuthenticationRateLimiterとFilter |
 | validation | Utf8InputLength、Utf8ByteLength、BoundedImageDecoder等の入力検証 |
 | config | SecurityConfig、AdminAccountInitializer、PublicationInformation、PageViewAnalyticsConfig |
@@ -201,7 +201,7 @@ AnalyticsService.recordOfficialClickは@Transactionalで銘柄と、その時点
 
 PageViewAnalyticsConfig.PageViewInterceptorは、対象パスのControllerがHTMLを描画した後、例外なし・HTTP 200・text/htmlの場合にだけPVを加算する。AnalyticsRequestPolicyはGETだけを対象とし、Purpose等の先読みヘッダーとbot・spider・crawler・slurp・headlessを含むUser-Agentを除外する。対象ページはANALYTICS.mdに定義し、管理・認証・静的ファイル・転送は含めない。保存パスからクエリを除き、IP・会員ID・User-Agent等は保存しない。ClockをAsia/Tokyoに合わせ、日別集計と直近14日間の0件補完を行う。
 
-AdminAnalyticsControllerは/adminと/admin/でAnalyticsService.Dashboardを取得する。累計遷移数、累計・当日PV、銘柄トップ10、各タグの件数とトップ5、直近14日間の件数とグラフ比率を同じ表示用recordにまとめる。タグごとのトップ5は標準detailsで開閉し、PVの横棒はThymeleafとCSSで件数とともに描画する。集計はDBへ保持し、アプリ再起動後も引き継ぐ。
+AdminAnalyticsControllerは/adminと/admin/でAnalyticsService.Dashboardを取得し、日別件数からPageViewChartの描画座標と目盛りを作る。累計遷移数、累計・当日PV、銘柄トップ10、各タグの件数とトップ5は同じ表示用recordで渡す。PVは横軸を日付、縦軸をPVとする折れ線SVGをThymeleafで描画し、CSSで画面幅に合わせる。当日を含む直近14日間の0件の日も描き、標準details内の表で全14日分の正確な件数を示す。グラフと一覧の表示・開閉はJavaScriptを必要としない。タグごとのトップ5も標準detailsで開閉する。件数の定義とDB保存は変えず、再起動後も集計を引き継ぐ。
 
 転送・PV・管理トップの呼出側はDataAccessExceptionとTransactionExceptionを処理する。転送と表示は継続し、管理トップは取得失敗を0件に置き換えず案内を出す。失敗した集計の種類だけをログに残す。導入前や障害中の過去件数を復元する処理は設けない。
 
@@ -316,7 +316,7 @@ DBとuploads/sake、利用する外部JSONをバックアップする。接続�
 
 Gradleの全テストでDB接続・表示・権限・保存・画像等を検証する。追加テストはメジャー候補限定、本人除外、タグ比率、同点、タグ不足、空・1件カタログ、匿名ガイドと比較画面を扱う。JSテストは診断、トピック、プロフィール画像を確認する。PC・スマートフォン幅で目次と比較表示を確認する。
 
-人気・閲覧数のテストはタグ重みによらない加算、タグ変更後の過去集計、ランキングの上限と同点順、日本時間の日付境界と14日間の0件補完、登録済み転送先、管理者権限、ボット・先読み・エラー等の除外、集計障害時の継続を対象とする。ブラウザでは管理トップのPC・スマートフォン表示、タグ別の開閉、日別の横棒を確認する。実行済みの結果は作業完了報告と検証記録で示す。
+人気・閲覧数のテストはタグ重みによらない加算、タグ変更後の過去集計、ランキングの上限と同点順、日本時間の日付境界と14日間の0件補完、登録済み転送先、管理者権限、ボット・先読み・エラー等の除外、集計障害時の継続を対象とする。ブラウザでは管理トップのPC・スマートフォン表示、タグ別の開閉、日別の折れ線と全14日分の件数一覧、JavaScript無効時の表示を確認する。実行済みの結果は作業完了報告と検証記録で示す。
 
 残課題は公開環境の接続・運用確認、サービス終了・データ削除の実施計画、酒蔵と商品の情報・写真利用条件の確認、利用者調査と評価である。全カタログを読む推薦・比較は現行規模向けで、件数増加時は取得件数・キャッシュ・索引を見直す。公開準備の状況はPUBLICATION.mdを参照する。
 

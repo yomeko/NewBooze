@@ -438,7 +438,7 @@ erDiagram
 | `page_path` | VARCHAR(255) | ○ | — | PK |
 | `view_count` | BIGINT UNSIGNED | ○ | 0 | — |
 
-複合主キーは `(view_date, page_path)` です。日付はアプリで日本時間に統一し、ページパスにはクエリ文字列を含めません。外部キー、会員ID、IPアドレス、Cookie、参照元、User-Agentは保存しません。PVの棒グラフは日別に合計し、直近14日間の未記録日も0件として補います。
+複合主キーは `(view_date, page_path)` です。日付はアプリで日本時間に統一し、ページパスにはクエリ文字列を含めません。外部キー、会員ID、IPアドレス、Cookie、参照元、User-Agentは保存しません。PVは日別に合計し、当日を含む直近14日間の未記録日も0件として補います。表示は横軸を日付、縦軸をPVとする折れ線SVGと、detailsで開く全14日分の件数一覧です。画面幅に合わせて表示し、JavaScriptは必要ありません。2026年11月20日のグラフ形式変更でDB定義・集計対象・保存値の変更はありません。
 
 集計用3テーブルはJPA Entityを設けず、`AnalyticsRepository` のJdbcTemplateで取得・保存します。加算付きupsertを使い、銘柄と各タグへの加算を `AnalyticsService` の同じトランザクションで行います。ランキングはDB側で銘柄上位10件・各タグ上位5件に制限します。計測対象と既存DBへの適用手順は [ANALYTICS.md](ANALYTICS.md) を参照してください。
 
